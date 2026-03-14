@@ -1128,24 +1128,53 @@ const genres=[
 const explicitWords=['fuck','shit','bitch','ass','dick','damn','bastard','crap','piss','cock','pussy','хуй','пизд','блядь','бля','ёб','еб','сук','мудак','мудил','пидор','пидар','залуп','хер','дерьм','срань','сука','ебан','ебат','ёбан','пиздец','нахуй','нахер','похуй','охуе','ахуе','шлюх','проститут','ублюдок','гандон','манда','ебло','ёбл','хуе','хуё','пизж','выблядок','долбоёб','долбоеб','заеб','заёб','отъеб','подъеб','уёб','уеб','разъеб','разъёб','объеб','объёб','перееб','переёб','выеб','выёб','взъеб','взъёб','доеб','доёб','наеб','наёб','приеб','приёб','припизд','распизд','спизд','пиздат','запизд','отпизд','попизд','хуяр','хуяч','хуяк','пиздюл','ёбарь','ебарь','мудозвон','fucker','motherfuck','asshole','bullshit','nigger','nigga','whore','slut','cunt','twat','wanker','jackass'];
 function checkExplicit(t){if(!t)return false;const l=t.toLowerCase().replace(/[^a-zа-яёй0-9]/gi,' ');for(const w of explicitWords)if(l.includes(w.toLowerCase()))return true;return false}
 const POLLINATIONS_API_KEY='sk_FpZu7IFGMpDXM9c4ou1rdmWKgt3SdRgi';
-async function transcribeAudioWithPollinations(file){
-  try{
-    const fd=new FormData();
-    fd.append('file',file,file?.name||'track.audio');
-    fd.append('model','whisper-large-v3');
-    const res=await fetch('https://gen.pollinations.ai/v1/audio/transcriptions',{
-      method:'POST',
-      headers:{'Authorization':'Bearer '+POLLINATIONS_API_KEY},
-      body:fd
-    });
-    if(!res.ok) throw new Error('transcription-failed');
-    const json=await res.json();
-    return (json?.text||json?.transcript||'').trim();
-  }catch(e){
-    return '';
-  }
+function textLettersCount(text=''){return String(text||'').replace(/[^a-zA-Zа-яА-ЯёЁ0-9]+/g,'').length}
+function looksLikeInstrumentalHint(text=''){return /(instrumental|\binst\b|karaoke|minus|minusovka|минус|минусовка|без\s+слов|инструментал)/i.test(String(text||''))}
+function inferAudioExtension(file){
+  const type=String(file?.type||'').toLowerCase();
+  const name=String(file?.name||'').toLowerCase();
+  if(/\.m4a$/.test(name)||type.includes('mp4')||type.includes('m4a')||type.includes('aac'))return '.m4a';
+  if(/\.wav$/.test(name)||type.includes('wav'))return '.wav';
+  if(/\.ogg$/.test(name)||type.includes('ogg'))return '.ogg';
+  if(/\.flac$/.test(name)||type.includes('flac'))return '.flac';
+  return '.mp3';
 }
-async function dataUrlToAudioFile(dataUrl,fileName='track.audio'){
+async function transcribeAudioWithPollinations(file,opts={}){
+  const models=opts.models||['whisper-large-v3','scribe'];
+  const retries=Math.max(1,Number(opts.retries||2));
+  const minLetters=Math.max(6,Number(opts.minLetters||8));
+  const fallbackName='track'+inferAudioExtension(file);
+  let best={text:'',model:'',score:0,attempts:[]};
+  for(const model of models){
+    for(let attempt=1;attempt<=retries;attempt++){
+      try{
+        const fd=new FormData();
+        fd.append('file',file,file?.name||fallbackName);
+        fd.append('model',model);
+        const controller=new AbortController();
+        const timeout=setTimeout(()=>controller.abort(),45000);
+        const res=await fetch('https://gen.pollinations.ai/v1/audio/transcriptions',{
+          method:'POST',
+          headers:{'Authorization':'Bearer '+POLLINATIONS_API_KEY},
+          body:fd,
+          signal:controller.signal
+        });
+        clearTimeout(timeout);
+        if(!res.ok) throw new Error('transcription-failed-'+res.status);
+        const json=await res.json();
+        const text=String(json?.text||json?.transcript||json?.data?.text||'').trim();
+        const score=textLettersCount(text);
+        best.attempts.push({model,attempt,ok:true,score});
+        if(score>best.score) best={text,model,score,attempts:best.attempts};
+        if(score>=minLetters) return {text,model,score,attempts:best.attempts};
+      }catch(e){
+        best.attempts.push({model,attempt,ok:false,error:String(e?.message||e)});
+      }
+    }
+  }
+  return best;
+}
+async function dataUrlToAudioFile(dataUrl,fileName='track.audio'){ 
   try{
     if(!dataUrl||!String(dataUrl).startsWith('data:')) return null;
     const res=await fetch(dataUrl);
@@ -1315,19 +1344,49 @@ async function moderateTrackWithAI({title='',lyrics='',genre='',duration=0,fileN
 }
 
 async function analyzeTrackLyricsWithAI({audioFile=null,title='',genre='',musicAuthor='',duration=0,seedLyrics=''}){
-  const transcript=(audioFile?await transcribeAudioWithPollinations(audioFile):'').trim();
-  const transcriptLetters=transcript.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'');
-  const hasTranscriptVocals=transcriptLetters.length>=8;
+  const txResult=audioFile?await transcribeAudioWithPollinations(audioFile,{models:['whisper-large-v3','scribe'],retries:2,minLetters:8}):{text:''};
+  const transcript=String(txResult?.text||'').trim();
+  const transcriptLetters=textLettersCount(transcript);
+  const seedLetters=textLettersCount(seedLyrics);
+  const titleHintsInstrumental=looksLikeInstrumentalHint(title)||looksLikeInstrumentalHint(seedLyrics);
+  const hasTranscriptVocals=transcriptLetters>=8;
+  const canUseSeedAsFallback=seedLetters>=8;
 
   if(!hasTranscriptVocals){
+    if(canUseSeedAsFallback){
+      const seedFallback=fallbackSongStructure({lyrics:seedLyrics,transcript:seedLyrics});
+      return {
+        transcript: transcript,
+        hasVocals: true,
+        chorus: seedFallback.chorus||'',
+        songStructure: seedFallback.sections||[{type:'lyrics',label:'Текст',text:seedLyrics}],
+        structureSummary: 'Транскрибатор не дал надёжный текст, использован введённый текст как запасной вариант',
+        displayLyrics: seedFallback.displayLyrics||seedLyrics,
+        detectedLyrics: seedFallback.normalizedLyrics||seedLyrics,
+        uncertainTranscription: true
+      };
+    }
+    if(titleHintsInstrumental){
+      return {
+        transcript: transcript,
+        hasVocals: false,
+        chorus: '',
+        songStructure: [{type:'instrumental',label:'Инструментал',text:'[инструментал]'}],
+        structureSummary: 'Похоже на инструментальный трек: транскриптор не нашёл слов, а название/подсказки указывают на инструментал',
+        displayLyrics: '[инструментал]',
+        detectedLyrics: '[инструментал]',
+        uncertainTranscription: false
+      };
+    }
     return {
       transcript: transcript,
-      hasVocals: false,
+      hasVocals: true,
       chorus: '',
-      songStructure: [{type:'instrumental',label:'Инструментал',text:'[инструментал]'}],
-      structureSummary: 'Транскрибатор не нашёл различимых слов',
-      displayLyrics: '[инструментал]',
-      detectedLyrics: '[инструментал]'
+      songStructure: [{type:'unknown',label:'Текст не распознан',text:'[текст не распознан транскрибатором]'}],
+      structureSummary: 'Транскрибатор не смог надёжно распознать слова. Это не считается инструменталом автоматически.',
+      displayLyrics: '[текст не распознан транскрибатором]',
+      detectedLyrics: '[текст не распознан транскрибатором]',
+      uncertainTranscription: true
     };
   }
 
@@ -1351,7 +1410,8 @@ async function analyzeTrackLyricsWithAI({audioFile=null,title='',genre='',musicA
     songStructure: (structure?.sections&&structure.sections.length?structure.sections:fallback.sections)||[{type:'lyrics',label:'Текст',text:finalDetected}],
     structureSummary: structure?.summary||fallback.summary||'Транскрипция получена',
     displayLyrics: finalDisplay,
-    detectedLyrics: finalDetected
+    detectedLyrics: finalDetected,
+    uncertainTranscription: false
   };
 }
 
@@ -1374,13 +1434,22 @@ async function analyzeLyricsForUpload(){
       probe.addEventListener('error',()=>resolve(0),{once:true});
     });
     const result=await analyzeTrackLyricsWithAI({audioFile:selectedAudioFile,title,genre,musicAuthor,duration,seedLyrics});
-    document.getElementById('uploadLyrics').value=(result.displayLyrics||result.detectedLyrics||'[инструментал]').trim();
-    status.textContent=result.hasVocals ? ('Готово: транскрипция получена'+(result.chorus?' • найден припев':'')+(result.transcript?' • слова распознаны':'') ) : 'Готово: транскрибатор не нашёл слов, отмечено как [инструментал].';
-    showSnackbar(result.hasVocals ? 'Текст песни распознан' : 'Транскрибатор определил: [инструментал]');
+    document.getElementById('uploadLyrics').value=(result.displayLyrics||result.detectedLyrics||seedLyrics||'[текст не распознан транскрибатором]').trim();
+    if(result.hasVocals && !result.uncertainTranscription){
+      status.textContent='Готово: транскрипция получена'+(result.chorus?' • найден припев':'')+(result.transcript?' • слова распознаны':'');
+      showSnackbar('Текст песни распознан');
+    }else if(result.hasVocals && result.uncertainTranscription){
+      status.textContent='Готово: транскрибатор не дал надёжный текст. Инструментал не ставился автоматически.';
+      showSnackbar('Текст распознан неуверенно');
+    }else{
+      status.textContent='Готово: похоже на инструментальный трек.';
+      showSnackbar('Определён инструментальный трек');
+    }
   }catch(e){
     status.textContent='Ошибка транскрибации. Использован запасной текст.';
-    const fallbackText=(await transcribeAudioWithPollinations(selectedAudioFile)) || seedLyrics || '[инструментал]';
-    document.getElementById('uploadLyrics').value=fallbackText.trim()||'[инструментал]';
+    const fallbackResult=await transcribeAudioWithPollinations(selectedAudioFile,{models:['whisper-large-v3','scribe'],retries:1,minLetters:1});
+    const fallbackText=(fallbackResult?.text||'').trim() || seedLyrics || '[текст не распознан транскрибатором]';
+    document.getElementById('uploadLyrics').value=fallbackText.trim()||'[текст не распознан транскрибатором]';
     showSnackbar('Использована запасная транскрипция');
   }finally{
     btn.disabled=false;
@@ -1403,12 +1472,20 @@ async function analyzeLyricsForEdit(){
     const audioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
     if(!audioFile) throw new Error('no-audio');
     const result=await analyzeTrackLyricsWithAI({audioFile,title,genre,musicAuthor,duration:Number(track.duration||0),seedLyrics});
-    document.getElementById('editTrackLyrics').value=(result.displayLyrics||result.detectedLyrics||'[инструментал]').trim();
-    status.textContent=result.hasVocals ? ('Готово: транскрипция обновлена'+(result.chorus?' • найден припев':'')+(result.transcript?' • слова распознаны':'') ) : 'Готово: транскрибатор не нашёл слов, отмечено как [инструментал].';
-    showSnackbar(result.hasVocals ? 'Текст трека обновлён' : 'Транскрибатор определил: [инструментал]');
+    document.getElementById('editTrackLyrics').value=(result.displayLyrics||result.detectedLyrics||seedLyrics||'[текст не распознан транскрибатором]').trim();
+    if(result.hasVocals && !result.uncertainTranscription){
+      status.textContent='Готово: транскрипция обновлена'+(result.chorus?' • найден припев':'')+(result.transcript?' • слова распознаны':'');
+      showSnackbar('Текст трека обновлён');
+    }else if(result.hasVocals && result.uncertainTranscription){
+      status.textContent='Готово: транскрибатор не дал надёжный текст. Инструментал не ставился автоматически.';
+      showSnackbar('Текст распознан неуверенно');
+    }else{
+      status.textContent='Готово: похоже на инструментальный трек.';
+      showSnackbar('Определён инструментальный трек');
+    }
   }catch(e){
     const trackTranscript=(track?.moderationMeta?.transcript||'').trim();
-    document.getElementById('editTrackLyrics').value=trackTranscript || seedLyrics || '[инструментал]';
+    document.getElementById('editTrackLyrics').value=trackTranscript || seedLyrics || '[текст не распознан транскрибатором]';
     status.textContent='Ошибка транскрибации. Подставлена сохранённая расшифровка.';
     showSnackbar('Использована сохранённая транскрипция');
   }finally{
@@ -2432,7 +2509,7 @@ async function publishTrack(){
       title,
       genre:genre||'other',
       cover,
-      lyrics:(moderation.displayLyrics||moderation.detectedLyrics||lyrics||'[инструментал]').trim(),
+      lyrics:(moderation.displayLyrics||moderation.detectedLyrics||lyrics||'[текст не распознан транскрибатором]').trim(),
       musicAuthor,
       artistId:currentUser.uid,
       artistName:currentUser.displayName||'Неизвестен',
@@ -2447,8 +2524,8 @@ async function publishTrack(){
       moderationMeta:{
         transcript:moderation.transcript||'',
         hasVocals:!!moderation.hasVocals,
-        detectedLyrics:moderation.detectedLyrics||lyrics||'[инструментал]',
-        displayLyrics:moderation.displayLyrics||moderation.detectedLyrics||lyrics||'[инструментал]',
+        detectedLyrics:moderation.detectedLyrics||lyrics||'[текст не распознан транскрибатором]',
+        displayLyrics:moderation.displayLyrics||moderation.detectedLyrics||lyrics||'[текст не распознан транскрибатором]',
         chorus:moderation.chorus||'',
         songStructure:moderation.songStructure||[],
         structureSummary:moderation.structureSummary||'',
