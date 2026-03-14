@@ -1169,17 +1169,25 @@ function inferAudioExtension(file){
 async function transcribeAudioWithPollinations(file,opts={}){
   const models=opts.models||['whisper-large-v3','scribe'];
   const retries=Math.max(1,Number(opts.retries||2));
-  const minLetters=Math.max(6,Number(opts.minLetters||8));
+  const minLetters=Math.max(1,Number(opts.minLetters||8));
+  const perRequestTimeoutMs=Math.max(5000,Number(opts.perRequestTimeoutMs||18000));
+  const totalTimeoutMs=Math.max(perRequestTimeoutMs,Number(opts.totalTimeoutMs||45000));
+  const startedAt=Date.now();
   const fallbackName='track'+inferAudioExtension(file);
   let best={text:'',model:'',score:0,attempts:[]};
   for(const model of models){
     for(let attempt=1;attempt<=retries;attempt++){
+      if(Date.now()-startedAt>totalTimeoutMs){
+        best.attempts.push({model,attempt,ok:false,error:'total-timeout'});
+        return best;
+      }
+      let timeout=null;
       try{
         const fd=new FormData();
         fd.append('file',file,file?.name||fallbackName);
         fd.append('model',model);
         const controller=new AbortController();
-        const timeout=setTimeout(()=>controller.abort(),45000);
+        timeout=setTimeout(()=>controller.abort(),perRequestTimeoutMs);
         const res=await fetch('https://gen.pollinations.ai/v1/audio/transcriptions',{
           method:'POST',
           headers:{'Authorization':'Bearer '+POLLINATIONS_API_KEY},
@@ -1195,11 +1203,23 @@ async function transcribeAudioWithPollinations(file,opts={}){
         if(score>best.score) best={text,model,score,attempts:best.attempts};
         if(score>=minLetters) return {text,model,score,attempts:best.attempts};
       }catch(e){
+        if(timeout) clearTimeout(timeout);
         best.attempts.push({model,attempt,ok:false,error:String(e?.message||e)});
       }
     }
   }
   return best;
+}
+async function runWithTimeout(factory, ms, fallbackValue){
+  let timer=null;
+  try{
+    return await Promise.race([
+      Promise.resolve().then(factory),
+      new Promise(resolve=>{timer=setTimeout(()=>resolve(fallbackValue),ms)})
+    ]);
+  }finally{
+    if(timer) clearTimeout(timer);
+  }
 }
 async function dataUrlToAudioFile(dataUrl,fileName='track.audio'){ 
   try{
@@ -1460,7 +1480,11 @@ async function analyzeLyricsForUpload(){
       probe.addEventListener('loadedmetadata',()=>resolve(Math.round(probe.duration||0)||0),{once:true});
       probe.addEventListener('error',()=>resolve(0),{once:true});
     });
-    const result=await analyzeTrackLyricsWithAI({audioFile:selectedAudioFile,title,genre,musicAuthor,duration,seedLyrics});
+    const result=await runWithTimeout(
+      ()=>analyzeTrackLyricsWithAI({audioFile:selectedAudioFile,title,genre,musicAuthor,duration,seedLyrics}),
+      15000,
+      {transcript:'',hasVocals:true,chorus:'',songStructure:(seedLyrics?[{type:'lyrics',label:'Текст',text:seedLyrics}]:[]),structureSummary:'Таймаут анализа текста',displayLyrics:seedLyrics||'[текст не распознан транскрибатором]',detectedLyrics:seedLyrics||'[текст не распознан транскрибатором]',uncertainTranscription:true}
+    );
     document.getElementById('uploadLyrics').value=(result.displayLyrics||result.detectedLyrics||seedLyrics||'[текст не распознан транскрибатором]').trim();
     window.__lastUploadLyricsAnalysis=result;
     if(result.hasVocals && !result.uncertainTranscription){
@@ -1499,7 +1523,11 @@ async function analyzeLyricsForEdit(){
   try{
     const audioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
     if(!audioFile) throw new Error('no-audio');
-    const result=await analyzeTrackLyricsWithAI({audioFile,title,genre,musicAuthor,duration:Number(track.duration||0),seedLyrics});
+    const result=await runWithTimeout(
+      ()=>analyzeTrackLyricsWithAI({audioFile,title,genre,musicAuthor,duration:Number(track.duration||0),seedLyrics}),
+      15000,
+      {transcript:'',hasVocals:true,chorus:'',songStructure:(seedLyrics?[{type:'lyrics',label:'Текст',text:seedLyrics}]:[]),structureSummary:'Таймаут анализа текста',displayLyrics:seedLyrics||'[текст не распознан транскрибатором]',detectedLyrics:seedLyrics||'[текст не распознан транскрибатором]',uncertainTranscription:true}
+    );
     document.getElementById('editTrackLyrics').value=(result.displayLyrics||result.detectedLyrics||seedLyrics||'[текст не распознан транскрибатором]').trim();
     window.__lastEditLyricsAnalysis=result;
     if(result.hasVocals && !result.uncertainTranscription){
@@ -1988,7 +2016,11 @@ async function saveTrackEdits(){
     try{
       const editAudioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
       if(editAudioFile){
-        moderation=await moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile:editAudioFile,artistName:track.artistName||currentUser.displayName||''});
+        moderation=await runWithTimeout(
+          ()=>moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile:editAudioFile,artistName:track.artistName||currentUser.displayName||''}),
+          12000,
+          moderation
+        );
       }
     }catch(err){
       console.warn('saveTrackEdits moderation fallback',err);
@@ -2765,13 +2797,33 @@ async function publishTrack(){
   st.textContent='Проверка аудио...';pb.style.width='10%';
   const duration=await new Promise(res=>{const ta=new Audio(selectedAudioDataURL);ta.addEventListener('loadedmetadata',()=>{if(ta.duration<15){showSnackbar('Трек мин. 15 сек');pe.style.display='none';btn.disabled=false;res(false);return}res(ta.duration)});ta.addEventListener('error',()=>{showSnackbar('Ошибка чтения аудио');pe.style.display='none';btn.disabled=false;res(false)})});
   if(duration===false)return;
-  st.textContent='ИИ слушает трек и проверяет слова...';pb.style.width='32%';
-  const moderation=await moderateTrackWithAI({title,lyrics,genre,duration:Math.round(duration),fileName:selectedAudioFile?.name||'',musicAuthor,audioFile:selectedAudioFile,artistName:currentUser.displayName||''});
+  st.textContent='Быстрая проверка аудио и слов...';pb.style.width='32%';
+  const moderationFallback={
+    explicit:checkExplicit(title)||checkExplicit(lyrics)||checkExplicit(selectedAudioFile?.name||''),
+    lowQuality:false,
+    confidence:0,
+    reason:'fast-fallback',
+    transcript:'',
+    hasVocals:true,
+    detectedLyrics:(lyrics||'[текст не распознан транскрибатором]').trim(),
+    displayLyrics:(lyrics||'[текст не распознан транскрибатором]').trim(),
+    chorus:'',
+    songStructure:(lyrics?[{type:'lyrics',label:'Текст',text:lyrics}]:[]),
+    structureSummary:'Быстрый режим публикации без ожидания долгой ИИ-проверки',
+    copyright:{possibleCopyright:false,confidence:0,reason:'skipped-fast-publish',matchedSource:'',matchedArtist:''},
+    moderationModel:'fast-fallback',
+    copyrightModel:'gemini-search'
+  };
+  const moderation=await runWithTimeout(
+    ()=>moderateTrackWithAI({title,lyrics,genre,duration:Math.round(duration),fileName:selectedAudioFile?.name||'',musicAuthor,audioFile:selectedAudioFile,artistName:currentUser.displayName||''}),
+    12000,
+    moderationFallback
+  );
   const isExp=!!moderation.explicit;
   if(moderation.lowQuality&&duration<25){showSnackbar('Трек отклонён ИИ: похоже на мусорный или слишком слабый контент');pe.style.display='none';btn.disabled=false;pb.style.width='0%';return}
   pb.style.width='62%';
-  st.textContent='Проверка возможных авторских прав...';
-  await new Promise(r=>setTimeout(r,180));
+  st.textContent=moderation.reason==='fast-fallback'?'Публикуем без долгого ожидания ИИ...':'Проверка возможных авторских прав...';
+  await new Promise(r=>setTimeout(r,120));
   const copyrightFlag=!!moderation?.copyright?.possibleCopyright;
   const szMB=(selectedAudioDataURL.length*0.75)/(1024*1024);
   if(szMB>10){showSnackbar('Файл слишком большой для БД');pe.style.display='none';btn.disabled=false;return}
