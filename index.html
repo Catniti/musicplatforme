@@ -1135,6 +1135,59 @@ async function transcribeAudioWithPollinations(file){
     return '';
   }
 }
+async function dataUrlToAudioFile(dataUrl,fileName='track.audio'){
+  try{
+    if(!dataUrl||!String(dataUrl).startsWith('data:')) return null;
+    const res=await fetch(dataUrl);
+    const blob=await res.blob();
+    return new File([blob],fileName,{type:blob.type||'audio/mpeg'});
+  }catch(e){
+    return null;
+  }
+}
+function buildLyricsDisplayFromSections(sections, fallbackText=''){
+  if(Array.isArray(sections)&&sections.length){
+    const parts=sections
+      .filter(s=>s&&String(s.text||'').trim())
+      .map((s,i)=>{
+        const label=String(s.label||s.type||('Секция '+(i+1))).trim();
+        return '['+label+']\n'+String(s.text||'').trim();
+      });
+    if(parts.length) return parts.join('\n\n').trim();
+  }
+  return String(fallbackText||'').trim();
+}
+function fallbackSongStructure({lyrics='',transcript=''}){
+  const raw=String(lyrics||transcript||'').replace(/\r/g,'\n').trim();
+  const compactLetters=raw.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'');
+  if(!raw||compactLetters.length<10){
+    return {
+      hasVocals:false,
+      normalizedLyrics:'[инструментал]',
+      chorus:'',
+      sections:[{type:'instrumental',label:'Инструментал',text:'[инструментал]'}],
+      displayLyrics:'[инструментал]',
+      summary:'Инструментальный трек'
+    };
+  }
+  const lines=raw.split(/\n+/).map(v=>v.trim()).filter(Boolean);
+  const counts={};
+  lines.forEach(line=>{const key=line.toLowerCase();counts[key]=(counts[key]||0)+1});
+  let chorus='';
+  const repeated=Object.entries(counts).filter(([k,v])=>v>1).sort((a,b)=>b[0].length-a[0].length);
+  if(repeated.length) chorus=lines.find(l=>l.toLowerCase()===repeated[0][0])||'';
+  const sections=[];
+  if(chorus) sections.push({type:'chorus',label:'Припев',text:chorus});
+  sections.push({type:'lyrics',label:'Текст',text:raw});
+  return {
+    hasVocals:true,
+    normalizedLyrics:raw,
+    chorus,
+    sections,
+    displayLyrics:buildLyricsDisplayFromSections(sections,raw),
+    summary:chorus?'Найдены слова и вероятный припев':'Найдены слова песни'
+  };
+}
 async function analyzeAudioSafetyWithPollinations({title='',lyrics='',genre='',duration=0,fileName='',musicAuthor='',transcript=''}){
   const localExplicit=checkExplicit(title)||checkExplicit(lyrics)||checkExplicit(fileName)||checkExplicit(transcript);
   const messages=[
@@ -1163,9 +1216,44 @@ async function analyzeAudioSafetyWithPollinations({title='',lyrics='',genre='',d
     return {explicit:localExplicit,lowQuality:false,reason:'fallback-local',confidence:localExplicit?0.65:0.3,detectedLyrics:(transcript||lyrics||'').trim()};
   }
 }
+async function analyzeSongStructureWithPollinations({title='',lyrics='',genre='',duration=0,musicAuthor='',transcript=''}){
+  const rawText=String(lyrics||transcript||'').trim();
+  if(!rawText||rawText.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'').length<10) return fallbackSongStructure({lyrics,transcript});
+  const messages=[
+    {role:'system',content:'Ты анализируешь песню по распознанным словам из аудио. Ответь только JSON без пояснений. Формат: {"hasVocals": boolean, "normalizedLyrics": string, "chorus": string, "sections": [{"type": string, "label": string, "text": string}], "summary": string}. Найди слова песни, припев, куплеты, бридж, интро/аутро если они различимы. Если вокала или слов практически нет, верни hasVocals=false, normalizedLyrics="[инструментал]", sections=[{"type":"instrumental","label":"Инструментал","text":"[инструментал]"}]. Не выдумывай текст, которого нет в распознанных словах.'},
+    {role:'user',content:JSON.stringify({title,lyrics,genre,duration,musicAuthor,transcript:rawText})}
+  ];
+  try{
+    const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
+      body:JSON.stringify({model:'openai-audio',messages,response_format:{type:'json_object'},temperature:0})
+    });
+    if(!res.ok) throw new Error('structure-analysis-failed');
+    const json=await res.json();
+    const content=json?.choices?.[0]?.message?.content||'{}';
+    let parsed={};
+    try{parsed=JSON.parse(content)}catch(e){parsed={}}
+    const normalizedLyrics=String(parsed.normalizedLyrics||rawText||'').trim();
+    const hasVocals=parsed.hasVocals!==false && normalizedLyrics.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'').length>=10;
+    const sections=Array.isArray(parsed.sections)?parsed.sections.filter(s=>s&&String(s.text||'').trim()).map(s=>({type:String(s.type||'section'),label:String(s.label||s.type||'Секция').trim(),text:String(s.text||'').trim()})):[];
+    const safeNormalized=hasVocals?(normalizedLyrics||rawText):'[инструментал]';
+    const safeSections=hasVocals?(sections.length?sections:[{type:'lyrics',label:'Текст',text:safeNormalized}]):[{type:'instrumental',label:'Инструментал',text:'[инструментал]'}];
+    return {
+      hasVocals,
+      normalizedLyrics:safeNormalized,
+      chorus:hasVocals?String(parsed.chorus||'').trim():'',
+      sections:safeSections,
+      displayLyrics:buildLyricsDisplayFromSections(safeSections,safeNormalized),
+      summary:String(parsed.summary||'').trim()||(hasVocals?'Найдены слова и структура песни':'Инструментальный трек')
+    };
+  }catch(e){
+    return fallbackSongStructure({lyrics,transcript});
+  }
+}
 async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor='',lyricsSample=''}){
   const snippet=(lyricsSample||'').replace(/\s+/g,' ').trim().slice(0,700);
-  if(!snippet && !title) return {possibleCopyright:false,confidence:0,reason:'no-lyrics'};
+  if((!snippet||snippet==='[инструментал]') && !title) return {possibleCopyright:false,confidence:0,reason:'no-lyrics'};
   const messages=[
     {role:'system',content:'Ты ищешь в интернете возможные совпадения текста песни и признаки авторских прав. Используй веб-поиск. Ответь только JSON без пояснений. Формат: {"possibleCopyright": boolean, "confidence": number, "reason": string, "matchedSource": string, "matchedArtist": string}. possibleCopyright=true если вероятно, что текст уже опубликован и принадлежит другому артисту/правообладателю. Если musicAuthor соответствует найденному правообладателю или источнику, снижай риск.'},
     {role:'user',content:JSON.stringify({title,artistName,musicAuthor,lyricsSample:snippet})}
@@ -1194,8 +1282,9 @@ async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor=''
 }
 async function moderateTrackWithAI({title='',lyrics='',genre='',duration=0,fileName='',musicAuthor='',audioFile=null,artistName=''}){
   const transcript=audioFile?await transcribeAudioWithPollinations(audioFile):'';
-  const safety=await analyzeAudioSafetyWithPollinations({title,lyrics,genre,duration,fileName,musicAuthor,transcript});
-  const lyricsForSearch=(lyrics||safety.detectedLyrics||transcript||'').trim();
+  const structure=await analyzeSongStructureWithPollinations({title,lyrics,genre,duration,musicAuthor,transcript});
+  const safety=await analyzeAudioSafetyWithPollinations({title,lyrics,genre,duration,fileName,musicAuthor,transcript:structure.hasVocals?(transcript||structure.normalizedLyrics):'[инструментал]'});
+  const lyricsForSearch=(lyrics||structure.normalizedLyrics||safety.detectedLyrics||transcript||'').trim();
   const copyright=await checkLyricsCopyrightOnline({title,artistName,musicAuthor,lyricsSample:lyricsForSearch});
   return {
     explicit: !!safety.explicit,
@@ -1203,7 +1292,12 @@ async function moderateTrackWithAI({title='',lyrics='',genre='',duration=0,fileN
     confidence: Number(safety.confidence||0),
     reason: safety.reason||'',
     transcript,
-    detectedLyrics: safety.detectedLyrics||lyricsForSearch,
+    hasVocals: !!structure.hasVocals,
+    detectedLyrics: structure.normalizedLyrics||safety.detectedLyrics||lyricsForSearch,
+    displayLyrics: structure.displayLyrics||structure.normalizedLyrics||'[инструментал]',
+    chorus: structure.chorus||'',
+    songStructure: structure.sections||[],
+    structureSummary: structure.summary||'',
     copyright: copyright,
     moderationModel:'openai-audio',
     copyrightModel:'gemini-search'
@@ -1644,17 +1738,24 @@ async function saveTrackEdits(){
   let cover=(document.getElementById('editTrackCoverUrl').value||'').trim();if(editTrackCoverData)cover=editTrackCoverData;
   if(!title){showSnackbar('Введите название');return}
   if(!musicAuthor){showSnackbar('Укажите автора музыки');return}
-  const moderation=await moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile:null,artistName:track.artistName||currentUser.displayName||''});
+  const editAudioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
+  const moderation=await moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile:editAudioFile,artistName:track.artistName||currentUser.displayName||''});
   const upd={
     title,
     genre:genre||'other',
-    lyrics,
+    lyrics:(moderation.displayLyrics||moderation.detectedLyrics||lyrics||'[инструментал]').trim(),
     musicAuthor,
     explicit:!!moderation.explicit,
     cover:cover||'',
     moderationMeta:{
       ...(track.moderationMeta||{}),
-      detectedLyrics:moderation.detectedLyrics||lyrics||'',
+      transcript:moderation.transcript||track?.moderationMeta?.transcript||'',
+      hasVocals:!!moderation.hasVocals,
+      detectedLyrics:moderation.detectedLyrics||lyrics||'[инструментал]',
+      displayLyrics:moderation.displayLyrics||moderation.detectedLyrics||lyrics||'[инструментал]',
+      chorus:moderation.chorus||'',
+      songStructure:moderation.songStructure||[],
+      structureSummary:moderation.structureSummary||'',
       copyrightPossible:!!moderation?.copyright?.possibleCopyright,
       copyrightConfidence:Number(moderation?.copyright?.confidence||0),
       copyrightReason:moderation?.copyright?.reason||'',
@@ -1662,7 +1763,15 @@ async function saveTrackEdits(){
       copyrightMatchedArtist:moderation?.copyright?.matchedArtist||''
     }
   };
-  try{await db.ref('tracks/'+editTrackId).update(upd);closeModal('editTrackModal');showSnackbar('Трек обновлён');editTrackId=null;editTrackCoverData='';}catch(e){showSnackbar('Ошибка сохранения')}}
+  try{
+    await db.ref('tracks/'+editTrackId).update(upd);
+    closeModal('editTrackModal');
+    let msg='Трек обновлён';
+    if(!moderation.hasVocals) msg+=' • ИИ: инструментал';
+    else if(moderation.chorus) msg+=' • ИИ нашла припев';
+    showSnackbar(msg);
+    editTrackId=null;editTrackCoverData='';
+  }catch(e){showSnackbar('Ошибка сохранения')}}
 
 function shareTrackById(tid){const t=allTracks[tid];if(!t)return;if(navigator.share){navigator.share({title:t.title,text:t.title+' — '+t.artistName,url:location.href}).catch(()=>{})}else{navigator.clipboard.writeText(t.title+' — '+t.artistName+' | MusicPlatforme').then(()=>showSnackbar('Скопировано'))}}
 function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,currentTrackId)}
@@ -1770,7 +1879,7 @@ function loadAndPlay(track){
     const fadeOut=setInterval(()=>{if(audio.volume>0.05){audio.volume=Math.max(0,audio.volume-0.1)}else{clearInterval(fadeOut);audio.volume=origVol;doLoad(track)}},30);
   }else doLoad(track);
   document.querySelectorAll('.track-item').forEach(el=>{el.classList.toggle('playing',el.dataset.id===currentTrackId);const n=el.querySelector('.track-num');if(el.dataset.id===currentTrackId&&n)n.innerHTML='<div class="now-playing-mark">♪</div>'});
-  if('mediaSession' in navigator){navigator.mediaSession.metadata=new MediaMetadata({title:track.title||'',artist:track.artistName||'',artwork:track.cover?[{src:track.cover}]:[]});navigator.mediaSession.setActionHandler('play',()=>togglePlay());navigator.mediaSession.setActionHandler('pause',()=>togglePlay());navigator.mediaSession.setActionHandler('previoustrack',()=>prevTrack());navigator.mediaSession.setActionHandler('nexttrack',()=>nextTrack())}
+  if('mediaSession' in navigator){navigator.mediaSession.metadata=new MediaMetadata({title:track.title||'',artist:track.musicAuthor||track.artistName||'',album:'MusicPlatforme',artwork:track.cover?[{src:track.cover}]:[]});navigator.mediaSession.setActionHandler('play',()=>togglePlay());navigator.mediaSession.setActionHandler('pause',()=>togglePlay());navigator.mediaSession.setActionHandler('previoustrack',()=>prevTrack());navigator.mediaSession.setActionHandler('nexttrack',()=>nextTrack())}
   broadcastPlaybackState();
 }
 function doLoad(track){audio.src=track.audioData;startAudioEngine();audio.play().then(()=>{isPlaying=true;updatePlayButton();document.getElementById('fsCover').classList.add('playing');syncFxUi();broadcastPlaybackState()}).catch(err=>{showSnackbar('Ошибка воспроизведения')})}
@@ -2017,8 +2126,12 @@ function fsGoToArtist(){if(!currentTrackId||!allTracks[currentTrackId])return;cl
 function shareTrack(){if(currentTrackId)shareTrackById(currentTrackId)}
 function toggleLyrics(){
   lyricsOpen=!lyricsOpen;const el=document.getElementById('fsLyrics');
-  if(lyricsOpen){const t=allTracks[currentTrackId];el.style.display='block';el.textContent=t&&t.lyrics?t.lyrics:'Текст песни не добавлен'}
-  else el.style.display='none';
+  if(lyricsOpen){
+    const t=allTracks[currentTrackId];
+    const text=(t?.moderationMeta?.displayLyrics||t?.lyrics||t?.moderationMeta?.detectedLyrics||'').trim()||'[инструментал]';
+    el.style.display='block';
+    el.textContent=text;
+  }else el.style.display='none';
 }
 
 /* ===== QUEUE ===== */
@@ -2206,7 +2319,7 @@ async function publishTrack(){
       title,
       genre:genre||'other',
       cover,
-      lyrics,
+      lyrics:(moderation.displayLyrics||moderation.detectedLyrics||lyrics||'[инструментал]').trim(),
       musicAuthor,
       artistId:currentUser.uid,
       artistName:currentUser.displayName||'Неизвестен',
@@ -2220,7 +2333,12 @@ async function publishTrack(){
       moderated:true,
       moderationMeta:{
         transcript:moderation.transcript||'',
-        detectedLyrics:moderation.detectedLyrics||lyrics||'',
+        hasVocals:!!moderation.hasVocals,
+        detectedLyrics:moderation.detectedLyrics||lyrics||'[инструментал]',
+        displayLyrics:moderation.displayLyrics||moderation.detectedLyrics||lyrics||'[инструментал]',
+        chorus:moderation.chorus||'',
+        songStructure:moderation.songStructure||[],
+        structureSummary:moderation.structureSummary||'',
         moderationModel:moderation.moderationModel||'openai-audio',
         copyrightModel:moderation.copyrightModel||'gemini-search',
         copyrightPossible:copyrightFlag,
@@ -2245,6 +2363,8 @@ async function publishTrack(){
       clearSelectedFile();
       let msg='Трек опубликован!';
       if(isExp) msg='Опубликован с пометкой explicit';
+      if(!moderation.hasVocals) msg+=' ИИ определила: инструментал.';
+      else if(moderation.chorus) msg+=' ИИ нашла припев.';
       if(copyrightFlag) msg+=' Возможны авторские права.';
       showSnackbar(msg);
     },800);
