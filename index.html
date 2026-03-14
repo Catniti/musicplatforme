@@ -2172,7 +2172,7 @@ async function importTrackFromUrl(){
   showSnackbar(info?'Метаданные из ссылки получены':'Импорт по ссылке ограничен этой платформой');
 }
 
-async function publishTrack(){“}
+async function publishTrack(){
   if(!currentUser){showSnackbar('Войдите');return}
   const title=document.getElementById('uploadTitle').value.trim();
   let genre=document.getElementById('uploadGenre').value;
