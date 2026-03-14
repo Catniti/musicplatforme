@@ -395,14 +395,14 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .stat-value{font:700 28px/36px 'Inter',sans-serif;color:var(--md-primary)}
 .stat-label{font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px}
 
-/* ===== EQUALIZER ANIM ===== */
-.eq-bars{display:flex;align-items:flex-end;gap:2px;height:18px}
-.eq-bars span{width:3px;background:var(--md-primary);border-radius:1px;animation:eqBar .8s ease-in-out infinite alternate}
-.eq-bars span:nth-child(1){animation-delay:0s;height:30%}
-.eq-bars span:nth-child(2){animation-delay:.15s;height:60%}
-.eq-bars span:nth-child(3){animation-delay:.3s;height:100%}
-.eq-bars span:nth-child(4){animation-delay:.45s;height:40%}
-@keyframes eqBar{0%{height:20%}100%{height:100%}}
+/* ===== NOW PLAYING INDICATOR ===== */
+.now-playing-mark{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;color:var(--md-primary);font-size:16px;font-weight:800;animation:nowPulse 1.2s ease-in-out infinite}
+@keyframes nowPulse{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.08);opacity:1}}
+
+/* ===== IMPORT BOX ===== */
+.import-box{padding:14px 16px;border-radius:var(--md-shape-lg);background:var(--md-surface-container-low);border:1px solid var(--md-outline-variant);margin-bottom:16px}
+.import-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.import-meta{margin-top:10px;padding:10px 12px;border-radius:var(--md-shape-md);background:var(--md-surface-container-highest);font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant)}
 
 /* ===== NOTIFICATION DOT ===== */
 .notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--md-error);border:2px solid var(--md-surface-container)}
@@ -426,11 +426,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .speed-btn:hover{background:var(--md-surface-container-high)}
 .speed-btn.active{background:var(--md-primary);color:var(--md-on-primary);border-color:transparent}
 
-/* ===== VISUALIZER & AUDIO FX ===== */
-.fs-visualizer-card{margin:14px 24px 10px;padding:12px;border-radius:24px;background:linear-gradient(180deg,color-mix(in srgb,var(--md-primary-container) 60%,var(--md-surface-container-high) 40%),var(--md-surface-container-high));border:1px solid color-mix(in srgb,var(--md-outline-variant) 70%,transparent 30%);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
-#fsVisualizer{display:block;width:100%;height:110px;border-radius:18px;background:radial-gradient(circle at 50% 20%,rgba(103,80,164,.14),transparent 60%),linear-gradient(180deg,rgba(103,80,164,.08),transparent)}
-.viz-mode-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:10px}
-.fx-summary{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:0 24px 20px}
+/* ===== AUDIO FX ===== */
 .effect-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
 .effect-card{background:var(--md-surface-container);border:1px solid var(--md-outline-variant);border-radius:20px;padding:14px}
 .effect-card-title{display:flex;align-items:center;gap:10px;font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:10px}
@@ -488,11 +484,8 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
   .edit-grid{grid-template-columns:1fr}
   .edit-cover-preview{width:100px;height:100px;margin:0 auto}
   .fs-progress{gap:10px}
-  .fs-progress .progress-time{display:block!important;min-width:42px;font-size:12px;line-height:16px}
+  .fs-progress .progress-time{display:block!important;min-width:42px;font-size:12px;line-height:16px;opacity:1;visibility:visible}
   .fs-progress .progress-track{height:6px}
-  .fs-visualizer-card{margin:12px 16px 8px;padding:10px;border-radius:20px}
-  #fsVisualizer{height:88px}
-  .fx-summary{padding:0 16px 16px}
 }
 @media(max-width:360px){
   .cards-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
@@ -652,9 +645,17 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
       <div class="upload-zone" id="uploadZone" onclick="document.getElementById('audioFileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleAudioDrop(event)">
         <span class="material-symbols-rounded">cloud_upload</span>
         <div style="font:500 16px/24px 'Inter',sans-serif;color:var(--md-on-surface);position:relative;z-index:1">Перетащите аудиофайл сюда</div>
-        <div style="font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px;position:relative;z-index:1">или нажмите для выбора (MP3, WAV, OGG, до 15 МБ)</div>
+        <div style="font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px;position:relative;z-index:1">или нажмите для выбора (MP3, M4A, AAC, WAV, OGG, FLAC, до 15 МБ)</div>
       </div>
-      <input type="file" id="audioFileInput" accept="audio/*" style="display:none" onchange="handleAudioSelect(event)">
+      <input type="file" id="audioFileInput" accept="audio/*,.m4a,.aac,.flac,.wav,.ogg,.mp3" style="display:none" onchange="handleAudioSelect(event)">
+      <div class="import-box">
+        <label class="modal-label">Импорт по ссылке с другой платформы</label>
+        <div class="import-row">
+          <input class="md-input" id="importTrackUrl" placeholder="Ссылка на Яндекс Музыку, YouTube, VK Музыку, SoundCloud..." style="flex:1;min-width:220px;border-radius:var(--md-shape-md);margin-bottom:0">
+          <button class="btn-tonal" onclick="importTrackFromUrl()"><span class="material-symbols-rounded">download</span> Импортировать</button>
+        </div>
+        <div class="import-meta" id="importTrackMeta">Вставьте публичную ссылку на трек или видео. Если прямой аудиофайл недоступен, MusicPlatforme попытается вытащить метаданные: название, автора, возможную обложку и ссылку на источник.</div>
+      </div>
       <div id="selectedFileInfo" style="display:none;margin-bottom:16px;padding:12px;background:var(--md-surface-container-highest);border-radius:var(--md-shape-md)">
         <div style="display:flex;align-items:center;gap:8px">
           <span class="material-symbols-rounded" style="color:var(--md-primary)">audio_file</span>
@@ -1023,6 +1024,8 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
     <button class="speed-btn" onclick="applyFxPreset('focus')">Фокус</button>
     <button class="speed-btn" onclick="applyFxPreset('8d')">8D</button>
     <button class="speed-btn" onclick="applyFxPreset('bass')">Bass Boost</button>
+    <button class="speed-btn" onclick="applyFxPreset('vocal')">Vocal</button>
+    <button class="speed-btn" onclick="applyFxPreset('night')">Night</button>
   </div>
   <div class="effect-grid">
     <div class="effect-card">
@@ -1031,21 +1034,29 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
       <div class="effect-row"><div class="effect-meta"><div class="effect-name">8D-движение</div><div class="effect-sub">Звук вращается вокруг головы</div></div><div class="toggle" id="fx8DToggle" onclick="toggleFx('eightD')"></div></div>
       <div class="effect-row"><div class="effect-meta"><div class="effect-name">Скорость 8D</div><div class="effect-sub">Скорость панорамирования</div></div><div class="effect-value" id="fx8dRateValue">0.35x</div></div>
       <input class="effect-slider" id="fx8dRate" type="range" min="0.05" max="1.2" step="0.01" value="0.35" oninput="updateFxFromUI()">
+      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Ширина стерео</div><div class="effect-sub">Насколько широко разводить каналы</div></div><div class="effect-value" id="fxWidthValue">1.00x</div></div>
+      <input class="effect-slider" id="fxWidth" type="range" min="0.8" max="2.4" step="0.01" value="1" oninput="updateFxFromUI()">
     </div>
     <div class="effect-card">
-      <div class="effect-card-title"><span class="material-symbols-rounded">graphic_eq</span> Звучание</div>
+      <div class="effect-card-title"><span class="material-symbols-rounded">music_note</span> Тон и детали</div>
       <div class="effect-row"><div class="effect-meta"><div class="effect-name">Басс</div><div class="effect-sub">Больше глубины и удара</div></div><div class="effect-value" id="fxBassValue">0 dB</div></div>
       <input class="effect-slider" id="fxBass" type="range" min="-10" max="16" step="1" value="0" oninput="updateFxFromUI()">
       <div class="effect-row"><div class="effect-meta"><div class="effect-name">Чёткость</div><div class="effect-sub">Вокал и детали выше</div></div><div class="effect-value" id="fxPresenceValue">0 dB</div></div>
       <input class="effect-slider" id="fxPresence" type="range" min="-8" max="14" step="1" value="0" oninput="updateFxFromUI()">
+      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Воздух</div><div class="effect-sub">Лёгкий блеск верхов</div></div><div class="effect-value" id="fxAirValue">0 dB</div></div>
+      <input class="effect-slider" id="fxAir" type="range" min="-6" max="12" step="1" value="0" oninput="updateFxFromUI()">
+      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Тёплота</div><div class="effect-sub">Мягче и плотнее середина</div></div><div class="effect-value" id="fxWarmthValue">0 dB</div></div>
+      <input class="effect-slider" id="fxWarmth" type="range" min="-8" max="10" step="1" value="0" oninput="updateFxFromUI()">
     </div>
     <div class="effect-card">
-      <div class="effect-card-title"><span class="material-symbols-rounded">tune</span> Усиление</div>
+      <div class="effect-card-title"><span class="material-symbols-rounded">tune</span> Динамика</div>
       <div class="effect-row"><div class="effect-meta"><div class="effect-name">Мягкий драйв</div><div class="effect-sub">Лёгкая насыщенность звука</div></div><div class="toggle" id="fxDriveToggle" onclick="toggleFx('drive')"></div></div>
       <div class="effect-row"><div class="effect-meta"><div class="effect-name">Громкость</div><div class="effect-sub">Дополнительный уровень</div></div><div class="effect-value" id="fxGainValue">1.00x</div></div>
       <input class="effect-slider" id="fxGain" type="range" min="0.6" max="1.8" step="0.01" value="1" oninput="updateFxFromUI()">
       <div class="effect-row"><div class="effect-meta"><div class="effect-name">Скорость</div><div class="effect-sub">Playback rate</div></div><div class="effect-value" id="fxSpeedValue">1.00x</div></div>
       <input class="effect-slider" id="fxSpeed" type="range" min="0.75" max="1.35" step="0.01" value="1" oninput="updateFxFromUI()">
+      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Эхо</div><div class="effect-sub">Лёгкий хвост пространства</div></div><div class="effect-value" id="fxEchoValue">0%</div></div>
+      <input class="effect-slider" id="fxEcho" type="range" min="0" max="40" step="1" value="0" oninput="updateFxFromUI()">
     </div>
   </div>
   <div class="effect-note">Эффекты работают локально на устройстве через Web Audio API и не ломают обычное воспроизведение.</div>
@@ -1085,7 +1096,7 @@ let deviceId=localStorage.getItem('mp_device_id')||('dev_'+Math.random().toStrin
 let deviceName=localStorage.getItem('mp_device_name')||((/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)?'Телефон':'Компьютер')+' • '+navigator.platform);
 let activeReceiverId=null,remoteControlUnsub=null,devicePresenceUnsub=null,suppressRemoteBroadcast=false,lastRemoteApplyTs=0,editTrackCoverData='';
 let audioCtx=null,mediaSource=null,fxNodes=null;
-let fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,gain:1,speed:1,eightDRate:.35};
+let fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};
 localStorage.setItem('mp_device_id',deviceId);localStorage.setItem('mp_device_name',deviceName);
 try{const savedFx=JSON.parse(localStorage.getItem('mp_fx_state')||'null');if(savedFx)fxState={...fxState,...savedFx}}catch(e){}
 const audio=document.getElementById('audioPlayer');
@@ -1268,7 +1279,38 @@ function tryExtractMp4Cover(buf){
 async function fetchRemoteCoverHints(title, artist){
   try{
     const prompt=encodeURIComponent(`album cover art for music track ${title||''} by ${artist||''}, square artwork, no text, high quality, abstract music cover`);
-    return 'https://gen.pollinations.ai/image/'+prompt+'?model=flux&width=1024&height=1024&seed=7&safe=false&enhance=true&key=sk_FpZu7IFGMpDXM9c4ou1rdmWKgt3SdRgi';
+    return 'https://gen.pollinations.ai/image/'+prompt+'?model=flux&width=1024&height=1024&seed=7&safe=false&enhance=true&key='+POLLINATIONS_API_KEY;
+  }catch(e){return null}
+}
+async function fetchCoverFromUrlMeta(url){
+  try{
+    const target=String(url||'').trim();
+    if(!target)return null;
+    if(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(target)) return target;
+    const proxied='https://r.jina.ai/http://'+target.replace(/^https?:\/\//,'');
+    const res=await fetch(proxied);
+    if(!res.ok) throw new Error('meta-fetch-failed');
+    const html=await res.text();
+    const og=html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)||html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    const tw=html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+    const icon=html.match(/<link[^>]+rel=["'][^"']*(apple-touch-icon|icon)[^"']*["'][^>]+href=["']([^"']+)["']/i);
+    const candidate=(og&&og[1])||(tw&&tw[1])||(icon&&icon[2])||'';
+    if(!candidate) return null;
+    return new URL(candidate,target).href;
+  }catch(e){return null}
+}
+async function enrichImportMetaFromUrl(url){
+  try{
+    const target=String(url||'').trim();
+    if(!target) return null;
+    const proxied='https://r.jina.ai/http://'+target.replace(/^https?:\/\//,'');
+    const res=await fetch(proxied);
+    if(!res.ok) throw new Error('import-meta-failed');
+    const html=await res.text();
+    const title=(html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)||html.match(/<title>([^<]+)<\/title>/i)||[])[1]||'';
+    const desc=(html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)||html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)||[])[1]||'';
+    const cover=await fetchCoverFromUrlMeta(target);
+    return {title:title.trim(),description:desc.trim(),cover:cover||''};
   }catch(e){return null}
 }
 async function extractEmbeddedCover(file){
@@ -1519,7 +1561,7 @@ function renderTrackItem(id,track,num,showDel){
   const isExp=track.explicit,isFav=favorites[id],isNP=currentTrackId===id,dur=track.duration?formatTime(track.duration):'—';
   const plays=track.plays||0;
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
-    '<div class="track-num">'+(isNP?'<div class="eq-bars"><span></span><span></span><span></span><span></span></div>':num)+'</div>'+
+    '<div class="track-num">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
     '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
     '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isExp?'<span class="explicit-badge" title="Explicit">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав">©?</span>':'')+'</div>'+
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
@@ -1727,7 +1769,7 @@ function loadAndPlay(track){
     const origVol=audio.volume;
     const fadeOut=setInterval(()=>{if(audio.volume>0.05){audio.volume=Math.max(0,audio.volume-0.1)}else{clearInterval(fadeOut);audio.volume=origVol;doLoad(track)}},30);
   }else doLoad(track);
-  document.querySelectorAll('.track-item').forEach(el=>{el.classList.toggle('playing',el.dataset.id===currentTrackId);const n=el.querySelector('.track-num');if(el.dataset.id===currentTrackId&&n)n.innerHTML='<div class="eq-bars"><span></span><span></span><span></span><span></span></div>'});
+  document.querySelectorAll('.track-item').forEach(el=>{el.classList.toggle('playing',el.dataset.id===currentTrackId);const n=el.querySelector('.track-num');if(el.dataset.id===currentTrackId&&n)n.innerHTML='<div class="now-playing-mark">♪</div>'});
   if('mediaSession' in navigator){navigator.mediaSession.metadata=new MediaMetadata({title:track.title||'',artist:track.artistName||'',artwork:track.cover?[{src:track.cover}]:[]});navigator.mediaSession.setActionHandler('play',()=>togglePlay());navigator.mediaSession.setActionHandler('pause',()=>togglePlay());navigator.mediaSession.setActionHandler('previoustrack',()=>prevTrack());navigator.mediaSession.setActionHandler('nexttrack',()=>nextTrack())}
   broadcastPlaybackState();
 }
@@ -1830,34 +1872,57 @@ function toggleMute(){audio.muted=!audio.muted;updateVolumeIcon()}
 function updateVolumeIcon(){document.getElementById('volumeBtn').querySelector('.material-symbols-rounded').textContent=audio.muted||volume===0?'volume_off':volume<.5?'volume_down':'volume_up'}
 function formatTime(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return m+':'+(sec<10?'0':'')+sec}
 
-/* ===== WEB AUDIO FX + VISUALIZER ===== */
+/* ===== WEB AUDIO FX ===== */
 function ensureAudioGraph(){
   if(audioCtx)return;
   const AC=window.AudioContext||window.webkitAudioContext;
   if(!AC)return;
   audioCtx=new AC();
   mediaSource=audioCtx.createMediaElementSource(audio);
+
   const inputGain=audioCtx.createGain();
   const bass=audioCtx.createBiquadFilter();bass.type='lowshelf';bass.frequency.value=180;bass.gain.value=0;
-  const presence=audioCtx.createBiquadFilter();presence.type='highshelf';presence.frequency.value=3200;presence.gain.value=0;
+  const warmth=audioCtx.createBiquadFilter();warmth.type='peaking';warmth.frequency.value=480;warmth.Q.value=.7;warmth.gain.value=0;
+  const presence=audioCtx.createBiquadFilter();presence.type='peaking';presence.frequency.value=3200;presence.Q.value=.8;presence.gain.value=0;
+  const air=audioCtx.createBiquadFilter();air.type='highshelf';air.frequency.value=7600;air.gain.value=0;
+
   const drivePre=audioCtx.createGain();drivePre.gain.value=1;
   const waveShaper=audioCtx.createWaveShaper();
   const drivePost=audioCtx.createGain();drivePost.gain.value=.92;
-  const panner=audioCtx.createStereoPanner?audioCtx.createStereoPanner():null;
-  const spatialDelayL=audioCtx.createDelay(0.03),spatialDelayR=audioCtx.createDelay(0.03);
-  spatialDelayL.delayTime.value=.012;spatialDelayR.delayTime.value=.018;
-  const splitter=audioCtx.createChannelSplitter(2),merger=audioCtx.createChannelMerger(2);
+
+  const splitter=audioCtx.createChannelSplitter(2);
+  const merger=audioCtx.createChannelMerger(2);
+  const leftGain=audioCtx.createGain();
+  const rightGain=audioCtx.createGain();
+  const eightDPanner=audioCtx.createStereoPanner?audioCtx.createStereoPanner():null;
+
+  const delaySend=audioCtx.createGain();delaySend.gain.value=0;
+  const delayNode=audioCtx.createDelay(.6);delayNode.delayTime.value=.22;
+  const delayFeedback=audioCtx.createGain();delayFeedback.gain.value=.18;
+  const delayWet=audioCtx.createGain();delayWet.gain.value=0;
+
   const analyser=audioCtx.createAnalyser();analyser.fftSize=256;analyser.smoothingTimeConstant=.88;
   const master=audioCtx.createGain();master.gain.value=1;
+
   mediaSource.connect(inputGain);
-  inputGain.connect(bass);bass.connect(presence);presence.connect(drivePre);drivePre.connect(waveShaper);waveShaper.connect(drivePost);
-  if(panner)drivePost.connect(panner); else drivePost.connect(master);
-  if(panner){panner.connect(splitter);splitter.connect(spatialDelayL,0);splitter.connect(spatialDelayR,1);spatialDelayL.connect(merger,0,0);spatialDelayR.connect(merger,0,1);merger.connect(master)}
+  inputGain.connect(bass);bass.connect(warmth);warmth.connect(presence);presence.connect(air);air.connect(drivePre);drivePre.connect(waveShaper);waveShaper.connect(drivePost);
+
+  drivePost.connect(splitter);
+  splitter.connect(leftGain,0);
+  splitter.connect(rightGain,1);
+  leftGain.connect(merger,0,0);
+  rightGain.connect(merger,0,1);
+
+  if(eightDPanner){merger.connect(eightDPanner);eightDPanner.connect(master)}else{merger.connect(master)}
+
+  drivePost.connect(delaySend);delaySend.connect(delayNode);delayNode.connect(delayFeedback);delayFeedback.connect(delayNode);delayNode.connect(delayWet);delayWet.connect(master);
+
   master.connect(analyser);analyser.connect(audioCtx.destination);
-  fxNodes={inputGain,bass,presence,drivePre,waveShaper,drivePost,panner,splitter,spatialDelayL,spatialDelayR,merger,master,analyser};
+
+  fxNodes={inputGain,bass,warmth,presence,air,drivePre,waveShaper,drivePost,splitter,merger,leftGain,rightGain,eightDPanner,delaySend,delayNode,delayFeedback,delayWet,master,analyser};
   updateWaveShaperCurve();
   applyFxState();
-  startVisualizer();
+  start8DLoop();
 }
 function updateWaveShaperCurve(){
   if(!fxNodes?.waveShaper)return;
@@ -1866,99 +1931,81 @@ function updateWaveShaperCurve(){
   fxNodes.waveShaper.curve=curve;fxNodes.waveShaper.oversample='4x';
 }
 function applyFxState(){
-  if(!fxNodes)return;
+  if(!fxNodes||!audioCtx)return;
   fxNodes.bass.gain.setTargetAtTime(Number(fxState.bass||0),audioCtx.currentTime,.08);
+  fxNodes.warmth.gain.setTargetAtTime(Number(fxState.warmth||0),audioCtx.currentTime,.08);
   fxNodes.presence.gain.setTargetAtTime(Number(fxState.presence||0),audioCtx.currentTime,.08);
+  fxNodes.air.gain.setTargetAtTime(Number(fxState.air||0),audioCtx.currentTime,.08);
   fxNodes.master.gain.setTargetAtTime(Number(fxState.gain||1),audioCtx.currentTime,.08);
   fxNodes.drivePre.gain.setTargetAtTime(fxState.drive?1.7:1,audioCtx.currentTime,.08);
   fxNodes.drivePost.gain.setTargetAtTime(fxState.drive?.78:.92,audioCtx.currentTime,.08);
-  if(fxNodes.panner)fxNodes.panner.pan.setTargetAtTime(0,audioCtx.currentTime,.04);
-  if(fxNodes.spatialDelayL&&fxNodes.spatialDelayR){
-    fxNodes.spatialDelayL.delayTime.setTargetAtTime(fxState.spatial?.016:.0,audioCtx.currentTime,.08);
-    fxNodes.spatialDelayR.delayTime.setTargetAtTime(fxState.spatial?.022:.0,audioCtx.currentTime,.08);
-  }
+
+  const width=Number(fxState.width||1);
+  fxNodes.leftGain.gain.setTargetAtTime(fxState.spatial?Math.min(1.45,width):1,audioCtx.currentTime,.08);
+  fxNodes.rightGain.gain.setTargetAtTime(fxState.spatial?Math.min(1.45,width):1,audioCtx.currentTime,.08);
+
+  fxNodes.delaySend.gain.setTargetAtTime(Number(fxState.echo||0)/100,audioCtx.currentTime,.08);
+  fxNodes.delayWet.gain.setTargetAtTime(Number(fxState.echo||0)/140,audioCtx.currentTime,.08);
+  fxNodes.delayFeedback.gain.setTargetAtTime(Math.min(.55,(Number(fxState.echo||0)/100)*.65),audioCtx.currentTime,.08);
+
+  if(fxNodes.eightDPanner)fxNodes.eightDPanner.pan.setTargetAtTime(0,audioCtx.currentTime,.04);
   audio.playbackRate=Number(fxState.speed||1);
-  updateFxSummary();
   localStorage.setItem('mp_fx_state',JSON.stringify(fxState));
 }
 function startAudioEngine(){ensureAudioGraph();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{})}
 function animate8D(){
-  if(!fxNodes?.panner)return;
-  const t=performance.now()/1000,rate=Number(fxState.eightDRate||.35);
-  const pan=fxState.eightD?Math.sin(t*rate*Math.PI*2)*.95:0;
-  fxNodes.panner.pan.setTargetAtTime(pan,audioCtx.currentTime,.05);
+  if(!fxNodes?.eightDPanner||!audioCtx)return;
+  const t=audioCtx.currentTime;
+  const rate=Number(fxState.eightDRate||.35);
+  const pan=fxState.eightD?Math.sin(t*rate*Math.PI*2)*.97:0;
+  fxNodes.eightDPanner.pan.setTargetAtTime(pan,audioCtx.currentTime,.025);
 }
-function startVisualizer(){
-  if(visualizerAnimation)return;
-  const canvas=document.getElementById('fsVisualizer');if(!canvas)return;
-  const ctx=canvas.getContext('2d');
-  const resize=()=>{const r=canvas.getBoundingClientRect();canvas.width=Math.max(300,Math.floor(r.width*devicePixelRatio));canvas.height=Math.max(120,Math.floor(r.height*devicePixelRatio));ctx.setTransform(1,0,0,1,0,0);ctx.scale(devicePixelRatio,devicePixelRatio)};
-  resize();window.addEventListener('resize',resize);
-  const freq=new Uint8Array(128),wave=new Uint8Array(128);const particles=Array.from({length:48},()=>({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.0015,vy:(Math.random()-.5)*.0012,r:1+Math.random()*3}));
-  const draw=()=>{
-    visualizerAnimation=requestAnimationFrame(draw);
-    const w=canvas.clientWidth||canvas.width/devicePixelRatio,h=canvas.clientHeight||canvas.height/devicePixelRatio;
-    ctx.clearRect(0,0,w,h);
-    const grad=ctx.createLinearGradient(0,0,w,h);grad.addColorStop(0,'rgba(103,80,164,.9)');grad.addColorStop(.5,'rgba(125,82,96,.65)');grad.addColorStop(1,'rgba(208,188,255,.85)');
-    if(fxNodes?.analyser){fxNodes.analyser.getByteFrequencyData(freq);fxNodes.analyser.getByteTimeDomainData(wave)}
-    else for(let i=0;i<freq.length;i++){freq[i]=20+Math.sin((performance.now()/180)+i)*40+Math.random()*40;wave[i]=128+Math.sin((performance.now()/250)+(i/4))*40}
-    animate8D();
-    if(visualizerMode==='bars'){
-      const barW=w/freq.length;for(let i=0;i<freq.length;i++){const v=freq[i]/255;const bh=Math.max(4,v*(h-10));ctx.fillStyle=grad;ctx.fillRect(i*barW+1,h-bh,Math.max(2,barW-2),bh);}
-    }else if(visualizerMode==='wave'){
-      ctx.beginPath();ctx.lineWidth=3;ctx.strokeStyle=grad;for(let i=0;i<wave.length;i++){const x=i/(wave.length-1)*w;const y=(wave[i]/255)*h;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke();
-    }else if(visualizerMode==='orbit'){
-      const bass=(freq[4]+freq[8]+freq[12])/3/255;const mid=(freq[26]+freq[32]+freq[40])/3/255;const cx=w/2,cy=h/2,base=Math.min(w,h)*.22;ctx.strokeStyle=grad;ctx.lineWidth=3;
-      for(let ring=0;ring<3;ring++){ctx.beginPath();for(let a=0;a<=Math.PI*2+.15;a+=.12){const amp=ring===0?bass:ring===1?mid:((freq[(ring*15+Math.floor(a*10))%freq.length]/255));const r=base+ring*20+amp*24;const x=cx+Math.cos(a)*r;const y=cy+Math.sin(a)*r*.72;if(a===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke()}
-    }else if(visualizerMode==='particles'){
-      const energy=freq.reduce((s,v)=>s+v,0)/(freq.length*255);particles.forEach((p,idx)=>{p.x+=p.vx*(1+energy*8);p.y+=p.vy*(1+energy*8);if(p.x<0||p.x>1)p.vx*=-1;if(p.y<0||p.y>1)p.vy*=-1;const rr=p.r+energy*8;ctx.beginPath();ctx.fillStyle=idx%2?'rgba(103,80,164,.75)':'rgba(208,188,255,.8)';ctx.arc(p.x*w,p.y*h,rr,0,Math.PI*2);ctx.fill()})
-    }
-  };
-  draw();
+let eightDLoopHandle=null;
+function start8DLoop(){
+  if(eightDLoopHandle)return;
+  const loop=()=>{animate8D();eightDLoopHandle=requestAnimationFrame(loop)};
+  loop();
 }
-function setVisualizerMode(mode){visualizerMode=mode;['bars','wave','orbit','particles'].forEach(m=>{const el=document.getElementById('vizMode'+m.charAt(0).toUpperCase()+m.slice(1));if(el)el.classList.toggle('active',m===mode)})}
 function openAudioEffectsModal(){startAudioEngine();syncFxUi();document.getElementById('audioEffectsModal').classList.add('open')}
 function syncFxUi(){
-  const map={fxBass:fxState.bass,fxPresence:fxState.presence,fxGain:fxState.gain,fxSpeed:fxState.speed,fx8dRate:fxState.eightDRate};
+  const map={fxBass:fxState.bass,fxPresence:fxState.presence,fxGain:fxState.gain,fxSpeed:fxState.speed,fx8dRate:fxState.eightDRate,fxAir:fxState.air,fxWarmth:fxState.warmth,fxWidth:fxState.width,fxEcho:fxState.echo};
   Object.entries(map).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val});
   document.getElementById('fxSpatialToggle')?.classList.toggle('on',!!fxState.spatial);
   document.getElementById('fx8DToggle')?.classList.toggle('on',!!fxState.eightD);
   document.getElementById('fxDriveToggle')?.classList.toggle('on',!!fxState.drive);
   document.getElementById('fxBassValue').textContent=((Number(fxState.bass)||0)>0?'+':'')+Math.round(fxState.bass||0)+' dB';
   document.getElementById('fxPresenceValue').textContent=((Number(fxState.presence)||0)>0?'+':'')+Math.round(fxState.presence||0)+' dB';
+  document.getElementById('fxAirValue').textContent=((Number(fxState.air)||0)>0?'+':'')+Math.round(fxState.air||0)+' dB';
+  document.getElementById('fxWarmthValue').textContent=((Number(fxState.warmth)||0)>0?'+':'')+Math.round(fxState.warmth||0)+' dB';
   document.getElementById('fxGainValue').textContent=Number(fxState.gain||1).toFixed(2)+'x';
   document.getElementById('fxSpeedValue').textContent=Number(fxState.speed||1).toFixed(2)+'x';
   document.getElementById('fx8dRateValue').textContent=Number(fxState.eightDRate||.35).toFixed(2)+'x';
-  updateFxSummary();
-}
-function updateFxSummary(){
-  const box=document.getElementById('fxSummary');if(!box)return;
-  const chips=[];
-  if(fxState.spatial)chips.push('<span class="badge"><span class="material-symbols-rounded" style="font-size:14px">surround_sound</span>Spatial</span>');
-  if(fxState.eightD)chips.push('<span class="badge"><span class="material-symbols-rounded" style="font-size:14px">360</span>8D</span>');
-  if(fxState.drive)chips.push('<span class="badge"><span class="material-symbols-rounded" style="font-size:14px">bolt</span>Drive</span>');
-  if((fxState.bass||0)!==0)chips.push('<span class="badge">Bass '+((fxState.bass>0?'+':'')+Math.round(fxState.bass))+' dB</span>');
-  if((fxState.presence||0)!==0)chips.push('<span class="badge">Presence '+((fxState.presence>0?'+':'')+Math.round(fxState.presence))+' dB</span>');
-  if(Math.abs((fxState.speed||1)-1)>.001)chips.push('<span class="badge">'+Number(fxState.speed).toFixed(2)+'x</span>');
-  box.innerHTML=chips.length?chips.join(''):'<span class="badge">FX Off</span>';
+  document.getElementById('fxWidthValue').textContent=Number(fxState.width||1).toFixed(2)+'x';
+  document.getElementById('fxEchoValue').textContent=Math.round(Number(fxState.echo||0))+'%';
 }
 function toggleFx(name){fxState[name]=!fxState[name];startAudioEngine();applyFxState();syncFxUi()}
 function updateFxFromUI(){
   fxState.bass=Number(document.getElementById('fxBass')?.value||0);
   fxState.presence=Number(document.getElementById('fxPresence')?.value||0);
+  fxState.air=Number(document.getElementById('fxAir')?.value||0);
+  fxState.warmth=Number(document.getElementById('fxWarmth')?.value||0);
   fxState.gain=Number(document.getElementById('fxGain')?.value||1);
   fxState.speed=Number(document.getElementById('fxSpeed')?.value||1);
   fxState.eightDRate=Number(document.getElementById('fx8dRate')?.value||.35);
+  fxState.width=Number(document.getElementById('fxWidth')?.value||1);
+  fxState.echo=Number(document.getElementById('fxEcho')?.value||0);
   startAudioEngine();applyFxState();syncFxUi();
 }
-function resetFx(){fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,gain:1,speed:1,eightDRate:.35};applyFxState();syncFxUi();showSnackbar('Эффекты сброшены')}
+function resetFx(){fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};applyFxState();syncFxUi();showSnackbar('Эффекты сброшены')}
 function applyFxPreset(name){
-  if(name==='off')fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,gain:1,speed:1,eightDRate:.35};
-  if(name==='cinema')fxState={...fxState,spatial:true,eightD:false,drive:false,bass:5,presence:3,gain:1.04,speed:1,eightDRate:.35};
-  if(name==='club')fxState={...fxState,spatial:true,eightD:false,drive:true,bass:9,presence:2,gain:1.1,speed:1,eightDRate:.35};
-  if(name==='focus')fxState={...fxState,spatial:false,eightD:false,drive:false,bass:-1,presence:6,gain:1,speed:1,eightDRate:.35};
-  if(name==='8d')fxState={...fxState,spatial:true,eightD:true,drive:false,bass:2,presence:1,gain:1,eightDRate:.42,speed:1};
-  if(name==='bass')fxState={...fxState,spatial:false,eightD:false,drive:true,bass:12,presence:0,gain:1.08,speed:1,eightDRate:.35};
+  if(name==='off')fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};
+  if(name==='cinema')fxState={...fxState,spatial:true,eightD:false,drive:false,bass:5,presence:3,air:2,warmth:2,gain:1.04,speed:1,eightDRate:.35,width:1.35,echo:12};
+  if(name==='club')fxState={...fxState,spatial:true,eightD:false,drive:true,bass:9,presence:2,air:1,warmth:3,gain:1.1,speed:1,eightDRate:.35,width:1.2,echo:8};
+  if(name==='focus')fxState={...fxState,spatial:false,eightD:false,drive:false,bass:-1,presence:6,air:4,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};
+  if(name==='8d')fxState={...fxState,spatial:true,eightD:true,drive:false,bass:2,presence:1,air:1,warmth:0,gain:1,eightDRate:.42,speed:1,width:1.5,echo:6};
+  if(name==='bass')fxState={...fxState,spatial:false,eightD:false,drive:true,bass:12,presence:0,air:-1,warmth:2,gain:1.08,speed:1,eightDRate:.35,width:1,echo:0};
+  if(name==='vocal')fxState={...fxState,spatial:false,eightD:false,drive:false,bass:-2,presence:7,air:5,warmth:1,gain:1,speed:1,eightDRate:.35,width:1.05,echo:0};
+  if(name==='night')fxState={...fxState,spatial:true,eightD:false,drive:false,bass:3,presence:-1,air:-2,warmth:4,gain:.94,speed:1,eightDRate:.2,width:1.15,echo:14};
   startAudioEngine();applyFxState();syncFxUi();showSnackbar('Пресет: '+name)
 }
 
@@ -2090,7 +2137,6 @@ async function processAudioFile(f){
   document.getElementById('selectedFileInfo').style.display='block';
   document.getElementById('selectedFileName').textContent=f.name+' ('+(f.size/1024/1024).toFixed(1)+' МБ)';
   if(!document.getElementById('uploadTitle').value)document.getElementById('uploadTitle').value=f.name.replace(/\.[^/.]+$/,'');
-  if(!document.getElementById('uploadMusicAuthor').value && currentUser?.displayName)document.getElementById('uploadMusicAuthor').value=currentUser.displayName;
   const manualCover=document.getElementById('uploadCover').value.trim();
   const titleGuess=document.getElementById('uploadTitle').value.trim()||f.name.replace(/\.[^/.]+$/,'');
   const embeddedCover=await extractEmbeddedCover(f);
@@ -2110,7 +2156,23 @@ async function processAudioFile(f){
 }
 function clearSelectedFile(){selectedAudioFile=null;selectedAudioDataURL=null;document.getElementById('selectedFileInfo').style.display='none';document.getElementById('audioFileInput').value=''}
 
-async function publishTrack(){
+async function importTrackFromUrl(){
+  const url=(document.getElementById('importTrackUrl').value||'').trim();
+  const meta=document.getElementById('importTrackMeta');
+  if(!url){showSnackbar('Вставьте ссылку');return}
+  meta.textContent='Пробуем получить данные по ссылке...';
+  const info=await enrichImportMetaFromUrl(url);
+  if(info?.title && !document.getElementById('uploadTitle').value.trim()) document.getElementById('uploadTitle').value=info.title.replace(/\s*[—|-]\s*[^—|-]+$/,'').trim();
+  if(info?.description && !document.getElementById('uploadLyrics').value.trim()) document.getElementById('uploadLyrics').value=info.description.slice(0,1200);
+  if(info?.cover && !document.getElementById('uploadCover').value.trim() && !selectedCoverDataURL){
+    document.getElementById('uploadCover').value=info.cover;
+    document.getElementById('coverUploadZone').innerHTML='<img src="'+info.cover+'" alt="">';
+  }
+  meta.innerHTML=info?('Источник разобран. Название: <b>'+esc(info.title||'Не найдено')+'</b>'+(info.cover?' • обложка найдена':' • без обложки')+'<br>Если платформа не отдаёт аудио напрямую, загрузите сам файл отдельно — ссылка всё равно помогла подставить метаданные.'):'Не удалось вытащить метаданные. Попробуйте другую ссылку или загрузите файл вручную.';
+  showSnackbar(info?'Метаданные из ссылки получены':'Импорт по ссылке ограничен этой платформой');
+}
+
+async function publishTrack(){“}
   if(!currentUser){showSnackbar('Войдите');return}
   const title=document.getElementById('uploadTitle').value.trim();
   let genre=document.getElementById('uploadGenre').value;
