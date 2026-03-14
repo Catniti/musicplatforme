@@ -2795,7 +2795,23 @@ async function publishTrack(){
   const pe=document.getElementById('uploadProgress'),pb=document.getElementById('uploadProgressBar'),st=document.getElementById('uploadStatusText'),btn=document.getElementById('publishBtn');
   pe.style.display='block';btn.disabled=true;
   st.textContent='Проверка аудио...';pb.style.width='10%';
-  const duration=await new Promise(res=>{const ta=new Audio(selectedAudioDataURL);ta.addEventListener('loadedmetadata',()=>{if(ta.duration<15){showSnackbar('Трек мин. 15 сек');pe.style.display='none';btn.disabled=false;res(false);return}res(ta.duration)});ta.addEventListener('error',()=>{showSnackbar('Ошибка чтения аудио');pe.style.display='none';btn.disabled=false;res(false)})});
+  const duration=await new Promise(res=>{
+    try{
+      const ta=new Audio(selectedAudioDataURL);
+      const fail=(message)=>{showSnackbar(message);pe.style.display='none';btn.disabled=false;pb.style.width='0%';res(false)};
+      const timer=setTimeout(()=>fail('Не удалось быстро прочитать аудио'),12000);
+      ta.addEventListener('loadedmetadata',()=>{
+        clearTimeout(timer);
+        if(!isFinite(ta.duration)||!ta.duration){fail('Не удалось определить длительность');return}
+        if(ta.duration<15){fail('Трек мин. 15 сек');return}
+        res(ta.duration);
+      },{once:true});
+      ta.addEventListener('error',()=>{clearTimeout(timer);fail('Ошибка чтения аудио')},{once:true});
+      ta.load();
+    }catch(e){
+      showSnackbar('Ошибка подготовки аудио');pe.style.display='none';btn.disabled=false;pb.style.width='0%';res(false)
+    }
+  });
   if(duration===false)return;
   st.textContent='Быстрая проверка аудио и слов...';pb.style.width='32%';
   const moderationFallback={
@@ -2884,7 +2900,7 @@ async function publishTrack(){
       if(copyrightFlag) msg+=' Возможны авторские права.';
       showSnackbar(msg);
     },800);
-  }catch(err){showSnackbar('Ошибка: '+err.message);pe.style.display='none';btn.disabled=false}
+  }catch(err){showSnackbar('Ошибка: '+(err&&err.message?err.message:err));pe.style.display='none';btn.disabled=false;pb.style.width='0%';st.textContent='Ошибка загрузки'}
 }
 
 function deleteTrack(id){deleteTrackId=id;document.getElementById('deleteModal').classList.add('open')}
@@ -2946,6 +2962,7 @@ if(localStorage.getItem('theme')==='dark'||(!localStorage.getItem('theme')&&wind
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function showSnackbar(msg){const s=document.getElementById('snackbar');s.textContent=msg;s.classList.remove('show');void s.offsetWidth;s.classList.add('show');clearTimeout(s._t);s._t=setTimeout(()=>s.classList.remove('show'),3000)}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
+function updateFxSummary(){}
 
 /* ===== EVENT LISTENERS ===== */
 window.addEventListener('scroll',()=>{document.getElementById('topBar').classList.toggle('scrolled',window.scrollY>10)});
