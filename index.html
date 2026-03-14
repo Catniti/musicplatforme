@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>MusicPlatforme — Слушай музыку бесплатно</title>
 <meta name="description" content="MusicPlatforme — бесплатная музыкальная платформа. Слушай, публикуй и открывай новую музыку. Моя волна, подписки, лайки и умная ИИ-модерация.">
 <meta name="keywords" content="MusicPlatforme, музыка, слушать музыку бесплатно, музыкальная платформа, моя волна, публикация музыки">
@@ -193,7 +196,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .wave-circle:hover .material-symbols-rounded{transform:scale(1.1)}
 
 /* ===== MODALS ===== */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity .3s}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:950;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity .3s}
 .modal-overlay.open{display:flex;animation:modalOverlayIn .3s forwards}
 @keyframes modalOverlayIn{from{opacity:0}to{opacity:1}}
 .modal{background:var(--md-surface-container-high);border-radius:var(--md-shape-xl);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:24px;animation:modalIn .4s cubic-bezier(.2,0,0,1)}
@@ -308,6 +311,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 /* ===== FULLSCREEN PLAYER ===== */
 .fs-player-overlay{display:none;position:fixed;inset:0;background:var(--md-surface);z-index:600;flex-direction:column;overflow-y:auto}
 .fs-player-overlay.open{display:flex;animation:fsIn .4s cubic-bezier(.2,0,0,1)}
+.fs-player-overlay.dimmed{filter:blur(1px) brightness(.92)}
 @keyframes fsIn{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
 .fs-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
 .fs-cover-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -350,7 +354,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .cover-upload-zone .material-symbols-rounded{font-size:32px;color:var(--md-primary)}
 
 /* ===== CONTEXT MENU ===== */
-.track-context-menu{position:fixed;background:var(--md-surface-container);border-radius:var(--md-shape-md);box-shadow:var(--md-elevation-3);min-width:220px;z-index:700;overflow:hidden;animation:menuIn .2s cubic-bezier(.2,0,0,1)}
+.track-context-menu{position:fixed;background:var(--md-surface-container);border-radius:var(--md-shape-md);box-shadow:var(--md-elevation-3);min-width:220px;z-index:980;overflow:hidden;animation:menuIn .2s cubic-bezier(.2,0,0,1)}
 .track-context-item{display:flex;align-items:center;gap:12px;padding:12px 16px;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);cursor:pointer;transition:background .15s}
 .track-context-item:hover{background:var(--md-surface-container-high)}
 .track-context-item .material-symbols-rounded{font-size:20px;color:var(--md-on-surface-variant)}
@@ -358,8 +362,18 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .track-context-item.danger .material-symbols-rounded{color:var(--md-error)}
 
 /* ===== QUEUE PANEL ===== */
-.queue-panel{position:fixed;right:0;top:0;bottom:0;width:360px;background:var(--md-surface-container);z-index:500;transform:translateX(100%);transition:transform .4s cubic-bezier(.2,0,0,1);box-shadow:var(--md-elevation-3);display:flex;flex-direction:column;overflow:hidden}
+.queue-panel{position:fixed;right:0;top:0;bottom:0;width:360px;background:var(--md-surface-container);z-index:970;transform:translateX(100%);transition:transform .4s cubic-bezier(.2,0,0,1);box-shadow:var(--md-elevation-3);display:flex;flex-direction:column;overflow:hidden}
 .queue-panel.open{transform:translateX(0)}
+.device-list{display:flex;flex-direction:column;gap:8px}
+.device-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--md-shape-md);background:var(--md-surface-container);cursor:pointer;transition:all .25s cubic-bezier(.2,0,0,1)}
+.device-item:hover{transform:translateY(-1px);box-shadow:var(--md-elevation-1)}
+.device-item.active{background:var(--md-primary-container)}
+.device-meta{flex:1;min-width:0}
+.device-name{font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.device-sub{font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.edit-grid{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:start}
+.edit-cover-preview{width:120px;height:120px;border-radius:var(--md-shape-md);overflow:hidden;background:var(--md-surface-container-highest);display:flex;align-items:center;justify-content:center;border:1px solid var(--md-outline-variant)}
+.edit-cover-preview img{width:100%;height:100%;object-fit:cover}
 .queue-panel-header{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--md-outline-variant)}
 .queue-panel-header .section-title{margin:0;flex:1}
 .queue-panel-body{flex:1;overflow-y:auto;padding:8px}
@@ -446,8 +460,12 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
   .fs-buttons{gap:12px}
   .fs-play-btn{width:56px;height:56px}
   .track-plays{display:none}
-  .track-duration{display:none}
+  .track-duration{display:block;font-size:11px;min-width:34px;text-align:right}
+  .track-item{gap:10px;padding:8px 8px}
+  .track-actions{gap:0}
   .snackbar{bottom:calc(var(--nav-height) + var(--player-height) + 16px);max-width:85vw;font-size:13px;padding:10px 16px}
+  .edit-grid{grid-template-columns:1fr}
+  .edit-cover-preview{width:100px;height:100px;margin:0 auto}
 }
 @media(max-width:360px){
   .cards-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
@@ -455,6 +473,9 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
   .hero-title{font-size:20px;line-height:28px}
   .hero-sub{font-size:14px}
   .section-title{font-size:18px}
+  .track-duration{font-size:10px;min-width:30px}
+  .track-item{padding:8px 6px;gap:8px}
+  .track-thumb{width:44px;height:44px}
 }
 </style>
 </head>
@@ -822,6 +843,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
     <button class="btn-icon" onclick="shareTrack()" title="Поделиться"><span class="material-symbols-rounded">share</span></button>
     <button class="btn-icon" onclick="addToPlaylistPrompt()" title="В плейлист"><span class="material-symbols-rounded">playlist_add</span></button>
     <button class="btn-icon" onclick="toggleLyrics()" title="Текст"><span class="material-symbols-rounded">lyrics</span></button>
+    <button class="btn-icon" onclick="openDevicesModal()" title="Устройства"><span class="material-symbols-rounded">cast</span></button>
     <button class="btn-icon" onclick="toggleQueue()" title="Очередь"><span class="material-symbols-rounded">queue_music</span></button>
   </div>
   <div class="lyrics-container" id="fsLyrics" style="display:none"></div>
@@ -927,21 +949,51 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
   <div class="modal-actions" style="margin-top:12px"><button class="btn-outlined" onclick="closeModal('sleepTimerModal')">Закрыть</button></div>
 </div></div>
 
-<div class="modal-overlay" id="editTrackModal"><div class="modal">
+<div class="modal-overlay" id="editTrackModal"><div class="modal" style="max-width:720px">
   <div class="modal-title">Редактировать трек</div>
-  <label class="modal-label">Название</label>
-  <input class="md-input" id="editTrackTitle" placeholder="Название">
-  <label class="modal-label">Жанр</label>
-  <input class="md-input" id="editTrackGenre" placeholder="Жанр">
-  <label class="modal-label">Текст песни</label>
-  <textarea class="md-input" id="editTrackLyrics" placeholder="Текст песни..." rows="4" style="resize:vertical"></textarea>
+  <div class="edit-grid">
+    <div>
+      <div class="edit-cover-preview" id="editTrackCoverPreview"><span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">music_note</span></div>
+      <input type="file" id="editTrackCoverFile" accept="image/*" style="display:none" onchange="handleEditTrackCoverSelect(event)">
+      <button class="btn-tonal" style="width:100%;justify-content:center;margin-top:10px" onclick="document.getElementById('editTrackCoverFile').click()"><span class="material-symbols-rounded">image</span> Обложка</button>
+    </div>
+    <div>
+      <label class="modal-label">Название</label>
+      <input class="md-input" id="editTrackTitle" placeholder="Название">
+      <label class="modal-label">Жанр</label>
+      <input class="md-input" id="editTrackGenre" placeholder="Жанр">
+      <label class="modal-label">Обложка (URL)</label>
+      <input class="md-input" id="editTrackCoverUrl" placeholder="https://...">
+      <label class="modal-label">Текст песни</label>
+      <textarea class="md-input" id="editTrackLyrics" placeholder="Текст песни..." rows="5" style="resize:vertical"></textarea>
+    </div>
+  </div>
   <div class="modal-actions"><button class="btn-outlined" onclick="closeModal('editTrackModal')">Отмена</button><button class="btn-primary" onclick="saveTrackEdits()">Сохранить</button></div>
+</div></div>
+
+<div class="modal-overlay" id="devicesModal"><div class="modal" style="max-width:620px">
+  <div class="modal-title">Устройства и трансляция</div>
+  <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:16px">Если вы вошли в тот же аккаунт на другом устройстве в сети, можно передавать воспроизведение туда и управлять им как в музыкальных сервисах.</p>
+  <div id="devicesModalList" class="device-list"></div>
+  <div class="modal-actions" style="margin-top:16px"><button class="btn-outlined" onclick="closeModal('devicesModal')">Закрыть</button></div>
 </div></div>
 
 <div class="snackbar" id="snackbar"></div>
 <audio id="audioPlayer" preload="auto"></audio>
 
 <script>
+/* Runtime compatibility guard for old cached builds */
+window.onSnapshot=window.onSnapshot||function(){console.warn('onSnapshot shim called; app uses Realtime Database now');return function(){};};
+window.getFirestore=window.getFirestore||function(){console.warn('Firestore shim called; app uses Realtime Database now');return null;};
+window.collection=window.collection||function(){return null;};
+window.doc=window.doc||function(){return null;};
+window.setDoc=window.setDoc||function(){return Promise.resolve();};
+window.updateDoc=window.updateDoc||function(){return Promise.resolve();};
+window.addDoc=window.addDoc||function(){return Promise.resolve({id:null});};
+window.getDocs=window.getDocs||function(){return Promise.resolve({forEach:function(){},docs:[]});};
+window.query=window.query||function(){return null;};
+window.where=window.where||function(){return null;};
+window.serverTimestamp=window.serverTimestamp||function(){return Date.now();};
 const firebaseConfig={apiKey:"AIzaSyBi_ZxAPL7SOZGf-EX-mYxEuePztC4XoVc",authDomain:"musicplatforme.firebaseapp.com",databaseURL:"https://musicplatforme-default-rtdb.firebaseio.com",projectId:"musicplatforme",storageBucket:"musicplatforme.firebasestorage.app",messagingSenderId:"947754451244",appId:"1:947754451244:web:0e4bbe8403f91a57c8ec89"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
@@ -954,7 +1006,11 @@ let selectedAudioFile=null,selectedAudioDataURL=null,playerVisible=false;
 let selectedCoverDataURL=null,reportTrackId=null,contextTrackId=null;
 let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null;
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
-let playedTracks={};// tracks already counted for this session
+let playedTracks={};
+let deviceId=localStorage.getItem('mp_device_id')||('dev_'+Math.random().toString(36).slice(2)+'_'+Date.now());
+let deviceName=localStorage.getItem('mp_device_name')||((/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)?'Телефон':'Компьютер')+' • '+navigator.platform);
+let activeReceiverId=null,remoteControlUnsub=null,devicePresenceUnsub=null,suppressRemoteBroadcast=false,lastRemoteApplyTs=0,editTrackCoverData='';
+localStorage.setItem('mp_device_id',deviceId);localStorage.setItem('mp_device_name',deviceName);
 const audio=document.getElementById('audioPlayer');
 
 /* ===== GENRES ===== */
@@ -1076,12 +1132,11 @@ async function doLogin(){
 function loginUser(ud){
   currentUser={uid:ud.uid,username:ud.username||'',email:ud.email||'',displayName:ud.displayName||'Пользователь',photo:ud.photo||'',bio:ud.bio||'',authMethod:ud.authMethod||'email'};
   localStorage.setItem('mp_user',JSON.stringify(currentUser));
-  // Load played tracks from localStorage
   playedTracks=JSON.parse(localStorage.getItem('mp_played_'+currentUser.uid)||'{}');
-  updateAuthUI();loadUserData();
+  updateAuthUI();loadUserData();setupDevicePresence();listenRemoteCommands();
 }
-function signOutUser(){currentUser=null;localStorage.removeItem('mp_user');favorites={};subscriptions={};userPlaylists={};listeningHistory=[];playedTracks={};updateAuthUI();showSnackbar('Вы вышли');navigate('home')}
-function restoreSession(){const s=localStorage.getItem('mp_user');if(s){try{currentUser=JSON.parse(s);playedTracks=JSON.parse(localStorage.getItem('mp_played_'+currentUser.uid)||'{}');updateAuthUI();loadUserData()}catch(e){localStorage.removeItem('mp_user')}}}
+function signOutUser(){teardownDevicePresence();currentUser=null;localStorage.removeItem('mp_user');favorites={};subscriptions={};userPlaylists={};listeningHistory=[];playedTracks={};activeReceiverId=null;updateAuthUI();showSnackbar('Вы вышли');navigate('home')}
+function restoreSession(){const s=localStorage.getItem('mp_user');if(s){try{currentUser=JSON.parse(s);playedTracks=JSON.parse(localStorage.getItem('mp_played_'+currentUser.uid)||'{}');updateAuthUI();loadUserData();setupDevicePresence();listenRemoteCommands()}catch(e){localStorage.removeItem('mp_user')}}}
 
 /* ===== TELEGRAM AUTH ===== */
 window.onTelegramAuth=async function(tg){
@@ -1323,16 +1378,25 @@ function openEditTrack(tid){
   document.getElementById('editTrackTitle').value=t.title||'';
   document.getElementById('editTrackGenre').value=t.genre||'';
   document.getElementById('editTrackLyrics').value=t.lyrics||'';
+  document.getElementById('editTrackCoverUrl').value=t.cover||'';
+  editTrackCoverData='';
+  document.getElementById('editTrackCoverPreview').innerHTML=t.cover?'<img src="'+t.cover+'" alt="">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">music_note</span>';
   document.getElementById('editTrackModal').classList.add('open');
 }
-function saveTrackEdits(){
+function handleEditTrackCoverSelect(e){
+  const f=e.target.files[0];if(!f||!f.type.startsWith('image/')){showSnackbar('Выберите изображение');return}
+  if(f.size>2*1024*1024){showSnackbar('Обложка макс. 2 МБ');return}
+  const r=new FileReader();r.onload=ev=>{editTrackCoverData=ev.target.result;document.getElementById('editTrackCoverUrl').value='';document.getElementById('editTrackCoverPreview').innerHTML='<img src="'+editTrackCoverData+'" alt="">'};r.readAsDataURL(f);
+}
+async function saveTrackEdits(){
   if(!editTrackId||!currentUser)return;
+  const track=allTracks[editTrackId];if(!track||track.artistId!==currentUser.uid){showSnackbar('Нет доступа');return}
   const title=document.getElementById('editTrackTitle').value.trim(),genre=document.getElementById('editTrackGenre').value.trim(),lyrics=document.getElementById('editTrackLyrics').value.trim();
+  let cover=(document.getElementById('editTrackCoverUrl').value||'').trim();if(editTrackCoverData)cover=editTrackCoverData;
   if(!title){showSnackbar('Введите название');return}
   const isExp=checkExplicit(title)||checkExplicit(lyrics);
-  db.ref('tracks/'+editTrackId).update({title,genre,lyrics,explicit:isExp});
-  closeModal('editTrackModal');showSnackbar('Трек обновлён');editTrackId=null;
-}
+  const upd={title,genre:genre||'other',lyrics,explicit:isExp,cover:cover||''};
+  try{await db.ref('tracks/'+editTrackId).update(upd);closeModal('editTrackModal');showSnackbar('Трек обновлён');editTrackId=null;editTrackCoverData='';}catch(e){showSnackbar('Ошибка сохранения')}}
 
 function shareTrackById(tid){const t=allTracks[tid];if(!t)return;if(navigator.share){navigator.share({title:t.title,text:t.title+' — '+t.artistName,url:location.href}).catch(()=>{})}else{navigator.clipboard.writeText(t.title+' — '+t.artistName+' | MusicPlatforme').then(()=>showSnackbar('Скопировано'))}}
 function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,currentTrackId)}
@@ -1431,6 +1495,8 @@ function loadAndPlay(track){
   document.getElementById('fsCover').innerHTML=track.cover?'<img src="'+track.cover+'" alt="">':'<span class="material-symbols-rounded">music_note</span>';
   document.getElementById('fsTitle').innerHTML=esc(track.title||'')+(track.explicit?' <span class="explicit-badge">!</span>':'');
   document.getElementById('fsArtist').textContent=track.artistName||'Неизвестен';
+  document.getElementById('totalTime').textContent=track.duration?formatTime(track.duration):'0:00';
+  document.getElementById('fsTotalTime').textContent=track.duration?formatTime(track.duration):'0:00';
   updateFsLike();renderQueue();
   if(audio.src&&!audio.paused){
     const origVol=audio.volume;
@@ -1438,15 +1504,16 @@ function loadAndPlay(track){
   }else doLoad(track);
   document.querySelectorAll('.track-item').forEach(el=>{el.classList.toggle('playing',el.dataset.id===currentTrackId);const n=el.querySelector('.track-num');if(el.dataset.id===currentTrackId&&n)n.innerHTML='<div class="eq-bars"><span></span><span></span><span></span><span></span></div>'});
   if('mediaSession' in navigator){navigator.mediaSession.metadata=new MediaMetadata({title:track.title||'',artist:track.artistName||'',artwork:track.cover?[{src:track.cover}]:[]});navigator.mediaSession.setActionHandler('play',()=>togglePlay());navigator.mediaSession.setActionHandler('pause',()=>togglePlay());navigator.mediaSession.setActionHandler('previoustrack',()=>prevTrack());navigator.mediaSession.setActionHandler('nexttrack',()=>nextTrack())}
+  broadcastPlaybackState();
 }
-function doLoad(track){audio.src=track.audioData;audio.play().then(()=>{isPlaying=true;updatePlayButton();document.getElementById('fsCover').classList.add('playing')}).catch(err=>{showSnackbar('Ошибка воспроизведения')})}
+function doLoad(track){audio.src=track.audioData;audio.play().then(()=>{isPlaying=true;updatePlayButton();document.getElementById('fsCover').classList.add('playing');broadcastPlaybackState()}).catch(err=>{showSnackbar('Ошибка воспроизведения')})}
 
-function togglePlay(){if(!audio.src)return;if(isPlaying){audio.pause();document.getElementById('fsCover').classList.remove('playing')}else{audio.play();document.getElementById('fsCover').classList.add('playing')}isPlaying=!isPlaying;updatePlayButton()}
+function togglePlay(){if(!audio.src)return;if(isPlaying){audio.pause();document.getElementById('fsCover').classList.remove('playing')}else{audio.play();document.getElementById('fsCover').classList.add('playing')}isPlaying=!isPlaying;updatePlayButton();broadcastPlaybackState()}
 function updatePlayButton(){const ic=isPlaying?'pause':'play_arrow';document.getElementById('playIcon').textContent=ic;document.getElementById('fsPlayIcon').textContent=ic;document.getElementById('waveCircle').classList.toggle('playing-anim',isPlaying)}
-function prevTrack(){if(!playlist.length)return;if(audio.currentTime>3){audio.currentTime=0;return}playlistIndex=(playlistIndex-1+playlist.length)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
+function prevTrack(){if(!playlist.length)return;if(audio.currentTime>3){audio.currentTime=0;broadcastPlaybackState();return}playlistIndex=(playlistIndex-1+playlist.length)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
 function nextTrack(){if(!playlist.length)return;if(isShuffle)playlistIndex=Math.floor(Math.random()*playlist.length);else playlistIndex=(playlistIndex+1)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
-function toggleShuffle(){isShuffle=!isShuffle;document.getElementById('shuffleBtn').classList.toggle('active',isShuffle);document.getElementById('fsShuffleBtn').classList.toggle('active',isShuffle);showSnackbar(isShuffle?'Перемешивание вкл':'Перемешивание выкл')}
-function toggleRepeat(){repeatMode=(repeatMode+1)%3;['repeatBtn','fsRepeatBtn'].forEach(id=>{const b=document.getElementById(id);b.classList.toggle('active',repeatMode>0);b.querySelector('.material-symbols-rounded').textContent=repeatMode===2?'repeat_one':'repeat'});showSnackbar(['Повтор выкл','Повтор плейлиста','Повтор трека'][repeatMode])}
+function toggleShuffle(){isShuffle=!isShuffle;document.getElementById('shuffleBtn').classList.toggle('active',isShuffle);document.getElementById('fsShuffleBtn').classList.toggle('active',isShuffle);showSnackbar(isShuffle?'Перемешивание вкл':'Перемешивание выкл');broadcastPlaybackState()}
+function toggleRepeat(){repeatMode=(repeatMode+1)%3;['repeatBtn','fsRepeatBtn'].forEach(id=>{const b=document.getElementById(id);b.classList.toggle('active',repeatMode>0);b.querySelector('.material-symbols-rounded').textContent=repeatMode===2?'repeat_one':'repeat'});showSnackbar(['Повтор выкл','Повтор плейлиста','Повтор трека'][repeatMode]);broadcastPlaybackState()}
 
 /* ===== AUDIO EVENTS ===== */
 audio.addEventListener('timeupdate',()=>{
@@ -1456,9 +1523,68 @@ audio.addEventListener('timeupdate',()=>{
   const ct=formatTime(audio.currentTime),tt=formatTime(audio.duration);
   document.getElementById('currentTime').textContent=ct;document.getElementById('totalTime').textContent=tt;
   document.getElementById('fsCurrentTime').textContent=ct;document.getElementById('fsTotalTime').textContent=tt;
+  if(audio.currentTime && Math.floor(audio.currentTime)%3===0)broadcastPlaybackState();
 });
 audio.addEventListener('progress',()=>{if(audio.buffered.length>0&&audio.duration){document.getElementById('progressBuffered').style.width=(audio.buffered.end(audio.buffered.length-1)/audio.duration*100)+'%'}});
-audio.addEventListener('ended',()=>{document.getElementById('fsCover').classList.remove('playing');if(repeatMode===2){audio.currentTime=0;audio.play();document.getElementById('fsCover').classList.add('playing')}else if(repeatMode===1||playlistIndex<playlist.length-1)nextTrack();else{isPlaying=false;updatePlayButton()}});
+audio.addEventListener('play',()=>broadcastPlaybackState());
+audio.addEventListener('pause',()=>broadcastPlaybackState());
+audio.addEventListener('seeking',()=>broadcastPlaybackState());
+audio.addEventListener('ended',()=>{document.getElementById('fsCover').classList.remove('playing');if(repeatMode===2){audio.currentTime=0;audio.play();document.getElementById('fsCover').classList.add('playing')}else if(repeatMode===1||playlistIndex<playlist.length-1)nextTrack();else{isPlaying=false;updatePlayButton();broadcastPlaybackState()}});
+
+function setupDevicePresence(){
+  if(!currentUser)return;
+  const ref=db.ref('presence/'+currentUser.uid+'/'+deviceId);
+  ref.set({name:deviceName,platform:navigator.userAgent,lastSeen:firebase.database.ServerValue.TIMESTAMP,online:true,currentTrackId:'',isPlaying:false});
+  ref.onDisconnect().remove();
+  if(devicePresenceUnsub)db.ref('presence/'+currentUser.uid+'/'+deviceId).off('value',devicePresenceUnsub);
+  devicePresenceUnsub=()=>{};
+  setInterval(()=>{if(currentUser)db.ref('presence/'+currentUser.uid+'/'+deviceId).update({lastSeen:Date.now(),online:true,currentTrackId:currentTrackId||'',isPlaying:!!isPlaying})},15000);
+}
+function teardownDevicePresence(){if(currentUser)db.ref('presence/'+currentUser.uid+'/'+deviceId).remove();}
+function getPlaybackPayload(){return{fromDevice:deviceId,trackId:currentTrackId||'',playlist:playlist||[],playlistIndex:playlistIndex||0,currentTime:Math.floor(audio.currentTime||0),isPlaying:!!isPlaying,repeatMode,shuffle:isShuffle,updatedAt:Date.now()}}
+function broadcastPlaybackState(){
+  if(!currentUser||!activeReceiverId||suppressRemoteBroadcast)return;
+  if(activeReceiverId===deviceId)return;
+  db.ref('remoteSessions/'+currentUser.uid+'/'+activeReceiverId).set(getPlaybackPayload());
+}
+function listenRemoteCommands(){
+  if(!currentUser)return;
+  const ref=db.ref('remoteSessions/'+currentUser.uid+'/'+deviceId);
+  ref.off();
+  ref.on('value',snap=>{
+    const cmd=snap.val();
+    if(!cmd||!cmd.trackId)return;
+    if(cmd.updatedAt&&cmd.updatedAt===lastRemoteApplyTs)return;
+    lastRemoteApplyTs=cmd.updatedAt||Date.now();
+    suppressRemoteBroadcast=true;
+    activeReceiverId=null;
+    if(JSON.stringify(playlist)!==JSON.stringify(cmd.playlist||[])){playlist=cmd.playlist||[];playlistIndex=cmd.playlistIndex||0;renderQueue()}
+    if(currentTrackId!==cmd.trackId){currentTrackId=cmd.trackId;if(allTracks[currentTrackId])loadAndPlay(allTracks[currentTrackId]);}
+    const applyState=()=>{
+      try{if(typeof cmd.currentTime==='number'&&Math.abs((audio.currentTime||0)-cmd.currentTime)>2)audio.currentTime=cmd.currentTime;}catch(e){}
+      isShuffle=!!cmd.shuffle;repeatMode=cmd.repeatMode||0;updatePlayButton();
+      document.getElementById('shuffleBtn').classList.toggle('active',isShuffle);document.getElementById('fsShuffleBtn').classList.toggle('active',isShuffle);
+      ['repeatBtn','fsRepeatBtn'].forEach(id=>{const b=document.getElementById(id);b.classList.toggle('active',repeatMode>0);b.querySelector('.material-symbols-rounded').textContent=repeatMode===2?'repeat_one':'repeat'});
+      if(cmd.isPlaying){audio.play().catch(()=>{})}else{audio.pause();isPlaying=false;updatePlayButton();document.getElementById('fsCover').classList.remove('playing')}
+      setTimeout(()=>{suppressRemoteBroadcast=false},500);
+    };
+    if(audio.readyState<2)audio.addEventListener('loadedmetadata',applyState,{once:true});else applyState();
+  });
+}
+function openDevicesModal(){if(!currentUser){showSnackbar('Войдите');return}renderDevicesModal();document.getElementById('devicesModal').classList.add('open');}
+function renderDevicesModal(){
+  const box=document.getElementById('devicesModalList');
+  box.innerHTML='<div class="loading-spinner"></div>';
+  db.ref('presence/'+currentUser.uid).once('value').then(s=>{
+    const data=s.val()||{};const now=Date.now();
+    const devices=Object.entries(data).filter(([id,d])=>now-(d.lastSeen||0)<45000);
+    if(!devices.length){box.innerHTML='<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">devices</span><h3>Других устройств нет</h3><p>Войдите в этот аккаунт на другом устройстве и откройте MusicPlatforme</p></div>';return}
+    box.innerHTML=devices.map(([id,d])=>'<div class="device-item '+(activeReceiverId===id?'active':'')+'" onclick="selectPlaybackDevice(\''+id+'\')"><span class="material-symbols-rounded">'+(id===deviceId?'smartphone':'devices')+'</span><div class="device-meta"><div class="device-name">'+esc(d.name||'Устройство')+(id===deviceId?' (это устройство)':'')+'</div><div class="device-sub">'+((d.isPlaying&&d.currentTrackId&&allTracks[d.currentTrackId])?('Сейчас: '+esc(allTracks[d.currentTrackId].title||'')):'Готово к трансляции')+'</div></div>'+(activeReceiverId===id?'<span class="material-symbols-rounded" style="color:var(--md-primary)">check_circle</span>':'')+'</div>').join('')+
+      '<div class="device-item" onclick="disableRemotePlayback()"><span class="material-symbols-rounded">phone_iphone</span><div class="device-meta"><div class="device-name">Воспроизводить здесь</div><div class="device-sub">Отключить трансляцию на другое устройство</div></div></div>';
+  });
+}
+function selectPlaybackDevice(id){activeReceiverId=id===deviceId?null:id;renderDevicesModal();broadcastPlaybackState();showSnackbar(id===deviceId?'Локальное воспроизведение':'Трансляция включена');}
+function disableRemotePlayback(){activeReceiverId=null;renderDevicesModal();showSnackbar('Трансляция отключена');}
 
 /* ===== PROGRESS & VOLUME DRAG ===== */
 function initDrag(el,cb){
