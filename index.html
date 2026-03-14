@@ -885,6 +885,22 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
   </div>
   <div class="lyrics-container" id="fsLyrics" style="display:none"></div>
 </div>
+<style>
+.lyrics-container{margin-top:18px;background:var(--md-surface-container-low);border:1px solid var(--md-outline-variant);border-radius:24px;padding:18px;max-height:min(36vh,320px);overflow:auto;scroll-behavior:smooth}
+.lyrics-block{display:flex;flex-direction:column;gap:10px}
+.lyrics-section{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px dashed var(--md-outline-variant)}
+.lyrics-section:last-child{border-bottom:none}
+.lyrics-section-label{font:700 12px/16px 'Inter',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--md-primary)}
+.lyrics-line{font:500 15px/22px 'Inter',sans-serif;color:var(--md-on-surface-variant);padding:6px 10px;border-radius:14px;transition:background .25s cubic-bezier(.2,0,0,1),color .25s cubic-bezier(.2,0,0,1),transform .25s cubic-bezier(.2,0,0,1);white-space:pre-wrap;word-break:break-word}
+.lyrics-line.active{background:color-mix(in srgb,var(--md-primary-container) 84%, transparent);color:var(--md-on-primary-container);transform:translateX(4px)}
+.lyrics-line.past{color:var(--md-on-surface);opacity:.88}
+.lyrics-line.chorus{font-weight:700}
+.lyrics-inline-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;background:var(--md-secondary-container);color:var(--md-on-secondary-container);font:600 11px/14px 'Inter',sans-serif;margin-bottom:6px;width:max-content}
+@media (max-width:640px){
+  .lyrics-container{max-height:34vh;padding:14px;border-radius:20px}
+  .lyrics-line{font:500 14px/20px 'Inter',sans-serif;padding:6px 8px}
+}
+</style>
 
 <!-- ===== QUEUE PANEL ===== -->
 <div class="queue-panel" id="queuePanel">
@@ -1102,6 +1118,7 @@ let selectedCoverDataURL=null,reportTrackId=null,contextTrackId=null;
 let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null;
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
+let currentLyricsMap=null;
 let deviceId=localStorage.getItem('mp_device_id')||('dev_'+Math.random().toString(36).slice(2)+'_'+Date.now());
 let deviceName=localStorage.getItem('mp_device_name')||((/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)?'Телефон':'Компьютер')+' • '+navigator.platform);
 let activeReceiverId=null,remoteControlUnsub=null,devicePresenceUnsub=null,suppressRemoteBroadcast=false,lastRemoteApplyTs=0,editTrackCoverData='';
@@ -1435,6 +1452,7 @@ async function analyzeLyricsForUpload(){
     });
     const result=await analyzeTrackLyricsWithAI({audioFile:selectedAudioFile,title,genre,musicAuthor,duration,seedLyrics});
     document.getElementById('uploadLyrics').value=(result.displayLyrics||result.detectedLyrics||seedLyrics||'[текст не распознан транскрибатором]').trim();
+    window.__lastUploadLyricsAnalysis=result;
     if(result.hasVocals && !result.uncertainTranscription){
       status.textContent='Готово: транскрипция получена'+(result.chorus?' • найден припев':'')+(result.transcript?' • слова распознаны':'');
       showSnackbar('Текст песни распознан');
@@ -1473,6 +1491,7 @@ async function analyzeLyricsForEdit(){
     if(!audioFile) throw new Error('no-audio');
     const result=await analyzeTrackLyricsWithAI({audioFile,title,genre,musicAuthor,duration:Number(track.duration||0),seedLyrics});
     document.getElementById('editTrackLyrics').value=(result.displayLyrics||result.detectedLyrics||seedLyrics||'[текст не распознан транскрибатором]').trim();
+    window.__lastEditLyricsAnalysis=result;
     if(result.hasVocals && !result.uncertainTranscription){
       status.textContent='Готово: транскрипция обновлена'+(result.chorus?' • найден припев':'')+(result.transcript?' • слова распознаны':'');
       showSnackbar('Текст трека обновлён');
@@ -1923,45 +1942,91 @@ function handleEditTrackCoverSelect(e){
 }
 async function saveTrackEdits(){
   if(!editTrackId||!currentUser)return;
-  const track=allTracks[editTrackId];if(!track||track.artistId!==currentUser.uid){showSnackbar('Нет доступа');return}
-  const title=document.getElementById('editTrackTitle').value.trim(),genre=document.getElementById('editTrackGenre').value.trim(),lyrics=document.getElementById('editTrackLyrics').value.trim(),musicAuthor=document.getElementById('editTrackMusicAuthor').value.trim();
-  let cover=(document.getElementById('editTrackCoverUrl').value||'').trim();if(editTrackCoverData)cover=editTrackCoverData;
-  if(!title){showSnackbar('Введите название');return}
-  if(!musicAuthor){showSnackbar('Укажите автора музыки');return}
-  const editAudioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
-  const moderation=await moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile:editAudioFile,artistName:track.artistName||currentUser.displayName||''});
-  const upd={
-    title,
-    genre:genre||'other',
-    lyrics:(moderation.displayLyrics||moderation.detectedLyrics||lyrics||'[инструментал]').trim(),
-    musicAuthor,
-    explicit:!!moderation.explicit,
-    cover:cover||'',
-    moderationMeta:{
-      ...(track.moderationMeta||{}),
-      transcript:moderation.transcript||track?.moderationMeta?.transcript||'',
-      hasVocals:!!moderation.hasVocals,
-      detectedLyrics:moderation.detectedLyrics||lyrics||'[инструментал]',
-      displayLyrics:moderation.displayLyrics||moderation.detectedLyrics||lyrics||'[инструментал]',
-      chorus:moderation.chorus||'',
-      songStructure:moderation.songStructure||[],
-      structureSummary:moderation.structureSummary||'',
-      copyrightPossible:!!moderation?.copyright?.possibleCopyright,
-      copyrightConfidence:Number(moderation?.copyright?.confidence||0),
-      copyrightReason:moderation?.copyright?.reason||'',
-      copyrightMatchedSource:moderation?.copyright?.matchedSource||'',
-      copyrightMatchedArtist:moderation?.copyright?.matchedArtist||''
-    }
-  };
+  const saveBtn=document.querySelector('#editTrackModal .btn-primary');
+  if(saveBtn) saveBtn.disabled=true;
   try{
+    const track=allTracks[editTrackId];
+    if(!track||track.artistId!==currentUser.uid){showSnackbar('Нет доступа');return}
+    const title=document.getElementById('editTrackTitle').value.trim();
+    const genre=document.getElementById('editTrackGenre').value.trim();
+    const lyrics=document.getElementById('editTrackLyrics').value.trim();
+    const musicAuthor=document.getElementById('editTrackMusicAuthor').value.trim();
+    let cover=(document.getElementById('editTrackCoverUrl').value||'').trim();
+    if(editTrackCoverData)cover=editTrackCoverData;
+    if(!title){showSnackbar('Введите название');return}
+    if(!musicAuthor){showSnackbar('Укажите автора музыки');return}
+
+    const fallbackDisplay=(lyrics||track.lyrics||track?.moderationMeta?.displayLyrics||track?.moderationMeta?.detectedLyrics||'[текст не распознан транскрибатором]').trim();
+    let moderation={
+      explicit:!!track.explicit,
+      transcript:track?.moderationMeta?.transcript||'',
+      hasVocals:!/^\[инструментал\]$/i.test(fallbackDisplay),
+      detectedLyrics:fallbackDisplay,
+      displayLyrics:fallbackDisplay,
+      chorus:track?.moderationMeta?.chorus||'',
+      songStructure:track?.moderationMeta?.songStructure||[],
+      structureSummary:track?.moderationMeta?.structureSummary||'',
+      copyright:track?.moderationMeta?.copyrightPossible?{
+        possibleCopyright:true,
+        confidence:Number(track?.moderationMeta?.copyrightConfidence||0),
+        reason:track?.moderationMeta?.copyrightReason||'',
+        matchedSource:track?.moderationMeta?.copyrightMatchedSource||'',
+        matchedArtist:track?.moderationMeta?.copyrightMatchedArtist||''
+      }:{possibleCopyright:false}
+    };
+
+    try{
+      const editAudioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
+      if(editAudioFile){
+        moderation=await moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile:editAudioFile,artistName:track.artistName||currentUser.displayName||''});
+      }
+    }catch(err){
+      console.warn('saveTrackEdits moderation fallback',err);
+    }
+
+    const safeLyrics=(moderation.displayLyrics||moderation.detectedLyrics||fallbackDisplay||'[текст не распознан транскрибатором]').trim();
+    const upd={
+      title,
+      genre:genre||'other',
+      lyrics:safeLyrics,
+      musicAuthor,
+      explicit:!!moderation.explicit,
+      cover:cover||'',
+      moderationMeta:{
+        ...(track.moderationMeta||{}),
+        transcript:moderation.transcript||track?.moderationMeta?.transcript||'',
+        hasVocals:moderation.hasVocals!==false,
+        detectedLyrics:moderation.detectedLyrics||safeLyrics,
+        displayLyrics:safeLyrics,
+        chorus:moderation.chorus||'',
+        songStructure:(moderation.songStructure&&moderation.songStructure.length?moderation.songStructure:(safeLyrics?[{type:'lyrics',label:(moderation.chorus?'Текст и припев':'Текст'),text:safeLyrics}]:[])),
+        structureSummary:moderation.structureSummary||'',
+        copyrightPossible:!!moderation?.copyright?.possibleCopyright,
+        copyrightConfidence:Number(moderation?.copyright?.confidence||0),
+        copyrightReason:moderation?.copyright?.reason||'',
+        copyrightMatchedSource:moderation?.copyright?.matchedSource||'',
+        copyrightMatchedArtist:moderation?.copyright?.matchedArtist||''
+      }
+    };
+
     await db.ref('tracks/'+editTrackId).update(upd);
     closeModal('editTrackModal');
     let msg='Трек обновлён';
-    if(!moderation.hasVocals) msg+=' • ИИ: инструментал';
-    else if(moderation.chorus) msg+=' • ИИ нашла припев';
+    if(upd.moderationMeta.chorus) msg+=' • найден припев';
     showSnackbar(msg);
+    if(currentTrackId===editTrackId && allTracks[editTrackId]){
+      allTracks[editTrackId]={...allTracks[editTrackId],...upd};
+      if(lyricsOpen) renderRealtimeLyrics(allTracks[editTrackId]);
+      loadAndPlay(allTracks[editTrackId]);
+    }
     editTrackId=null;editTrackCoverData='';
-  }catch(e){showSnackbar('Ошибка сохранения')}}
+  }catch(e){
+    console.error(e);
+    showSnackbar('Ошибка сохранения: '+(e?.message||'не удалось сохранить'));
+  }finally{
+    if(saveBtn) saveBtn.disabled=false;
+  }
+}
 
 function shareTrackById(tid){const t=allTracks[tid];if(!t)return;if(navigator.share){navigator.share({title:t.title,text:t.title+' — '+t.artistName,url:location.href}).catch(()=>{})}else{navigator.clipboard.writeText(t.title+' — '+t.artistName+' | MusicPlatforme').then(()=>showSnackbar('Скопировано'))}}
 function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,currentTrackId)}
@@ -2053,6 +2118,7 @@ function playTrackById(id){
 
 function loadAndPlay(track){
   showPlayer();
+  currentLyricsMap=null;
   document.getElementById('playerSong').textContent=track.title||'Без названия';
   document.getElementById('playerArtist').textContent=track.artistName||'Неизвестен';
   document.getElementById('playerExplicit').style.display=track.explicit?'inline-flex':'none';
@@ -2089,6 +2155,7 @@ audio.addEventListener('timeupdate',()=>{
   const ct=formatTime(audio.currentTime),tt=formatTime(audio.duration);
   document.getElementById('currentTime').textContent=ct;document.getElementById('totalTime').textContent=tt;
   document.getElementById('fsCurrentTime').textContent=ct;document.getElementById('fsTotalTime').textContent=tt;
+  if(lyricsOpen)updateRealtimeLyricsHighlight();
   if(audio.currentTime && Math.floor(audio.currentTime)%3===0)broadcastPlaybackState();
 });
 audio.addEventListener('progress',()=>{if(audio.buffered.length>0&&audio.duration){document.getElementById('progressBuffered').style.width=(audio.buffered.end(audio.buffered.length-1)/audio.duration*100)+'%'}});
@@ -2170,6 +2237,85 @@ initDrag(document.getElementById('volumeSlider'),v=>{volume=v;audio.volume=v;doc
 function toggleMute(){audio.muted=!audio.muted;updateVolumeIcon()}
 function updateVolumeIcon(){document.getElementById('volumeBtn').querySelector('.material-symbols-rounded').textContent=audio.muted||volume===0?'volume_off':volume<.5?'volume_down':'volume_up'}
 function formatTime(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return m+':'+(sec<10?'0':'')+sec}
+
+/* ===== LYRICS RENDERING ===== */
+function splitLyricsTextToLines(text=''){
+  return String(text||'').replace(/\r/g,'\n').split(/\n+/).map(v=>v.trim()).filter(Boolean);
+}
+function buildRealtimeLyricsMap(track){
+  if(!track) return {sections:[],lines:[],duration:0};
+  const duration=Number(track.duration||audio.duration||0)||0;
+  const meta=track.moderationMeta||{};
+  let sections=Array.isArray(meta.songStructure)&&meta.songStructure.length
+    ? meta.songStructure.map((s,i)=>({
+        type:String(s?.type||'section'),
+        label:String(s?.label||s?.type||('Секция '+(i+1))),
+        text:String(s?.text||'').trim()
+      })).filter(s=>s.text)
+    : [];
+  if(!sections.length){
+    const fallbackText=String(meta.displayLyrics||track.lyrics||meta.detectedLyrics||'[текст не распознан транскрибатором]').trim();
+    sections=[{type:/инструментал/i.test(fallbackText)?'instrumental':'lyrics',label:/инструментал/i.test(fallbackText)?'Инструментал':'Текст',text:fallbackText}];
+  }
+  const flatLines=[];
+  sections.forEach((section,sectionIndex)=>{
+    const rawLines=splitLyricsTextToLines(section.text);
+    if(!rawLines.length) rawLines.push(section.text||'');
+    rawLines.forEach((line,lineIndex)=>flatLines.push({
+      text:line,
+      sectionIndex,
+      lineIndex,
+      isChorus:/припев|chorus/i.test(section.label)||/chorus/i.test(section.type)
+    }));
+  });
+  const count=Math.max(flatLines.length,1);
+  flatLines.forEach((line,idx)=>{
+    line.start=(duration>0?(duration/count)*idx:idx*3);
+    line.end=(duration>0?(duration/count)*(idx+1):((idx+1)*3));
+  });
+  return {sections,lines:flatLines,duration};
+}
+function renderRealtimeLyrics(track){
+  const el=document.getElementById('fsLyrics');
+  if(!el) return;
+  currentLyricsMap=buildRealtimeLyricsMap(track);
+  const html=['<div class="lyrics-block">'];
+  currentLyricsMap.sections.forEach((section,sectionIndex)=>{
+    const chip=/припев|chorus/i.test(section.label||section.type)?'<div class="lyrics-inline-chip"><span class="material-symbols-rounded" style="font-size:14px">favorite</span> Припев</div>':'';
+    html.push('<div class="lyrics-section" data-section="'+sectionIndex+'">');
+    html.push('<div class="lyrics-section-label">'+esc(section.label||('Секция '+(sectionIndex+1)))+'</div>');
+    if(chip) html.push(chip);
+    const lines=currentLyricsMap.lines.filter(l=>l.sectionIndex===sectionIndex);
+    lines.forEach((line,localIndex)=>{
+      html.push('<div class="lyrics-line '+(line.isChorus?'chorus':'')+'" data-line-index="'+currentLyricsMap.lines.indexOf(line)+'" data-start="'+line.start+'" data-end="'+line.end+'">'+esc(line.text||'')+'</div>');
+    });
+    html.push('</div>');
+  });
+  html.push('</div>');
+  el.innerHTML=html.join('');
+  updateRealtimeLyricsHighlight();
+}
+function updateRealtimeLyricsHighlight(){
+  const el=document.getElementById('fsLyrics');
+  if(!lyricsOpen||!el||!currentLyricsMap||!currentLyricsMap.lines?.length) return;
+  const time=Number(audio.currentTime||0);
+  let activeIndex=currentLyricsMap.lines.findIndex(line=>time>=line.start&&time<line.end);
+  if(activeIndex===-1){
+    activeIndex=currentLyricsMap.lines.reduce((best,line,idx)=>Math.abs((line.start||0)-time)<Math.abs((currentLyricsMap.lines[best]?.start||0)-time)?idx:best,0);
+  }
+  el.querySelectorAll('.lyrics-line').forEach((node,idx)=>{
+    node.classList.toggle('active',idx===activeIndex);
+    node.classList.toggle('past',idx<activeIndex);
+  });
+  const activeNode=el.querySelector('.lyrics-line.active');
+  if(activeNode){
+    const containerRect=el.getBoundingClientRect();
+    const activeRect=activeNode.getBoundingClientRect();
+    if(activeRect.top<containerRect.top+40||activeRect.bottom>containerRect.bottom-40){
+      activeNode.scrollIntoView({block:'center',behavior:'smooth'});
+    }
+  }
+}
 
 /* ===== WEB AUDIO FX ===== */
 function ensureAudioGraph(){
@@ -2318,10 +2464,11 @@ function toggleLyrics(){
   lyricsOpen=!lyricsOpen;const el=document.getElementById('fsLyrics');
   if(lyricsOpen){
     const t=allTracks[currentTrackId];
-    const text=(t?.moderationMeta?.displayLyrics||t?.lyrics||t?.moderationMeta?.detectedLyrics||'').trim()||'[инструментал]';
     el.style.display='block';
-    el.textContent=text;
-  }else el.style.display='none';
+    renderRealtimeLyrics(t);
+  }else{
+    el.style.display='none';
+  }
 }
 
 /* ===== QUEUE ===== */
