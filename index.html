@@ -693,7 +693,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
       <label class="modal-label">Текст песни (необязательно)</label>
       <textarea class="md-input" id="uploadLyrics" placeholder="Вставьте текст песни..." rows="4" style="border-radius:var(--md-shape-md);margin-bottom:10px;resize:vertical"></textarea>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px">
-        <button class="btn-tonal" type="button" id="analyzeUploadLyricsBtn" onclick="analyzeLyricsForUpload()"><span class="material-symbols-rounded">graphic_eq</span> Нейросеть: найти слова и припев</button>
+        <button class="btn-tonal" type="button" id="analyzeUploadLyricsBtn" onclick="analyzeLyricsForUpload()"><span class="material-symbols-rounded">lyrics</span> Транскрибировать текст и припев</button>
         <button class="btn-text" type="button" onclick="document.getElementById('uploadLyrics').value='';document.getElementById('uploadAiLyricsStatus').textContent=''"><span class="material-symbols-rounded">ink_eraser</span> Очистить текст</button>
       </div>
       <div id="uploadAiLyricsStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin:-8px 0 16px"></div>
@@ -1006,7 +1006,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
       <label class="modal-label">Текст песни</label>
       <textarea class="md-input" id="editTrackLyrics" placeholder="Текст песни..." rows="5" style="resize:vertical;margin-bottom:10px"></textarea>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-        <button class="btn-tonal" type="button" id="analyzeEditLyricsBtn" onclick="analyzeLyricsForEdit()"><span class="material-symbols-rounded">graphic_eq</span> Нейросеть: найти слова и припев</button>
+        <button class="btn-tonal" type="button" id="analyzeEditLyricsBtn" onclick="analyzeLyricsForEdit()"><span class="material-symbols-rounded">lyrics</span> Транскрибировать текст и припев</button>
         <button class="btn-text" type="button" onclick="document.getElementById('editTrackLyrics').value='';document.getElementById('editAiLyricsStatus').textContent=''"><span class="material-symbols-rounded">ink_eraser</span> Очистить текст</button>
       </div>
       <div id="editAiLyricsStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant)"></div>
@@ -1315,25 +1315,43 @@ async function moderateTrackWithAI({title='',lyrics='',genre='',duration=0,fileN
 }
 
 async function analyzeTrackLyricsWithAI({audioFile=null,title='',genre='',musicAuthor='',duration=0,seedLyrics=''}){
-  const transcript=audioFile?await transcribeAudioWithPollinations(audioFile):'';
-  const fallback=fallbackSongStructure({lyrics:seedLyrics,transcript});
+  const transcript=(audioFile?await transcribeAudioWithPollinations(audioFile):'').trim();
+  const transcriptLetters=transcript.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'');
+  const hasTranscriptVocals=transcriptLetters.length>=8;
+
+  if(!hasTranscriptVocals){
+    return {
+      transcript: transcript,
+      hasVocals: false,
+      chorus: '',
+      songStructure: [{type:'instrumental',label:'Инструментал',text:'[инструментал]'}],
+      structureSummary: 'Транскрибатор не нашёл различимых слов',
+      displayLyrics: '[инструментал]',
+      detectedLyrics: '[инструментал]'
+    };
+  }
+
+  const fallback=fallbackSongStructure({lyrics:transcript,transcript});
   let structure=fallback;
   try{
-    structure=await analyzeSongStructureWithPollinations({title,lyrics:seedLyrics,genre,duration,musicAuthor,transcript});
+    structure=await analyzeSongStructureWithPollinations({title,lyrics:transcript,genre,duration,musicAuthor,transcript});
   }catch(e){
     structure=fallback;
   }
-  const finalHasVocals=!!structure?.hasVocals;
-  const finalTranscript=(transcript||seedLyrics||'').trim();
-  const finalDisplay=(structure?.displayLyrics||structure?.normalizedLyrics||fallback.displayLyrics||'[инструментал]').trim()||'[инструментал]';
+
+  const finalHasVocals=true;
+  const finalTranscript=transcript;
+  const finalDetected=(structure?.normalizedLyrics||transcript||seedLyrics||'').trim()||transcript;
+  const finalDisplay=(structure?.displayLyrics||buildLyricsDisplayFromSections(structure?.sections||[],finalDetected)||finalDetected).trim()||finalDetected;
+
   return {
     transcript: finalTranscript,
     hasVocals: finalHasVocals,
     chorus: structure?.chorus||fallback.chorus||'',
-    songStructure: structure?.sections||fallback.sections||[],
-    structureSummary: structure?.summary||fallback.summary||'',
-    displayLyrics: finalHasVocals ? finalDisplay : '[инструментал]',
-    detectedLyrics: finalHasVocals ? ((structure?.normalizedLyrics||finalTranscript||seedLyrics||'').trim()||'[инструментал]') : '[инструментал]'
+    songStructure: (structure?.sections&&structure.sections.length?structure.sections:fallback.sections)||[{type:'lyrics',label:'Текст',text:finalDetected}],
+    structureSummary: structure?.summary||fallback.summary||'Транскрипция получена',
+    displayLyrics: finalDisplay,
+    detectedLyrics: finalDetected
   };
 }
 
@@ -1347,7 +1365,7 @@ async function analyzeLyricsForUpload(){
   const musicAuthor=document.getElementById('uploadMusicAuthor').value.trim();
   const seedLyrics=document.getElementById('uploadLyrics').value.trim();
   btn.disabled=true;
-  status.textContent='Нейросеть слушает трек и пытается найти слова, припев и структуру...';
+  status.textContent='Транскрибатор слушает трек и распознаёт слова...';
   try{
     const duration=await new Promise(resolve=>{
       const src=selectedAudioDataURL || URL.createObjectURL(selectedAudioFile);
@@ -1357,13 +1375,13 @@ async function analyzeLyricsForUpload(){
     });
     const result=await analyzeTrackLyricsWithAI({audioFile:selectedAudioFile,title,genre,musicAuthor,duration,seedLyrics});
     document.getElementById('uploadLyrics').value=(result.displayLyrics||result.detectedLyrics||'[инструментал]').trim();
-    status.textContent=result.hasVocals ? ('Готово: текст распознан'+(result.chorus?' • найден припев':'')+(result.transcript?' • есть расшифровка':'') ) : 'Готово: ИИ определила, что это инструментал.';
-    showSnackbar(result.hasVocals ? 'Текст и структура песни найдены' : 'ИИ определила: [инструментал]');
+    status.textContent=result.hasVocals ? ('Готово: транскрипция получена'+(result.chorus?' • найден припев':'')+(result.transcript?' • слова распознаны':'') ) : 'Готово: транскрибатор не нашёл слов, отмечено как [инструментал].';
+    showSnackbar(result.hasVocals ? 'Текст песни распознан' : 'Транскрибатор определил: [инструментал]');
   }catch(e){
-    status.textContent='Не удалось получить ответ модели. Использована fallback-расшифровка.';
+    status.textContent='Ошибка транскрибации. Использован запасной текст.';
     const fallbackText=(await transcribeAudioWithPollinations(selectedAudioFile)) || seedLyrics || '[инструментал]';
     document.getElementById('uploadLyrics').value=fallbackText.trim()||'[инструментал]';
-    showSnackbar('Использована fallback-расшифровка');
+    showSnackbar('Использована запасная транскрипция');
   }finally{
     btn.disabled=false;
   }
@@ -1380,19 +1398,19 @@ async function analyzeLyricsForEdit(){
   const musicAuthor=document.getElementById('editTrackMusicAuthor').value.trim() || track.musicAuthor || '';
   const seedLyrics=document.getElementById('editTrackLyrics').value.trim();
   btn.disabled=true;
-  status.textContent='Нейросеть переслушивает трек и собирает слова/припев...';
+  status.textContent='Транскрибатор переслушивает трек и распознаёт слова...';
   try{
     const audioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
     if(!audioFile) throw new Error('no-audio');
     const result=await analyzeTrackLyricsWithAI({audioFile,title,genre,musicAuthor,duration:Number(track.duration||0),seedLyrics});
     document.getElementById('editTrackLyrics').value=(result.displayLyrics||result.detectedLyrics||'[инструментал]').trim();
-    status.textContent=result.hasVocals ? ('Готово: текст обновлён'+(result.chorus?' • найден припев':'')+(result.transcript?' • есть расшифровка':'') ) : 'Готово: ИИ определила, что это инструментал.';
-    showSnackbar(result.hasVocals ? 'Текст трека обновлён ИИ' : 'ИИ определила: [инструментал]');
+    status.textContent=result.hasVocals ? ('Готово: транскрипция обновлена'+(result.chorus?' • найден припев':'')+(result.transcript?' • слова распознаны':'') ) : 'Готово: транскрибатор не нашёл слов, отмечено как [инструментал].';
+    showSnackbar(result.hasVocals ? 'Текст трека обновлён' : 'Транскрибатор определил: [инструментал]');
   }catch(e){
     const trackTranscript=(track?.moderationMeta?.transcript||'').trim();
     document.getElementById('editTrackLyrics').value=trackTranscript || seedLyrics || '[инструментал]';
-    status.textContent='Модель не ответила. Подставлена fallback-расшифровка из аудио/метаданных.';
-    showSnackbar('Использована fallback-расшифровка');
+    status.textContent='Ошибка транскрибации. Подставлена сохранённая расшифровка.';
+    showSnackbar('Использована сохранённая транскрипция');
   }finally{
     btn.disabled=false;
   }
