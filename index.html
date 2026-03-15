@@ -411,10 +411,12 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--md-shape-full);font:500 11px/16px 'Inter',sans-serif;background:var(--md-primary-container);color:var(--md-on-primary-container)}
 
 /* ===== TOGGLE SWITCH ===== */
-.toggle{position:relative;width:52px;height:32px;border-radius:16px;background:var(--md-outline);cursor:pointer;transition:background .3s;flex-shrink:0}
+.toggle{position:relative;width:52px;height:32px;border-radius:16px;background:var(--md-outline);cursor:pointer;transition:background .3s,opacity .2s,filter .2s;flex-shrink:0}
 .toggle.on{background:var(--md-primary)}
 .toggle::after{content:'';position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:white;transition:transform .3s cubic-bezier(.2,0,0,1);box-shadow:var(--md-elevation-1)}
 .toggle.on::after{transform:translateX(20px)}
+.toggle.disabled{opacity:.45;filter:grayscale(.2);cursor:not-allowed;pointer-events:none}
+.toggle.disabled::after{box-shadow:none}
 
 /* ===== TOOLTIP ===== */
 [data-tooltip]{position:relative}
@@ -692,9 +694,16 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
       <input class="md-input" id="uploadMusicAuthor" placeholder="Например: Иван Иванов, DJ Example, Original Artist" style="border-radius:var(--md-shape-md);margin-bottom:16px">
       <label class="modal-label">Текст песни (необязательно)</label>
       <textarea class="md-input" id="uploadLyrics" placeholder="Вставьте текст песни..." rows="4" style="border-radius:var(--md-shape-md);margin-bottom:10px;resize:vertical"></textarea>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
         <button class="btn-tonal" type="button" id="analyzeUploadLyricsBtn" onclick="analyzeLyricsForUpload()"><span class="material-symbols-rounded">lyrics</span> Транскрибировать текст и припев</button>
         <button class="btn-text" type="button" onclick="document.getElementById('uploadLyrics').value='';document.getElementById('uploadAiLyricsStatus').textContent=''"><span class="material-symbols-rounded">ink_eraser</span> Очистить текст</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin:0 0 16px;padding:12px 14px;border:1px solid var(--md-outline-variant);border-radius:16px;background:var(--md-surface-container-low)">
+        <div class="toggle" id="uploadExplicitToggle" onclick="toggleUploadExplicit()"></div>
+        <div style="min-width:0">
+          <div style="font:600 13px/18px 'Inter',sans-serif;color:var(--md-on-surface)">Поставить пометку ! вручную</div>
+          <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant)">Если вы знаете, что в треке есть мат, взрослые темы или жёсткий контент</div>
+        </div>
       </div>
       <div id="uploadAiLyricsStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin:-8px 0 16px"></div>
       <div id="uploadProgress" style="display:none;margin-bottom:16px">
@@ -891,24 +900,20 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .lyrics-section{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px dashed var(--md-outline-variant)}
 .lyrics-section:last-child{border-bottom:none}
 .lyrics-section-label{font:700 12px/16px 'Inter',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--md-primary)}
-.lyrics-line{padding:8px 10px;border-radius:16px;transition:background .22s cubic-bezier(.2,0,0,1),transform .22s cubic-bezier(.2,0,0,1),opacity .22s cubic-bezier(.2,0,0,1);white-space:normal;word-break:break-word;line-height:1.7}
+.lyrics-line{padding:8px 10px;border-radius:16px;transition:background .22s cubic-bezier(.2,0,0,1),transform .22s cubic-bezier(.2,0,0,1),opacity .22s cubic-bezier(.2,0,0,1);white-space:normal;word-break:break-word;line-height:1.7;font:500 18px/1.75 'Inter',sans-serif;color:var(--md-on-surface)}
 .lyrics-line:hover{background:color-mix(in srgb,var(--md-surface-container-highest) 70%, transparent)}
 .lyrics-line.active{background:color-mix(in srgb,var(--md-primary-container) 84%, transparent);transform:translateX(4px)}
 .lyrics-line.past{opacity:.9}
 .lyrics-line.chorus{font-weight:700}
-.lyrics-line-inner{display:block;font:600 18px/1.75 'Inter',sans-serif;letter-spacing:-.01em}
-.lyrics-word{display:inline-block;vertical-align:baseline;position:relative;margin-right:.04em;background:linear-gradient(90deg,var(--md-primary) calc(var(--word-progress,0)*100%),var(--md-on-surface-variant) 0);-webkit-background-clip:text;background-clip:text;color:transparent;transition:transform .12s linear,filter .12s linear;will-change:transform,filter}
-.lyrics-line.active .lyrics-word{filter:drop-shadow(0 1px 0 rgba(0,0,0,.02))}
-.lyrics-word.active{transform:scale(1.045)}
-.lyrics-word.done{--word-progress:1}
-.lyrics-line.past .lyrics-word{--word-progress:1;background:linear-gradient(90deg,var(--md-on-surface) 100%,var(--md-on-surface) 0);-webkit-background-clip:text;background-clip:text}
-.lyrics-space{white-space:pre;color:transparent;user-select:none}
+.lyrics-line-inner{display:block;font:inherit;letter-spacing:-.01em;color:inherit}
+.lyrics-word,.lyrics-space{display:inline;position:static;margin:0;background:none!important;-webkit-background-clip:border-box;background-clip:border-box;color:inherit!important;filter:none!important;transform:none!important;transition:none!important;white-space:pre-wrap}
+.lyrics-word.active,.lyrics-word.done{color:inherit!important}
 .lyrics-inline-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;background:var(--md-secondary-container);color:var(--md-on-secondary-container);font:600 11px/14px 'Inter',sans-serif;margin-bottom:6px;width:max-content}
 .lyrics-inline-chip.marker{background:var(--md-tertiary-container);color:var(--md-on-tertiary-container,var(--md-on-surface))}
 @media (max-width:640px){
   .lyrics-container{max-height:38vh;padding:14px;border-radius:20px}
-  .lyrics-line{padding:7px 8px}
-  .lyrics-line-inner{font:600 16px/1.72 'Inter',sans-serif}
+  .lyrics-line{padding:7px 8px;font:500 16px/1.72 'Inter',sans-serif}
+  .lyrics-line-inner{font:inherit}
 }
 </style>
 
@@ -1035,6 +1040,13 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
         <button class="btn-tonal" type="button" id="analyzeEditLyricsBtn" onclick="analyzeLyricsForEdit()"><span class="material-symbols-rounded">lyrics</span> Транскрибировать текст и припев</button>
         <button class="btn-text" type="button" onclick="document.getElementById('editTrackLyrics').value='';document.getElementById('editAiLyricsStatus').textContent=''"><span class="material-symbols-rounded">ink_eraser</span> Очистить текст</button>
       </div>
+      <div style="display:flex;align-items:center;gap:12px;margin:0 0 10px;padding:12px 14px;border:1px solid var(--md-outline-variant);border-radius:16px;background:var(--md-surface-container-low)">
+        <div class="toggle" id="editExplicitToggle" onclick="toggleEditExplicit()"></div>
+        <div style="min-width:0">
+          <div style="font:600 13px/18px 'Inter',sans-serif;color:var(--md-on-surface)">Поставить пометку ! вручную</div>
+          <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant)">Можно вручную отметить explicit-контент</div>
+        </div>
+      </div>
       <div id="editAiLyricsStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant)"></div>
     </div>
   </div>
@@ -1046,6 +1058,25 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
   <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:16px">Если вы вошли в тот же аккаунт на другом устройстве в сети, можно передавать воспроизведение туда и управлять им как в музыкальных сервисах.</p>
   <div id="devicesModalList" class="device-list"></div>
   <div class="modal-actions" style="margin-top:16px"><button class="btn-outlined" onclick="closeModal('devicesModal')">Закрыть</button></div>
+</div></div>
+
+<div class="modal-overlay" id="partyModeModal"><div class="modal" style="max-width:720px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <button class="btn-icon" onclick="closeModal('partyModeModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0">Режим вечеринки</div>
+  </div>
+  <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:16px">Синхронное воспроизведение одного трека до 8 устройств рядом. Не требует входа в один аккаунт: устройства видят общую nearby-вечеринку и могут присоединиться по коду.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    <button class="btn-primary" onclick="startPartyMode()"><span class="material-symbols-rounded">celebration</span> Создать вечеринку</button>
+    <button class="btn-tonal" onclick="joinPartyPrompt()"><span class="material-symbols-rounded">group_add</span> Присоединиться по коду</button>
+    <button class="btn-outlined" onclick="refreshPartyDevices()"><span class="material-symbols-rounded">refresh</span> Обновить</button>
+  </div>
+  <div id="partyModeStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:12px">Поблизости будут отображаться совместимые устройства и комнаты.</div>
+  <div id="partyModeList" class="device-list"></div>
+  <div class="modal-actions" style="margin-top:16px">
+    <button class="btn-outlined" onclick="leavePartyMode()">Покинуть</button>
+    <button class="btn-primary" onclick="closeModal('partyModeModal')">Готово</button>
+  </div>
 </div></div>
 
 <div class="modal-overlay" id="audioEffectsModal"><div class="modal" style="max-width:760px">
@@ -1128,6 +1159,7 @@ let selectedCoverDataURL=null,reportTrackId=null,contextTrackId=null;
 let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null;
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
+let uploadExplicitManual=false,editExplicitManual=false,editExplicitLockedByAI=false;
 let currentLyricsMap=null;
 let deviceId=localStorage.getItem('mp_device_id')||('dev_'+Math.random().toString(36).slice(2)+'_'+Date.now());
 let deviceName=localStorage.getItem('mp_device_name')||((/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)?'Телефон':'Компьютер')+' • '+navigator.platform);
@@ -1277,14 +1309,14 @@ function fallbackSongStructure({lyrics='',transcript=''}){
 async function analyzeAudioSafetyWithPollinations({title='',lyrics='',genre='',duration=0,fileName='',musicAuthor='',transcript=''}){
   const localExplicit=checkExplicit(title)||checkExplicit(lyrics)||checkExplicit(fileName)||checkExplicit(transcript);
   const messages=[
-    {role:'system',content:'Ты модератор музыкальной платформы для детей и подростков. Проанализируй название, текст песни, расшифровку аудио и метаданные. Ответь только JSON без пояснений. Формат: {"explicit": boolean, "lowQuality": boolean, "reason": string, "confidence": number, "detectedLyrics": string}. explicit=true если есть мат, сексуальный контент, жестокость, наркотики, токсичные оскорбления или другой неприятный детям контент. lowQuality=true если это мусор, шум, бессмысленная нарезка или очень слабый спам-контент. detectedLyrics — короткая очищенная версия услышанных слов песни, если удалось распознать.'},
+    {role:'system',content:'Ты модератор музыкальной платформы для детей и подростков. Тебе дали название трека, текст, расшифровку слов, жанр, длительность и автора музыки. Ответь только JSON без пояснений. Формат: {"explicit": boolean, "lowQuality": boolean, "reason": string, "confidence": number, "detectedLyrics": string}. explicit=true если в тексте есть мат, сексуальные темы, жесть, наркотики, токсичные оскорбления или другой неприятный детям контент. lowQuality=true если это спам, мусор, бессмысленная нарезка или фейковый трек. Ничего не выдумывай сверх текста.'},
     {role:'user',content:JSON.stringify({title,lyrics,genre,duration,fileName,musicAuthor,transcript})}
   ];
   try{
     const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
-      body:JSON.stringify({model:'openai-audio',messages,response_format:{type:'json_object'},temperature:0})
+      body:JSON.stringify({model:'openai-fast',messages,response_format:{type:'json_object'},temperature:0})
     });
     if(!res.ok) throw new Error('audio-safety-failed');
     const json=await res.json();
@@ -1306,14 +1338,14 @@ async function analyzeSongStructureWithPollinations({title='',lyrics='',genre=''
   const rawText=String(lyrics||transcript||'').trim();
   if(!rawText||rawText.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'').length<10) return fallbackSongStructure({lyrics,transcript});
   const messages=[
-    {role:'system',content:'Ты анализируешь песню по распознанным словам из аудио. Ответь только JSON без пояснений. Формат: {"hasVocals": boolean, "normalizedLyrics": string, "chorus": string, "sections": [{"type": string, "label": string, "text": string}], "summary": string}. Найди слова песни, припев, куплеты, бридж, интро/аутро если они различимы. Если вокала или слов практически нет, верни hasVocals=false, normalizedLyrics="[инструментал]", sections=[{"type":"instrumental","label":"Инструментал","text":"[инструментал]"}]. Не выдумывай текст, которого нет в распознанных словах.'},
+    {role:'system',content:'Ты анализируешь уже готовую транскрипцию песни. Ответь только JSON без пояснений. Формат: {"hasVocals": boolean, "normalizedLyrics": string, "chorus": string, "sections": [{"type": string, "label": string, "text": string}], "summary": string}. Найди припев, куплеты, бридж, интро/аутро если они различимы. Не выдумывай строки, которых нет в тексте. Если текст слабый, просто структурируй то, что есть.'},
     {role:'user',content:JSON.stringify({title,lyrics,genre,duration,musicAuthor,transcript:rawText})}
   ];
   try{
     const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
-      body:JSON.stringify({model:'openai-audio',messages,response_format:{type:'json_object'},temperature:0})
+      body:JSON.stringify({model:'openai-fast',messages,response_format:{type:'json_object'},temperature:0})
     });
     if(!res.ok) throw new Error('structure-analysis-failed');
     const json=await res.json();
@@ -1321,17 +1353,17 @@ async function analyzeSongStructureWithPollinations({title='',lyrics='',genre=''
     let parsed={};
     try{parsed=JSON.parse(content)}catch(e){parsed={}}
     const normalizedLyrics=String(parsed.normalizedLyrics||rawText||'').trim();
-    const hasVocals=parsed.hasVocals!==false && normalizedLyrics.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'').length>=10;
+    const hasVocals=normalizedLyrics.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'').length>=10;
     const sections=Array.isArray(parsed.sections)?parsed.sections.filter(s=>s&&String(s.text||'').trim()).map(s=>({type:String(s.type||'section'),label:String(s.label||s.type||'Секция').trim(),text:String(s.text||'').trim()})):[];
-    const safeNormalized=hasVocals?(normalizedLyrics||rawText):'[инструментал]';
-    const safeSections=hasVocals?(sections.length?sections:[{type:'lyrics',label:'Текст',text:safeNormalized}]):[{type:'instrumental',label:'Инструментал',text:'[инструментал]'}];
+    const safeNormalized=hasVocals?(normalizedLyrics||rawText):(rawText||'[текст не распознан транскрибатором]');
+    const safeSections=sections.length?sections:[{type:'lyrics',label:'Текст',text:safeNormalized}];
     return {
       hasVocals,
       normalizedLyrics:safeNormalized,
       chorus:hasVocals?String(parsed.chorus||'').trim():'',
       sections:safeSections,
       displayLyrics:buildLyricsDisplayFromSections(safeSections,safeNormalized),
-      summary:String(parsed.summary||'').trim()||(hasVocals?'Найдены слова и структура песни':'Инструментальный трек')
+      summary:String(parsed.summary||'').trim()||(hasVocals?'Найдены слова и структура песни':'Текст распознан частично')
     };
   }catch(e){
     return fallbackSongStructure({lyrics,transcript});
@@ -1506,6 +1538,40 @@ async function analyzeLyricsForUpload(){
   }finally{
     btn.disabled=false;
   }
+}
+
+function updateUploadExplicitUI(){
+  const toggle=document.getElementById('uploadExplicitToggle');
+  if(!toggle)return;
+  toggle.classList.toggle('on',!!uploadExplicitManual);
+  toggle.classList.remove('disabled');
+}
+function toggleUploadExplicit(){
+  uploadExplicitManual=!uploadExplicitManual;
+  updateUploadExplicitUI();
+}
+function updateEditExplicitUI(){
+  const toggle=document.getElementById('editExplicitToggle');
+  const titleNode=toggle?.nextElementSibling?.querySelector('div:first-child');
+  const subNode=toggle?.nextElementSibling?.querySelector('div:last-child');
+  if(!toggle)return;
+  toggle.classList.toggle('on',!!(editExplicitManual||editExplicitLockedByAI));
+  toggle.classList.toggle('disabled',!!editExplicitLockedByAI);
+  if(titleNode){
+    titleNode.style.color=editExplicitLockedByAI?'var(--md-on-surface-variant)':'var(--md-on-surface)';
+    titleNode.textContent=editExplicitLockedByAI?'Пометка ! поставлена автоматически':'Поставить пометку ! вручную';
+  }
+  if(subNode){
+    subNode.style.color='var(--md-on-surface-variant)';
+    subNode.textContent=editExplicitLockedByAI
+      ? 'Эту пометку поставила модерация — выключить вручную нельзя'
+      : 'Можно вручную отметить explicit-контент';
+  }
+}
+function toggleEditExplicit(){
+  if(editExplicitLockedByAI){showSnackbar('Эта пометка поставлена модерацией и не отключается вручную');return}
+  editExplicitManual=!editExplicitManual;
+  updateEditExplicitUI();
 }
 
 async function analyzeLyricsForEdit(){
@@ -2008,6 +2074,9 @@ function openEditTrack(tid){
   document.getElementById('editTrackCoverUrl').value=t.cover||'';
   document.getElementById('editAiLyricsStatus').textContent='';
   editTrackCoverData='';
+  editExplicitLockedByAI=!!(t.explicit && !t.userForcedExplicit);
+  editExplicitManual=!!t.userForcedExplicit;
+  updateEditExplicitUI();
   document.getElementById('editTrackCoverPreview').innerHTML=t.cover?'<img src="'+t.cover+'" alt="">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">music_note</span>';
   document.getElementById('editTrackModal').classList.add('open');
 }
@@ -2065,12 +2134,14 @@ async function saveTrackEdits(){
     }
 
     const safeLyrics=(moderation.displayLyrics||moderation.detectedLyrics||fallbackDisplay||'[текст не распознан транскрибатором]').trim();
+    const finalExplicit=editExplicitLockedByAI ? true : !!(moderation.explicit || editExplicitManual);
     const upd={
       title,
       genre:genre||'other',
       lyrics:safeLyrics,
       musicAuthor,
-      explicit:!!moderation.explicit,
+      explicit:finalExplicit,
+      userForcedExplicit:!editExplicitLockedByAI && !!editExplicitManual,
       cover:cover||'',
       moderationMeta:{
         ...(track.moderationMeta||{}),
@@ -2863,19 +2934,20 @@ async function publishTrack(){
     const trackRef=db.ref('tracks').push();
     const trackId=trackRef.key;
 
-    await trackRef.set({
-      title,
-      genre:genre||'other',
-      cover,
-      lyrics:quickLyrics,
-      musicAuthor,
-      artistId:currentUser.uid,
-      artistName:currentUser.displayName||'Неизвестен',
-      artistPhoto:currentUser.photo||'',
-      audioData:publishAudioDataURL,
-      duration:Math.round(duration),
-      explicit:quickExplicit,
-      likes:0,
+      await trackRef.set({
+        title,
+        genre:genre||'other',
+        cover,
+        lyrics:quickLyrics,
+        musicAuthor,
+        artistId:currentUser.uid,
+        artistName:currentUser.displayName||'Неизвестен',
+        artistPhoto:currentUser.photo||'',
+        audioData:publishAudioDataURL,
+        duration:Math.round(duration),
+        explicit:!!(quickExplicit||uploadExplicitManual),
+        userForcedExplicit:!!uploadExplicitManual,
+        likes:0,
       plays:0,
       timestamp:Date.now(),
       moderated:false,
@@ -2902,11 +2974,13 @@ async function publishTrack(){
     pb.style.width='100%';
     st.textContent='Опубликован!';
 
-    document.getElementById('uploadTitle').value='';
-    document.getElementById('uploadGenre').value='';
-    document.getElementById('uploadCover').value='';
-    document.getElementById('uploadLyrics').value='';
-    document.getElementById('uploadMusicAuthor').value='';
+      document.getElementById('uploadTitle').value='';
+      document.getElementById('uploadGenre').value='';
+      document.getElementById('uploadCover').value='';
+      document.getElementById('uploadLyrics').value='';
+      document.getElementById('uploadMusicAuthor').value='';
+      uploadExplicitManual=false;
+      updateUploadExplicitUI();
     document.getElementById('uploadAiLyricsStatus').textContent='';
     document.getElementById('uploadCustomGenre').value='';
     document.getElementById('uploadCustomGenre').style.display='none';
@@ -2945,7 +3019,8 @@ async function publishTrack(){
         const finalLyrics=(moderation.displayLyrics||moderation.detectedLyrics||quickLyrics||'[текст не распознан транскрибатором]').trim();
         await db.ref('tracks/'+trackId).update({
           lyrics:finalLyrics,
-          explicit:!!moderation.explicit,
+          explicit:!!(moderation.explicit || uploadExplicitManual),
+          userForcedExplicit:!!uploadExplicitManual,
           moderated:true,
           moderationMeta:{
             transcript:moderation.transcript||'',
@@ -3059,6 +3134,8 @@ document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.id
 /* ===== INIT ===== */
 restoreSession();
 updateUserMenu();
+updateUploadExplicitUI();
+updateEditExplicitUI();
 if(typeof updateFxSummary==='function') updateFxSummary();
 </script>
 </body>
