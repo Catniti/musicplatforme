@@ -2128,6 +2128,23 @@ function handleEditTrackCoverSelect(e){
   if(f.size>2*1024*1024){showSnackbar('Обложка макс. 2 МБ');return}
   const r=new FileReader();r.onload=ev=>{editTrackCoverData=ev.target.result;document.getElementById('editTrackCoverUrl').value='';document.getElementById('editTrackCoverPreview').innerHTML='<img src="'+editTrackCoverData+'" alt="">'};r.readAsDataURL(f);
 }
+function sanitizeFirebaseValue(value){
+  if(value===undefined) return null;
+  if(value===null) return null;
+  if(Array.isArray(value)){
+    return value.map(item=>sanitizeFirebaseValue(item)).filter(item=>item!==undefined);
+  }
+  if(typeof value==='object'){
+    const out={};
+    Object.keys(value).forEach(key=>{
+      const cleaned=sanitizeFirebaseValue(value[key]);
+      if(cleaned!==undefined) out[key]=cleaned;
+    });
+    return out;
+  }
+  return value;
+}
+
 async function saveTrackEdits(){
   if(!editTrackId||!currentUser)return;
   const saveBtn=document.querySelector('#editTrackModal .btn-primary');
@@ -2182,7 +2199,7 @@ async function saveTrackEdits(){
 
     const safeLyrics=(moderation.displayLyrics||moderation.detectedLyrics||fallbackDisplay||'[текст не распознан транскрибатором]').trim();
     const finalExplicit=editExplicitLockedByAI ? true : !!(moderation.explicit || editExplicitManual);
-    const upd={
+    const upd=sanitizeFirebaseValue({
       title,
       genre:genre||'other',
       lyrics:safeLyrics,
@@ -2207,7 +2224,7 @@ async function saveTrackEdits(){
         copyrightMatchedSource:moderation?.copyright?.matchedSource||'',
         copyrightMatchedArtist:moderation?.copyright?.matchedArtist||''
       }
-    };
+    });
 
     await db.ref('tracks/'+editTrackId).update(upd);
     closeModal('editTrackModal');
@@ -3296,7 +3313,7 @@ async function publishTrack(){
         );
         if(!moderation) return;
         const finalLyrics=(moderation.displayLyrics||moderation.detectedLyrics||quickLyrics||'[текст не распознан транскрибатором]').trim();
-        await db.ref('tracks/'+trackId).update({
+        const moderationUpdate=sanitizeFirebaseValue({
           lyrics:finalLyrics,
           explicit:!!(moderation.explicit || uploadExplicitManual),
           userForcedExplicit:!!uploadExplicitManual,
@@ -3309,7 +3326,7 @@ async function publishTrack(){
             chorus:moderation.chorus||'',
             songStructure:(moderation.songStructure&&moderation.songStructure.length?moderation.songStructure:(finalLyrics?[{type:'lyrics',label:(moderation.chorus?'Текст и припев':'Текст'),text:finalLyrics}]:[])),
             structureSummary:moderation.structureSummary||'',
-            moderationModel:moderation.moderationModel||'openai-audio',
+            moderationModel:moderation.moderationModel||'openai-fast',
             copyrightModel:moderation.copyrightModel||'gemini-search',
             copyrightPossible:!!moderation?.copyright?.possibleCopyright,
             copyrightConfidence:Number(moderation?.copyright?.confidence||0),
@@ -3320,6 +3337,7 @@ async function publishTrack(){
             analysisStatus:'done'
           }
         });
+        await db.ref('tracks/'+trackId).update(moderationUpdate);
       }catch(bgErr){
         console.warn('background moderation skipped',bgErr);
         try{
