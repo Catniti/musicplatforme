@@ -648,7 +648,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
       <div class="upload-zone" id="uploadZone" onclick="document.getElementById('audioFileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleAudioDrop(event)">
         <span class="material-symbols-rounded">cloud_upload</span>
         <div style="font:500 16px/24px 'Inter',sans-serif;color:var(--md-on-surface);position:relative;z-index:1">Перетащите аудиофайл сюда</div>
-        <div style="font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px;position:relative;z-index:1">или нажмите для выбора (MP3, M4A, AAC, WAV, OGG, FLAC, до 15 МБ)</div>
+        <div style="font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px;position:relative;z-index:1">или нажмите для выбора (MP3, M4A, AAC, WAV, OGG, FLAC, до 15 МБ). Аудио и обложки подготавливаются поэтапно для более быстрой загрузки.</div>
       </div>
       <input type="file" id="audioFileInput" accept="audio/*,.m4a,.aac,.flac,.wav,.ogg,.mp3" style="display:none" onchange="handleAudioSelect(event)">
       <div class="import-box">
@@ -1308,6 +1308,52 @@ function dataUrlByteSize(dataUrl=''){
   if(!base64) return 0;
   const padding=(base64.match(/=*$/)?.[0]||'').length;
   return Math.max(0, Math.floor(base64.length * 3 / 4) - padding);
+}
+const AUDIO_CACHE_PREFIX='mp_audio_cache_';
+const AUDIO_CACHE_INDEX_KEY='mp_audio_cache_index';
+const AUDIO_CACHE_MAX_BYTES=18*1024*1024;
+function readAudioCacheIndex(){
+  try{return JSON.parse(localStorage.getItem(AUDIO_CACHE_INDEX_KEY)||'{}')}catch(e){return {}}
+}
+function writeAudioCacheIndex(index){
+  try{localStorage.setItem(AUDIO_CACHE_INDEX_KEY,JSON.stringify(index||{}))}catch(e){}
+}
+function getCachedAudioData(trackId){
+  try{return localStorage.getItem(AUDIO_CACHE_PREFIX+trackId)||''}catch(e){return ''}
+}
+function trimAudioCache(requiredBytes=0){
+  try{
+    const index=readAudioCacheIndex();
+    const entries=Object.entries(index).sort((a,b)=>(a[1]?.lastAccess||0)-(b[1]?.lastAccess||0));
+    let total=entries.reduce((s,[,v])=>s+Number(v?.bytes||0),0);
+    for(const [id,meta] of entries){
+      if(total+requiredBytes<=AUDIO_CACHE_MAX_BYTES) break;
+      try{localStorage.removeItem(AUDIO_CACHE_PREFIX+id)}catch(e){}
+      total-=Number(meta?.bytes||0);
+      delete index[id];
+    }
+    writeAudioCacheIndex(index);
+  }catch(e){}
+}
+function cacheAudioData(trackId,dataUrl){
+  try{
+    const safeId=String(trackId||'').trim();
+    const safeData=String(dataUrl||'').trim();
+    if(!safeId||!safeData.startsWith('data:')) return;
+    const bytes=dataUrlByteSize(safeData);
+    if(!bytes||bytes>6*1024*1024) return;
+    trimAudioCache(bytes);
+    localStorage.setItem(AUDIO_CACHE_PREFIX+safeId,safeData);
+    const index=readAudioCacheIndex();
+    index[safeId]={bytes,lastAccess:Date.now()};
+    writeAudioCacheIndex(index);
+  }catch(e){}
+}
+function touchAudioCache(trackId){
+  try{
+    const index=readAudioCacheIndex();
+    if(index[trackId]){index[trackId].lastAccess=Date.now();writeAudioCacheIndex(index)}
+  }catch(e){}
 }
 function splitIntoChunks(str,size=350000){
   const out=[];
@@ -2065,8 +2111,28 @@ function loadMyTracks(){
 function loadProfileStats(){if(!currentUser)return;db.ref('subscribers/'+currentUser.uid).on('value',s=>{document.getElementById('profileSubs').textContent=Object.keys(s.val()||{}).length})}
 
 /* ===== TRACKS LISTENER ===== */
+try{
+  const cachedTracks=JSON.parse(localStorage.getItem('mp_tracks_meta_cache')||'null');
+  if(cachedTracks&&typeof cachedTracks==='object'){
+    allTracks=cachedTracks;
+    renderHome();
+    renderExplore();
+    renderCharts();
+    renderNewReleases();
+    renderFavorites();
+    renderSubscriptions();
+    renderPlaylists();
+  }
+}catch(e){}
 db.ref('tracks').on('value',snap=>{
   allTracks=snap.val()||{};
+  try{
+    const metaOnly={};
+    Object.entries(allTracks).forEach(([id,t])=>{
+      metaOnly[id]={...t,audioData:t.audioData?('data:cached:'+id):'',videoData:''};
+    });
+    localStorage.setItem('mp_tracks_meta_cache',JSON.stringify(metaOnly));
+  }catch(e){}
   renderHome();
   renderExplore();
   renderCharts();
@@ -2218,7 +2284,7 @@ async function saveTrackEdits(){
       videoData=editTrackVideoData;
       videoUrl='';
     }
-    if(videoData && (videoData.length*0.75)/(1024*1024)>25){showSnackbar('Видео слишком большое (макс. 25 МБ)');return}
+    if(videoData && (videoData.length*0.75)/(1024*1024)>30){showSnackbar('Видео слишком большое (макс. 30 МБ)');return}
     if(!title){showSnackbar('Введите название');return}
     if(!musicAuthor){showSnackbar('Укажите автора музыки');return}
 
@@ -2454,7 +2520,20 @@ function loadAndPlay(track){
   broadcastPlaybackState();
   broadcastPartyState();
 }
-function doLoad(track){audio.src=track.audioData;startAudioEngine();audio.play().then(()=>{isPlaying=true;updatePlayButton();document.getElementById('fsCover').classList.add('playing');syncFxUi();broadcastPlaybackState()}).catch(err=>{showSnackbar('Ошибка воспроизведения')})}
+function doLoad(track){
+  const source=getCachedAudioData(currentTrackId)||track.audioData;
+  if(currentTrackId&&source) touchAudioCache(currentTrackId);
+  audio.src=source;
+  startAudioEngine();
+  audio.play().then(()=>{
+    isPlaying=true;
+    updatePlayButton();
+    document.getElementById('fsCover').classList.add('playing');
+    syncFxUi();
+    if(currentTrackId&&track.audioData) setTimeout(()=>cacheAudioData(currentTrackId,track.audioData),80);
+    broadcastPlaybackState();
+  }).catch(err=>{showSnackbar('Ошибка воспроизведения')})
+}
 
 function togglePlay(){if(!audio.src)return;startAudioEngine();if(isPlaying){audio.pause();document.getElementById('fsCover').classList.remove('playing')}else{audio.play();document.getElementById('fsCover').classList.add('playing')}isPlaying=!isPlaying;updatePlayButton();broadcastPlaybackState();broadcastPartyState()}
 function updatePlayButton(){const ic=isPlaying?'pause':'play_arrow';document.getElementById('playIcon').textContent=ic;document.getElementById('fsPlayIcon').textContent=ic;document.getElementById('waveCircle').classList.toggle('playing-anim',isPlaying)}
@@ -2492,7 +2571,7 @@ function setupDevicePresence(){
   setInterval(()=>{if(currentUser)db.ref('presence/'+currentUser.uid+'/'+deviceId).update({lastSeen:Date.now(),online:true,currentTrackId:currentTrackId||'',isPlaying:!!isPlaying,accountName:currentUser.displayName||currentUser.username||'Гость',nearbyDistance:randomNearbyDistance()})},15000);
 }
 function teardownDevicePresence(){if(currentUser)db.ref('presence/'+currentUser.uid+'/'+deviceId).remove();}
-function getPlaybackPayload(){return{fromDevice:deviceId,trackId:currentTrackId||'',playlist:playlist||[],playlistIndex:playlistIndex||0,currentTime:Math.floor(audio.currentTime||0),isPlaying:!!isPlaying,repeatMode,shuffle:isShuffle,updatedAt:Date.now()}}
+function getPlaybackPayload(){return{fromDevice:deviceId,trackId:currentTrackId||'',playlist:playlist||[],playlistIndex:playlistIndex||0,currentTime:Math.floor(audio.currentTime||0),isPlaying:!!isPlaying,repeatMode,shuffle:isShuffle,volume:Number(volume||0.8),muted:!!audio.muted,fxState:prepareFirebasePayload(fxState),updatedAt:Date.now()}}
 function broadcastPlaybackState(){
   if(!currentUser||!activeReceiverId||suppressRemoteBroadcast)return;
   if(activeReceiverId===deviceId)return;
@@ -2513,7 +2592,11 @@ function listenRemoteCommands(){
     if(currentTrackId!==cmd.trackId){currentTrackId=cmd.trackId;if(allTracks[currentTrackId])loadAndPlay(allTracks[currentTrackId]);}
     const applyState=()=>{
       try{if(typeof cmd.currentTime==='number'&&Math.abs((audio.currentTime||0)-cmd.currentTime)>2)audio.currentTime=cmd.currentTime;}catch(e){}
-      isShuffle=!!cmd.shuffle;repeatMode=cmd.repeatMode||0;updatePlayButton();
+      isShuffle=!!cmd.shuffle;repeatMode=cmd.repeatMode||0;
+      if(typeof cmd.volume==='number'){volume=Math.max(0,Math.min(1,cmd.volume));audio.volume=volume;document.getElementById('volumeFill').style.width=(volume*100)+'%';updateVolumeIcon();}
+      if(typeof cmd.muted==='boolean'){audio.muted=cmd.muted;updateVolumeIcon();}
+      if(cmd.fxState&&typeof cmd.fxState==='object'){fxState={...fxState,...cmd.fxState};applyFxState();syncFxUi();}
+      updatePlayButton();
       document.getElementById('shuffleBtn').classList.toggle('active',isShuffle);document.getElementById('fsShuffleBtn').classList.toggle('active',isShuffle);
       ['repeatBtn','fsRepeatBtn'].forEach(id=>{const b=document.getElementById(id);b.classList.toggle('active',repeatMode>0);b.querySelector('.material-symbols-rounded').textContent=repeatMode===2?'repeat_one':'repeat'});
       if(cmd.isPlaying){audio.play().catch(()=>{})}else{audio.pause();isPlaying=false;updatePlayButton();document.getElementById('fsCover').classList.remove('playing')}
@@ -2656,6 +2739,9 @@ function broadcastPartyState(){
     currentTrackId:currentTrackId||'',
     currentTime:Math.floor(audio.currentTime||0),
     isPlaying:!!isPlaying,
+    volume:Number(volume||0.8),
+    muted:!!audio.muted,
+    fxState:prepareFirebasePayload(fxState),
     updatedAt:Date.now()
   }).catch(()=>{});
   db.ref('partySessions/'+partySessionId+'/members/'+deviceId).update({lastSeen:Date.now(),currentTrackId:currentTrackId||'',isPlaying:!!isPlaying,nearbyDistance:randomNearbyDistance()}).catch(()=>{});
@@ -2680,6 +2766,9 @@ function ensurePartyListener(){
     if(typeof party.currentTime==='number' && Math.abs((audio.currentTime||0)-party.currentTime)>1.4){
       try{audio.currentTime=party.currentTime}catch(e){}
     }
+    if(typeof party.volume==='number'){volume=Math.max(0,Math.min(1,party.volume));audio.volume=volume;document.getElementById('volumeFill').style.width=(volume*100)+'%';updateVolumeIcon();}
+    if(typeof party.muted==='boolean'){audio.muted=party.muted;updateVolumeIcon();}
+    if(party.fxState&&typeof party.fxState==='object'){fxState={...fxState,...party.fxState};applyFxState();syncFxUi();}
     if(party.isPlaying && audio.paused){audio.play().catch(()=>{})}
     if(!party.isPlaying && !audio.paused){audio.pause()}
   },1200);
@@ -3183,7 +3272,7 @@ async function handleVideoSelect(e){
   const f=e.target.files?.[0];
   if(!f) return;
   if(!String(f.type||'').startsWith('video/')){showSnackbar('Выберите видеофайл');return}
-  if(f.size>25*1024*1024){showSnackbar('Видео макс. 25 МБ');return}
+  if(f.size>30*1024*1024){showSnackbar('Видео макс. 30 МБ');return}
   selectedVideoFile=f;
   selectedVideoDataURL=await fileToDataURL(f);
   document.getElementById('uploadVideoUrl').value='';
@@ -3194,7 +3283,7 @@ async function handleEditTrackVideoSelect(e){
   const f=e.target.files?.[0];
   if(!f) return;
   if(!String(f.type||'').startsWith('video/')){showSnackbar('Выберите видеофайл');return}
-  if(f.size>25*1024*1024){showSnackbar('Видео макс. 25 МБ');return}
+  if(f.size>30*1024*1024){showSnackbar('Видео макс. 30 МБ');return}
   editTrackVideoData=await fileToDataURL(f);
   document.getElementById('editTrackVideoUrl').value='';
   document.getElementById('editTrackVideoStatus').textContent='Выбрано видео: '+f.name;
@@ -3289,7 +3378,7 @@ async function publishTrack(){
     const szMB=(publishAudioDataURL.length*0.75)/(1024*1024);
     if(szMB>10){showSnackbar('Файл слишком большой для БД');return}
     if(cover&&cover.startsWith('data:')&&(cover.length*0.75)/(1024*1024)>2){showSnackbar('Обложка слишком большая');return}
-    if(videoData && (videoData.length*0.75)/(1024*1024)>25){showSnackbar('Видео слишком большое для БД (макс. 25 МБ)');return}
+    if(videoData && (videoData.length*0.75)/(1024*1024)>30){showSnackbar('Видео слишком большое для БД (макс. 30 МБ)');return}
 
     pb.style.width='42%';
     st.textContent='Публикация...';
