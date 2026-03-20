@@ -1342,7 +1342,7 @@ async function resolveTrackVideoSource(trackId,track={}){
   }
   return '';
 }
-function buildLyricsDisplayFromSections(sections, fallbackText=''){“}
+function buildLyricsDisplayFromSections(sections, fallbackText=''){
   if(Array.isArray(sections)&&sections.length){
     const parts=sections
       .filter(s=>s&&String(s.text||'').trim())
@@ -2921,9 +2921,9 @@ function applyFxState(){
   fxNodes.presence.gain.setTargetAtTime(Number(fxState.presence||0),audioCtx.currentTime,.08);
   fxNodes.air.gain.setTargetAtTime(Number(fxState.air||0),audioCtx.currentTime,.08);
   fxNodes.master.gain.setTargetAtTime(Number(fxState.gain||1),audioCtx.currentTime,.08);
-  fxNodes.drivePre.gain.setTargetAtTime(fxState.drive?1.7:1,audioCtx.currentTime,.08);
-  fxNodes.drivePost.gain.setTargetAtTime(fxState.drive?.78:.92,audioCtx.currentTime,.08);
-
+  fxNodes.drivePre.gain.setTargetAtTime(fxState.drive ? 1.7 : 1,audioCtx.currentTime,.08);
+  fxNodes.drivePost.gain.setTargetAtTime(fxState.drive ? .78 : .92,audioCtx.currentTime,.08);
+ 
   const width=Number(fxState.width||1);
   fxNodes.leftGain.gain.setTargetAtTime(fxState.spatial?Math.min(1.45,width):1,audioCtx.currentTime,.08);
   fxNodes.rightGain.gain.setTargetAtTime(fxState.spatial?Math.min(1.45,width):1,audioCtx.currentTime,.08);
