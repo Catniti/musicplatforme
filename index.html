@@ -2144,7 +2144,7 @@ async function saveTrackEdits(){
     let videoData='';
     if(editTrackCoverData)cover=editTrackCoverData;
     if(editTrackVideoData){videoData=editTrackVideoData;videoUrl=''}
-    if(videoData && (videoData.length*0.75)/(1024*1024)>18){showSnackbar('Видео слишком большое');return}
+    if(videoData && (videoData.length*0.75)/(1024*1024)>25){showSnackbar('Видео слишком большое (макс. 25 МБ)');return}
     if(!title){showSnackbar('Введите название');return}
     if(!musicAuthor){showSnackbar('Укажите автора музыки');return}
 
@@ -3197,11 +3197,12 @@ async function publishTrack(){
     const duration=await probeAudioDuration(publishAudioFile||publishAudioDataURL,12000);
     if(!duration||!isFinite(duration)) throw new Error('audio-metadata-failed');
     if(duration<15){showSnackbar('Трек минимум 15 секунд');return}
+    if(duration>300){showSnackbar('Трек должен быть не длиннее 5 минут');return}
 
     const szMB=(publishAudioDataURL.length*0.75)/(1024*1024);
     if(szMB>10){showSnackbar('Файл слишком большой для БД');return}
     if(cover&&cover.startsWith('data:')&&(cover.length*0.75)/(1024*1024)>2){showSnackbar('Обложка слишком большая');return}
-    if(videoData && (videoData.length*0.75)/(1024*1024)>18){showSnackbar('Видео слишком большое для БД');return}
+    if(videoData && (videoData.length*0.75)/(1024*1024)>25){showSnackbar('Видео слишком большое для БД (макс. 25 МБ)');return}
 
     pb.style.width='42%';
     st.textContent='Публикация...';
