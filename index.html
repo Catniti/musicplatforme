@@ -2144,6 +2144,14 @@ function sanitizeFirebaseValue(value){
   }
   return value;
 }
+function prepareFirebasePayload(value){
+  const cleaned=sanitizeFirebaseValue(value);
+  try{
+    return JSON.parse(JSON.stringify(cleaned));
+  }catch(e){
+    return cleaned;
+  }
+}
 
 async function saveTrackEdits(){
   if(!editTrackId||!currentUser)return;
@@ -2199,7 +2207,8 @@ async function saveTrackEdits(){
 
     const safeLyrics=(moderation.displayLyrics||moderation.detectedLyrics||fallbackDisplay||'[текст не распознан транскрибатором]').trim();
     const finalExplicit=editExplicitLockedByAI ? true : !!(moderation.explicit || editExplicitManual);
-    const upd=sanitizeFirebaseValue({
+    const upd=prepareFirebasePayload({
+      ...track,
       title,
       genre:genre||'other',
       lyrics:safeLyrics,
@@ -2226,7 +2235,7 @@ async function saveTrackEdits(){
       }
     });
 
-    await db.ref('tracks/'+editTrackId).update(upd);
+    await db.ref('tracks/'+editTrackId).set(upd);
     closeModal('editTrackModal');
     let msg='Трек обновлён';
     if(upd.moderationMeta.chorus) msg+=' • найден припев';
@@ -3341,7 +3350,7 @@ async function publishTrack(){
       }catch(bgErr){
         console.warn('background moderation skipped',bgErr);
         try{
-          await db.ref('tracks/'+trackId+'/moderationMeta').update({pending:false,analysisStatus:'failed',structureSummary:'Фоновый анализ не завершился'});
+          await db.ref('tracks/'+trackId+'/moderationMeta').set(prepareFirebasePayload({pending:false,analysisStatus:'failed',structureSummary:'Фоновый анализ не завершился'}));
         }catch(_){}
       }
     })();
