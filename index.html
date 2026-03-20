@@ -1301,7 +1301,48 @@ async function dataUrlToAudioFile(dataUrl,fileName='track.audio'){
     return null;
   }
 }
-function buildLyricsDisplayFromSections(sections, fallbackText=''){
+function dataUrlByteSize(dataUrl=''){
+  const str=String(dataUrl||'');
+  if(!str.startsWith('data:')) return 0;
+  const base64=(str.split(',')[1]||'').trim();
+  if(!base64) return 0;
+  const padding=(base64.match(/=*$/)?.[0]||'').length;
+  return Math.max(0, Math.floor(base64.length * 3 / 4) - padding);
+}
+function splitIntoChunks(str,size=350000){
+  const out=[];
+  for(let i=0;i<str.length;i+=size) out.push(str.slice(i,i+size));
+  return out;
+}
+async function persistTrackVideoPayload(trackId,dataUrl=''){
+  const safeId=String(trackId||'').trim();
+  const safeData=String(dataUrl||'').trim();
+  if(!safeId) return {mode:'none',inlineData:'',chunkCount:0};
+  if(!safeData){
+    try{await db.ref('trackVideoData/'+safeId).remove()}catch(e){}
+    return {mode:'none',inlineData:'',chunkCount:0};
+  }
+  const bytes=dataUrlByteSize(safeData);
+  if(bytes<=1024*1024){
+    try{await db.ref('trackVideoData/'+safeId).remove()}catch(e){}
+    return {mode:'inline',inlineData:safeData,chunkCount:0};
+  }
+  const chunks=splitIntoChunks(safeData,350000);
+  const payload={updatedAt:Date.now(),chunkCount:chunks.length,chunks:{}};
+  chunks.forEach((chunk,i)=>payload.chunks[i]=chunk);
+  await db.ref('trackVideoData/'+safeId).set(payload);
+  return {mode:'chunks',inlineData:'',chunkCount:chunks.length};
+}
+async function resolveTrackVideoSource(trackId,track={}){
+  if(track?.videoData) return String(track.videoData);
+  if(track?.videoStorageMode==='chunks' || Number(track?.videoChunkCount||0)>0){
+    const snap=await db.ref('trackVideoData/'+trackId+'/chunks').once('value');
+    const chunks=snap.val()||{};
+    return Object.keys(chunks).sort((a,b)=>Number(a)-Number(b)).map(k=>String(chunks[k]||'')).join('');
+  }
+  return '';
+}
+function buildLyricsDisplayFromSections(sections, fallbackText=''){“}
   if(Array.isArray(sections)&&sections.length){
     const parts=sections
       .filter(s=>s&&String(s.text||'').trim())
@@ -2167,8 +2208,16 @@ async function saveTrackEdits(){
     let cover=(document.getElementById('editTrackCoverUrl').value||'').trim();
     let videoUrl=normalizeVideoUrl((document.getElementById('editTrackVideoUrl').value||'').trim());
     let videoData='';
+    let clearVideo=false;
     if(editTrackCoverData)cover=editTrackCoverData;
-    if(editTrackVideoData){videoData=editTrackVideoData;videoUrl=''}
+    if(editTrackVideoData==='__CLEAR__'){
+      clearVideo=true;
+      videoData='';
+      videoUrl='';
+    }else if(editTrackVideoData){
+      videoData=editTrackVideoData;
+      videoUrl='';
+    }
     if(videoData && (videoData.length*0.75)/(1024*1024)>25){showSnackbar('Видео слишком большое (макс. 25 МБ)');return}
     if(!title){showSnackbar('Введите название');return}
     if(!musicAuthor){showSnackbar('Укажите автора музыки');return}
@@ -2207,17 +2256,21 @@ async function saveTrackEdits(){
 
     const safeLyrics=(moderation.displayLyrics||moderation.detectedLyrics||fallbackDisplay||'[текст не распознан транскрибатором]').trim();
     const finalExplicit=editExplicitLockedByAI ? true : !!(moderation.explicit || editExplicitManual);
+    const effectiveVideoData = clearVideo ? '' : (videoData || track.videoData || '');
+    const videoPersist = await persistTrackVideoPayload(editTrackId, effectiveVideoData);
     const upd=prepareFirebasePayload({
       ...track,
       title,
       genre:genre||'other',
       lyrics:safeLyrics,
       musicAuthor,
-      explicit:!!moderation.explicit,
+      explicit:!!finalExplicit,
       userForcedExplicit:false,
       cover:cover||'',
-      videoUrl:videoUrl||'',
-      videoData:videoData||track.videoData||'',
+      videoUrl:clearVideo ? '' : (videoUrl||''),
+      videoData:videoPersist.inlineData||'',
+      videoStorageMode:videoPersist.mode||'none',
+      videoChunkCount:Number(videoPersist.chunkCount||0),
       moderationMeta:{ 
         ...(track.moderationMeta||{}),
         transcript:moderation.transcript||track?.moderationMeta?.transcript||'',
@@ -3147,7 +3200,7 @@ async function handleEditTrackVideoSelect(e){
   document.getElementById('editTrackVideoStatus').textContent='Выбрано видео: '+f.name;
 }
 function clearEditTrackVideo(){
-  editTrackVideoData='';
+  editTrackVideoData='__CLEAR__';
   document.getElementById('editTrackVideoFile').value='';
   document.getElementById('editTrackVideoUrl').value='';
   document.getElementById('editTrackVideoStatus').textContent='Видео убрано';
@@ -3157,19 +3210,27 @@ function closeTrackVideo(){
   if(body) body.innerHTML='';
   closeModal('videoTrackModal');
 }
-function openTrackVideo(tid){
+async function openTrackVideo(tid){
   const t=allTracks[tid];
-  if(!t||!(t.videoData||t.videoUrl)){showSnackbar('У этого трека нет видео');return}
+  if(!t||!(t.videoData||t.videoUrl||t.videoStorageMode==='chunks'||Number(t.videoChunkCount||0)>0)){showSnackbar('У этого трека нет видео');return}
   const body=document.getElementById('videoTrackBody');
   const title=document.getElementById('videoTrackTitle');
   if(title) title.textContent='Видео: '+(t.title||'Трек');
+  body.innerHTML='<div class="loading-spinner"></div>';
   const url=normalizeVideoUrl(t.videoUrl||'');
-  if(t.videoData){
-    body.innerHTML='<video controls autoplay playsinline style="width:100%;max-height:min(78vh,720px);background:black" src="'+t.videoData+'"></video>';
-  }else if(/youtube\.com\/embed\//i.test(url)){
-    body.innerHTML='<iframe src="'+url+'" style="width:100%;aspect-ratio:16/9;border:0;background:black" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
-  }else{
-    body.innerHTML='<video controls autoplay playsinline style="width:100%;max-height:min(78vh,720px);background:black" src="'+url+'"></video>';
+  try{
+    const resolvedData=await resolveTrackVideoSource(tid,t);
+    if(resolvedData){
+      body.innerHTML='<video controls autoplay playsinline style="width:100%;max-height:min(78vh,720px);background:black" src="'+resolvedData+'"></video>';
+    }else if(/youtube\.com\/embed\//i.test(url)){
+      body.innerHTML='<iframe src="'+url+'" style="width:100%;aspect-ratio:16/9;border:0;background:black" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+    }else if(url){
+      body.innerHTML='<video controls autoplay playsinline style="width:100%;max-height:min(78vh,720px);background:black" src="'+url+'"></video>';
+    }else{
+      body.innerHTML='<div class="empty-state" style="padding:24px"><span class="material-symbols-rounded">videocam_off</span><h3>Видео не найдено</h3></div>';
+    }
+  }catch(e){
+    body.innerHTML='<div class="empty-state" style="padding:24px"><span class="material-symbols-rounded">error</span><h3>Не удалось открыть видео</h3></div>';
   }
   document.getElementById('videoTrackModal').classList.add('open');
 }
@@ -3238,8 +3299,9 @@ async function publishTrack(){
     const quickExplicit=!!(checkExplicit(title)||checkExplicit(lyrics)||checkExplicit(publishAudioFile?.name||''));
     const trackRef=db.ref('tracks').push();
     const trackId=trackRef.key;
+    const videoPersist=await persistTrackVideoPayload(trackId, videoData||'');
 
-      await trackRef.set({
+      await trackRef.set(prepareFirebasePayload({
         title,
         genre:genre||'other',
         cover,
@@ -3250,31 +3312,35 @@ async function publishTrack(){
         artistPhoto:currentUser.photo||'',
         audioData:publishAudioDataURL,
         duration:Math.round(duration),
-        explicit:!!(quickExplicit||uploadExplicitManual),
-        userForcedExplicit:!!uploadExplicitManual,
+        explicit:!!quickExplicit,
+        userForcedExplicit:false,
         likes:0,
-      plays:0,
-      timestamp:Date.now(),
-      moderated:false,
-      moderationMeta:{
-        transcript:cachedAnalysis?.transcript||'',
-        hasVocals:cachedAnalysis?.hasVocals!==false,
-        detectedLyrics:cachedAnalysis?.detectedLyrics||quickLyrics,
-        displayLyrics:cachedAnalysis?.displayLyrics||quickLyrics,
-        chorus:cachedAnalysis?.chorus||'',
-        songStructure:cachedAnalysis?.songStructure||[],
-        structureSummary:cachedAnalysis?.structureSummary||'Фоновый анализ ещё выполняется',
-        moderationModel:cachedAnalysis?.moderationModel||'queued-background-analysis',
-        copyrightModel:cachedAnalysis?.copyrightModel||'queued-background-analysis',
-        copyrightPossible:!!cachedAnalysis?.copyright?.possibleCopyright,
-        copyrightConfidence:Number(cachedAnalysis?.copyright?.confidence||0),
-        copyrightReason:cachedAnalysis?.copyright?.reason||'',
-        copyrightMatchedSource:cachedAnalysis?.copyright?.matchedSource||'',
-        copyrightMatchedArtist:cachedAnalysis?.copyright?.matchedArtist||'',
-        pending:true,
-        analysisStatus:'queued'
-      }
-    });
+        plays:0,
+        timestamp:Date.now(),
+        moderated:false,
+        videoUrl:videoUrl||'',
+        videoData:videoPersist.inlineData||'',
+        videoStorageMode:videoPersist.mode||'none',
+        videoChunkCount:Number(videoPersist.chunkCount||0),
+        moderationMeta:{
+          transcript:cachedAnalysis?.transcript||'',
+          hasVocals:cachedAnalysis?.hasVocals!==false,
+          detectedLyrics:cachedAnalysis?.detectedLyrics||quickLyrics,
+          displayLyrics:cachedAnalysis?.displayLyrics||quickLyrics,
+          chorus:cachedAnalysis?.chorus||'',
+          songStructure:cachedAnalysis?.songStructure||[],
+          structureSummary:cachedAnalysis?.structureSummary||'Фоновый анализ ещё выполняется',
+          moderationModel:cachedAnalysis?.moderationModel||'queued-background-analysis',
+          copyrightModel:cachedAnalysis?.copyrightModel||'queued-background-analysis',
+          copyrightPossible:!!cachedAnalysis?.copyright?.possibleCopyright,
+          copyrightConfidence:Number(cachedAnalysis?.copyright?.confidence||0),
+          copyrightReason:cachedAnalysis?.copyright?.reason||'',
+          copyrightMatchedSource:cachedAnalysis?.copyright?.matchedSource||'',
+          copyrightMatchedArtist:cachedAnalysis?.copyright?.matchedArtist||'',
+          pending:true,
+          analysisStatus:'queued'
+        }
+      }));
 
     pb.style.width='100%';
     st.textContent='Опубликован!';
