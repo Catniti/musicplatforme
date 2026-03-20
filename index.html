@@ -271,7 +271,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .loading-spinner{width:40px;height:40px;border:3px solid var(--md-outline-variant);border-top-color:var(--md-primary);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.user-menu{position:absolute;top:56px;right:16px;background:var(--md-surface-container);border-radius:var(--md-shape-md);box-shadow:var(--md-elevation-3);min-width:220px;overflow:hidden;z-index:300;display:none;transform-origin:top right}
+.user-menu{position:fixed;top:68px;right:16px;background:var(--md-surface-container);border-radius:var(--md-shape-md);box-shadow:var(--md-elevation-3);min-width:220px;max-width:min(92vw,280px);overflow:hidden;z-index:1005;display:none;transform-origin:top right}
 .user-menu.open{display:block;animation:menuIn .25s cubic-bezier(.2,0,0,1)}
 @keyframes menuIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
 .user-menu-item{display:flex;align-items:center;gap:12px;padding:12px 16px;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);cursor:pointer;transition:background .2s}
@@ -315,10 +315,10 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 @keyframes fsIn{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
 .fs-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
 .fs-cover-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
-.fs-cover{width:100%;max-width:360px;aspect-ratio:1;border-radius:var(--md-shape-lg);background:var(--md-surface-container-highest);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:var(--md-elevation-3);transition:border-radius .5s cubic-bezier(.2,0,0,1),transform .12s ease-out}
-.fs-cover.playing{border-radius:24px;animation:coverPulse 4s ease-in-out infinite}
-.fs-cover.beat{transform:translateY(calc(var(--beat-bounce, 0px) * -1)) scale(calc(1 + var(--beat-scale, 0)));}
-@keyframes coverPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+.fs-cover{width:100%;max-width:360px;aspect-ratio:1;border-radius:var(--md-shape-lg);background:var(--md-surface-container-highest);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:var(--md-elevation-3);transition:border-radius .5s cubic-bezier(.2,0,0,1),transform .08s ease-out, box-shadow .12s ease-out}
+.fs-cover.playing{border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.04) inset}
+.fs-cover.beat{transform:translateY(calc(var(--beat-bounce, 0px) * -1)) scale(calc(1 + var(--beat-scale, 0)));box-shadow:0 18px 48px rgba(0,0,0,.26),0 0 0 1px rgba(255,255,255,.06) inset}
+@keyframes coverPulse{0%,100%{opacity:1}50%{opacity:.985}}
 .fs-cover img{width:100%;height:100%;object-fit:cover}
 .fs-cover .material-symbols-rounded{font-size:96px;color:var(--md-outline)}
 .fs-info{padding:0 24px;text-align:center}
@@ -693,18 +693,23 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
       </div>
       <label class="modal-label">Автор музыки / правообладатель *</label>
       <input class="md-input" id="uploadMusicAuthor" placeholder="Например: Иван Иванов, DJ Example, Original Artist" style="border-radius:var(--md-shape-md);margin-bottom:16px">
+      <label class="modal-label">Видео к треку (необязательно)</label>
+      <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
+        <div class="cover-upload-zone" id="videoUploadZone" onclick="document.getElementById('videoFileInput').click()">
+          <span class="material-symbols-rounded">video_file</span>
+          <span style="font:400 11px/14px 'Inter',sans-serif;color:var(--md-on-surface-variant);text-align:center;padding:0 4px">Видео</span>
+        </div>
+        <div style="flex:1;min-width:220px">
+          <input class="md-input" id="uploadVideoUrl" placeholder="или вставьте URL видео (MP4 / WebM / YouTube embed)" style="border-radius:var(--md-shape-md)">
+          <input type="file" id="videoFileInput" accept="video/*,.mp4,.webm,.mov,.m4v" style="display:none" onchange="handleVideoSelect(event)">
+          <div style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:8px" id="uploadVideoStatus">Видео не выбрано</div>
+        </div>
+      </div>
       <label class="modal-label">Текст песни (необязательно)</label>
       <textarea class="md-input" id="uploadLyrics" placeholder="Вставьте текст песни..." rows="4" style="border-radius:var(--md-shape-md);margin-bottom:10px;resize:vertical"></textarea>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
         <button class="btn-tonal" type="button" id="analyzeUploadLyricsBtn" onclick="analyzeLyricsForUpload()"><span class="material-symbols-rounded">lyrics</span> Транскрибировать текст и припев</button>
         <button class="btn-text" type="button" onclick="document.getElementById('uploadLyrics').value='';document.getElementById('uploadAiLyricsStatus').textContent=''"><span class="material-symbols-rounded">ink_eraser</span> Очистить текст</button>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;margin:0 0 16px;padding:12px 14px;border:1px solid var(--md-outline-variant);border-radius:16px;background:var(--md-surface-container-low)">
-        <div class="toggle" id="uploadExplicitToggle" onclick="toggleUploadExplicit()"></div>
-        <div style="min-width:0">
-          <div style="font:600 13px/18px 'Inter',sans-serif;color:var(--md-on-surface)">Поставить пометку ! вручную</div>
-          <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant)">Если вы знаете, что в треке есть мат, взрослые темы или жёсткий контент</div>
-        </div>
       </div>
       <div id="uploadAiLyricsStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin:-8px 0 16px"></div>
       <div id="uploadProgress" style="display:none;margin-bottom:16px">
@@ -1030,18 +1035,19 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
       <input class="md-input" id="editTrackMusicAuthor" placeholder="Кто написал или владеет музыкой">
       <label class="modal-label">Обложка (URL)</label>
       <input class="md-input" id="editTrackCoverUrl" placeholder="https://...">
+      <label class="modal-label">Видео к треку</label>
+      <input class="md-input" id="editTrackVideoUrl" placeholder="https://... (mp4/webm/embed)" style="margin-bottom:10px">
+      <input type="file" id="editTrackVideoFile" accept="video/*,.mp4,.webm,.mov,.m4v" style="display:none" onchange="handleEditTrackVideoSelect(event)">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn-tonal" type="button" onclick="document.getElementById('editTrackVideoFile').click()"><span class="material-symbols-rounded">video_file</span> Выбрать видео</button>
+        <button class="btn-text" type="button" onclick="clearEditTrackVideo()"><span class="material-symbols-rounded">delete</span> Убрать видео</button>
+      </div>
+      <div id="editTrackVideoStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin:-4px 0 10px">Видео не выбрано</div>
       <label class="modal-label">Текст песни</label>
       <textarea class="md-input" id="editTrackLyrics" placeholder="Текст песни..." rows="5" style="resize:vertical;margin-bottom:10px"></textarea>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
         <button class="btn-tonal" type="button" id="analyzeEditLyricsBtn" onclick="analyzeLyricsForEdit()"><span class="material-symbols-rounded">lyrics</span> Транскрибировать текст и припев</button>
         <button class="btn-text" type="button" onclick="document.getElementById('editTrackLyrics').value='';document.getElementById('editAiLyricsStatus').textContent=''"><span class="material-symbols-rounded">ink_eraser</span> Очистить текст</button>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;margin:0 0 10px;padding:12px 14px;border:1px solid var(--md-outline-variant);border-radius:16px;background:var(--md-surface-container-low)">
-        <div class="toggle" id="editExplicitToggle" onclick="toggleEditExplicit()"></div>
-        <div style="min-width:0">
-          <div style="font:600 13px/18px 'Inter',sans-serif;color:var(--md-on-surface)">Поставить пометку ! вручную</div>
-          <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant)">Можно вручную отметить explicit-контент</div>
-        </div>
       </div>
       <div id="editAiLyricsStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant)"></div>
     </div>
@@ -1065,14 +1071,45 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
     <button class="btn-primary" onclick="startPartyMode()"><span class="material-symbols-rounded">celebration</span> Создать вечеринку</button>
     <button class="btn-tonal" onclick="joinPartyPrompt()"><span class="material-symbols-rounded">group_add</span> Присоединиться по коду</button>
+    <button class="btn-tonal" onclick="scanPartyQr()"><span class="material-symbols-rounded">qr_code_scanner</span> Сканировать QR</button>
+    <button class="btn-outlined" onclick="requestPartyGeolocation()"><span class="material-symbols-rounded">location_on</span> Геолокация</button>
     <button class="btn-outlined" onclick="refreshPartyDevices()"><span class="material-symbols-rounded">refresh</span> Обновить</button>
   </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <div class="effect-card" style="padding:12px">
+      <div class="effect-row" style="margin-bottom:0"><div class="effect-meta"><div class="effect-name">Подключение</div><div class="effect-sub">Кто может заходить в вечеринку</div></div>
+        <select class="md-input" id="partyJoinPolicy" style="margin:0;border-radius:14px;padding:10px 14px" onchange="updatePartyJoinPolicy(this.value)">
+          <option value="nearby">Любой поблизости</option>
+          <option value="code">Только по коду / QR</option>
+        </select>
+      </div>
+    </div>
+    <div class="effect-card" style="padding:12px">
+      <div class="effect-row" style="margin-bottom:0"><div class="effect-meta"><div class="effect-name">Радиус nearby</div><div class="effect-sub">Показывать ближайшие устройства</div></div>
+        <select class="md-input" id="partyRadius" style="margin:0;border-radius:14px;padding:10px 14px" onchange="updatePartyRadius(this.value)">
+          <option value="30">30 м</option>
+          <option value="80">80 м</option>
+          <option value="150">150 м</option>
+          <option value="300">300 м</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div id="partyQrBox" style="display:none;margin-bottom:12px;padding:14px;border:1px solid var(--md-outline-variant);border-radius:20px;background:var(--md-surface-container-low)"></div>
   <div id="partyModeStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:12px">Поблизости будут отображаться совместимые устройства и комнаты.</div>
   <div id="partyModeList" class="device-list"></div>
   <div class="modal-actions" style="margin-top:16px">
     <button class="btn-outlined" onclick="leavePartyMode()">Покинуть</button>
     <button class="btn-primary" onclick="closeModal('partyModeModal')">Готово</button>
   </div>
+</div></div>
+
+<div class="modal-overlay" id="videoTrackModal"><div class="modal" style="max-width:min(96vw,980px);padding:0;overflow:hidden">
+  <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--md-outline-variant)">
+    <div class="modal-title" id="videoTrackTitle" style="margin-bottom:0;flex:1">Видео трека</div>
+    <button class="btn-icon" onclick="closeTrackVideo()"><span class="material-symbols-rounded">close</span></button>
+  </div>
+  <div id="videoTrackBody" style="padding:0;background:black;min-height:240px;display:flex;align-items:center;justify-content:center"></div>
 </div></div>
 
 <div class="modal-overlay" id="audioEffectsModal"><div class="modal" style="max-width:760px">
@@ -1151,8 +1188,8 @@ let currentUser=null,allTracks={},currentTrackId=null,playlist=[],playlistIndex=
 let isPlaying=false,isShuffle=false,repeatMode=0;
 let favorites={},subscriptions={},userPlaylists={},deleteTrackId=null;
 let selectedAudioFile=null,selectedAudioDataURL=null,playerVisible=false;
-let selectedCoverDataURL=null,reportTrackId=null,contextTrackId=null;
-let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null;
+let selectedCoverDataURL=null,selectedVideoDataURL=null,selectedVideoFile=null,reportTrackId=null,contextTrackId=null;
+let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null,editTrackVideoData='';
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
 let uploadExplicitManual=false,editExplicitManual=false,editExplicitLockedByAI=false;
@@ -1163,6 +1200,8 @@ let activeReceiverId=null,remoteControlUnsub=null,devicePresenceUnsub=null,suppr
 let partySessionId=localStorage.getItem('mp_party_session')||'';
 let partyListenerBound=false;
 let lastPartyApplyTs=0;
+let partyGeoWatchId=null;
+let partyGeo={enabled:false,lat:null,lon:null,accuracy:null};
 let audioCtx=null,mediaSource=null,fxNodes=null;
 let fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};
 localStorage.setItem('mp_device_id',deviceId);localStorage.setItem('mp_device_name',deviceName);
@@ -1539,39 +1578,10 @@ async function analyzeLyricsForUpload(){
   }
 }
 
-function updateUploadExplicitUI(){
-  const toggle=document.getElementById('uploadExplicitToggle');
-  if(!toggle)return;
-  toggle.classList.toggle('on',!!uploadExplicitManual);
-  toggle.classList.remove('disabled');
-}
-function toggleUploadExplicit(){
-  uploadExplicitManual=!uploadExplicitManual;
-  updateUploadExplicitUI();
-}
-function updateEditExplicitUI(){
-  const toggle=document.getElementById('editExplicitToggle');
-  const titleNode=toggle?.nextElementSibling?.querySelector('div:first-child');
-  const subNode=toggle?.nextElementSibling?.querySelector('div:last-child');
-  if(!toggle)return;
-  toggle.classList.toggle('on',!!(editExplicitManual||editExplicitLockedByAI));
-  toggle.classList.toggle('disabled',!!editExplicitLockedByAI);
-  if(titleNode){
-    titleNode.style.color=editExplicitLockedByAI?'var(--md-on-surface-variant)':'var(--md-on-surface)';
-    titleNode.textContent=editExplicitLockedByAI?'Пометка ! поставлена автоматически':'Поставить пометку ! вручную';
-  }
-  if(subNode){
-    subNode.style.color='var(--md-on-surface-variant)';
-    subNode.textContent=editExplicitLockedByAI
-      ? 'Эту пометку поставила модерация — выключить вручную нельзя'
-      : 'Можно вручную отметить explicit-контент';
-  }
-}
-function toggleEditExplicit(){
-  if(editExplicitLockedByAI){showSnackbar('Эта пометка поставлена модерацией и не отключается вручную');return}
-  editExplicitManual=!editExplicitManual;
-  updateEditExplicitUI();
-}
+function updateUploadExplicitUI(){return}
+function toggleUploadExplicit(){showSnackbar('Пометку ! теперь ставит только ИИ-модерация')}
+function updateEditExplicitUI(){return}
+function toggleEditExplicit(){showSnackbar('Пометку ! теперь ставит только ИИ-модерация')}
 
 async function analyzeLyricsForEdit(){
   if(!editTrackId){showSnackbar('Трек не выбран');return}
@@ -1887,9 +1897,18 @@ function updateUserMenu(){
     c.innerHTML='<div class="user-menu-item" onclick="navigate(\'profile\');closeUserMenu()"><span class="material-symbols-rounded">login</span> Войти / Регистрация</div>';
   }
 }
-function toggleUserMenu(){document.getElementById('userMenu').classList.toggle('open')}
+function toggleUserMenu(){
+  const menu=document.getElementById('userMenu');
+  const btn=document.getElementById('userAvatarBtn');
+  if(!menu||!btn)return;
+  const rect=btn.getBoundingClientRect();
+  menu.style.top=(rect.bottom+8)+'px';
+  menu.style.right=Math.max(8,window.innerWidth-rect.right)+'px';
+  menu.classList.toggle('open');
+}
 function closeUserMenu(){document.getElementById('userMenu').classList.remove('open')}
 document.addEventListener('click',e=>{if(!e.target.closest('#userMenu')&&!e.target.closest('#userAvatarBtn'))closeUserMenu()});
+window.addEventListener('resize',()=>{if(document.getElementById('userMenu').classList.contains('open'))toggleUserMenu(),toggleUserMenu()});
 
 /* ===== SETTINGS ===== */
 function openSettings(){
@@ -1965,7 +1984,17 @@ function setSleepTimer(mins){
 /* ===== USER DATA ===== */
 function loadUserData(){
   if(!currentUser)return;const uid=currentUser.uid;
-  db.ref('favorites/'+uid).on('value',s=>{favorites=s.val()||{};renderFavorites();updateFsLike()});
+  db.ref('favorites/'+uid).on('value',s=>{
+    favorites=s.val()||{};
+    renderFavorites();
+    updateFsLike();
+    renderHome();
+    renderExplore();
+    renderCharts();
+    renderNewReleases();
+    if(document.getElementById('page-search').classList.contains('active'))handleSearch(document.getElementById('searchInput').value);
+    if(document.getElementById('page-artist').classList.contains('active')&&currentArtistId)viewArtist(currentArtistId);
+  });
   db.ref('subscriptions/'+uid).on('value',s=>{subscriptions=s.val()||{};renderSubscriptions()});
   db.ref('playlists/'+uid).on('value',s=>{userPlaylists=s.val()||{};renderPlaylists()});
   db.ref('history/'+uid).orderByChild('time').limitToLast(100).on('value',s=>{
@@ -1996,8 +2025,18 @@ function loadProfileStats(){if(!currentUser)return;db.ref('subscribers/'+current
 
 /* ===== TRACKS LISTENER ===== */
 db.ref('tracks').on('value',snap=>{
-  allTracks=snap.val()||{};renderHome();renderExplore();renderCharts();renderNewReleases();
+  allTracks=snap.val()||{};
+  renderHome();
+  renderExplore();
+  renderCharts();
+  renderNewReleases();
+  renderFavorites();
+  renderSubscriptions();
+  renderPlaylists();
+  if(currentUser) loadMyTracks();
   if(document.getElementById('page-search').classList.contains('active'))handleSearch(document.getElementById('searchInput').value);
+  if(document.getElementById('page-artist').classList.contains('active')&&currentArtistId)viewArtist(currentArtistId);
+  openTrackFromHash();
 });
 
 /* ===== RENDER TRACK ITEM ===== */
@@ -2035,6 +2074,7 @@ function openTrackContextMenu(e,tid){
     items+='<div class="track-context-item" onclick="openAddToPlaylist(\''+tid+'\');this.parentElement.remove()"><span class="material-symbols-rounded">playlist_add</span>В плейлист</div>';
   }
   items+='<div class="track-context-item" onclick="viewArtist(\''+track.artistId+'\');this.parentElement.remove()"><span class="material-symbols-rounded">person</span>Профиль артиста</div>';
+  if(track.videoData||track.videoUrl){items+='<div class="track-context-item" onclick="openTrackVideo(\''+tid+'\');this.parentElement.remove()"><span class="material-symbols-rounded">smart_display</span>Смотреть видео</div>'}
   items+='<div class="track-context-item" onclick="shareTrackById(\''+tid+'\');this.parentElement.remove()"><span class="material-symbols-rounded">share</span>Поделиться</div>';
   if(isOwner){
     items+='<div class="track-context-item" onclick="openEditTrack(\''+tid+'\');this.parentElement.remove()"><span class="material-symbols-rounded">edit</span>Редактировать</div>';
@@ -2072,8 +2112,11 @@ function openEditTrack(tid){
   document.getElementById('editTrackLyrics').value=t.lyrics||'';
   document.getElementById('editTrackMusicAuthor').value=t.musicAuthor||'';
   document.getElementById('editTrackCoverUrl').value=t.cover||'';
+  document.getElementById('editTrackVideoUrl').value=t.videoUrl||'';
+  document.getElementById('editTrackVideoStatus').textContent=t.videoData?'Видео загружено в трек':(t.videoUrl?'Подключено видео по ссылке':'Видео не выбрано');
   document.getElementById('editAiLyricsStatus').textContent='';
   editTrackCoverData='';
+  editTrackVideoData='';
   editExplicitLockedByAI=!!(t.explicit && !t.userForcedExplicit);
   editExplicitManual=!!t.userForcedExplicit;
   updateEditExplicitUI();
@@ -2097,7 +2140,11 @@ async function saveTrackEdits(){
     const lyrics=document.getElementById('editTrackLyrics').value.trim();
     const musicAuthor=document.getElementById('editTrackMusicAuthor').value.trim();
     let cover=(document.getElementById('editTrackCoverUrl').value||'').trim();
+    let videoUrl=normalizeVideoUrl((document.getElementById('editTrackVideoUrl').value||'').trim());
+    let videoData='';
     if(editTrackCoverData)cover=editTrackCoverData;
+    if(editTrackVideoData){videoData=editTrackVideoData;videoUrl=''}
+    if(videoData && (videoData.length*0.75)/(1024*1024)>18){showSnackbar('Видео слишком большое');return}
     if(!title){showSnackbar('Введите название');return}
     if(!musicAuthor){showSnackbar('Укажите автора музыки');return}
 
@@ -2140,10 +2187,12 @@ async function saveTrackEdits(){
       genre:genre||'other',
       lyrics:safeLyrics,
       musicAuthor,
-      explicit:finalExplicit,
-      userForcedExplicit:!editExplicitLockedByAI && !!editExplicitManual,
+      explicit:!!moderation.explicit,
+      userForcedExplicit:false,
       cover:cover||'',
-      moderationMeta:{
+      videoUrl:videoUrl||'',
+      videoData:videoData||track.videoData||'',
+      moderationMeta:{ 
         ...(track.moderationMeta||{}),
         transcript:moderation.transcript||track?.moderationMeta?.transcript||'',
         hasVocals:moderation.hasVocals!==false,
@@ -2183,11 +2232,31 @@ function buildTrackShareUrl(tid){
   const base=(location.origin+location.pathname).replace(/\/?$/,'');
   return base+'#track='+encodeURIComponent(tid);
 }
+function openTrackFromHash(){
+  const hash=String(location.hash||'');
+  const match=hash.match(/track=([^&]+)/i);
+  if(!match)return false;
+  const tid=decodeURIComponent(match[1]||'');
+  if(!tid)return false;
+  if(!allTracks[tid]){
+    setTimeout(()=>{ if(allTracks[tid]) openTrackFromHash(); }, 500);
+    return false;
+  }
+  navigate('home');
+  setTimeout(()=>{
+    playTrackById(tid);
+    openFullscreenPlayer();
+    const el=document.querySelector('.track-item[data-id="'+CSS.escape(tid)+'"]');
+    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+  },160);
+  return true;
+}
+window.addEventListener('hashchange',openTrackFromHash);
 function shareTrackById(tid){
   const t=allTracks[tid];if(!t)return;
   const url=buildTrackShareUrl(tid);
   const shareTitle=(t.title||'Трек')+' — '+(t.musicAuthor||t.artistName||'Автор');
-  const shareText='Слушай «'+(t.title||'Без названия')+'» в MusicPlatforme: '+(t.musicAuthor||t.artistName||'Неизвестный автор');
+  const shareText='Слушай «'+(t.title||'Без названия')+'» — '+(t.musicAuthor||t.artistName||'Неизвестный автор')+' в MusicPlatforme';
   if(navigator.share){
     navigator.share({title:shareTitle,text:shareText,url}).catch(()=>{});
   }else if(navigator.clipboard){
@@ -2408,12 +2477,15 @@ function getPartyMemberPayload(){
     joinedAt:Date.now(),
     lastSeen:Date.now(),
     currentTrackId:currentTrackId||'',
-    isPlaying:!!isPlaying
+    isPlaying:!!isPlaying,
+    geo:partyGeo.enabled&&partyGeo.lat&&partyGeo.lon?{lat:partyGeo.lat,lon:partyGeo.lon,accuracy:partyGeo.accuracy||0}:null
   };
 }
 async function startPartyMode(){
   const code='PARTY-'+Math.random().toString(36).slice(2,6).toUpperCase();
   const id='party_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+  const joinPolicy=document.getElementById('partyJoinPolicy')?.value||'nearby';
+  const radius=Number(document.getElementById('partyRadius')?.value||80);
   partySessionId=id;
   localStorage.setItem('mp_party_session',partySessionId);
   await db.ref('partySessions/'+id).set({
@@ -2422,12 +2494,16 @@ async function startPartyMode(){
     hostName:getPartyDisplayName(),
     createdAt:Date.now(),
     maxMembers:8,
+    joinPolicy,
+    radius,
+    bannedDevices:{},
     currentTrackId:currentTrackId||'',
     currentTime:Math.floor(audio.currentTime||0),
     isPlaying:!!isPlaying,
     updatedAt:Date.now()
   });
   await db.ref('partySessions/'+id+'/members/'+deviceId).set(getPartyMemberPayload());
+  renderPartyQr(code);
   document.getElementById('partyModeStatus').textContent='Вечеринка создана. Код: '+code;
   refreshPartyDevices();
   ensurePartyListener();
@@ -3017,6 +3093,60 @@ async function processAudioFile(f){
   const r=new FileReader();r.onload=e=>{selectedAudioDataURL=e.target.result};r.readAsDataURL(f);
 }
 function clearSelectedFile(){selectedAudioFile=null;selectedAudioDataURL=null;document.getElementById('selectedFileInfo').style.display='none';document.getElementById('audioFileInput').value=''}
+function normalizeVideoUrl(url=''){
+  const u=String(url||'').trim();
+  if(!u) return '';
+  const yt=u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/i);
+  if(yt) return 'https://www.youtube.com/embed/'+yt[1];
+  return u;
+}
+async function handleVideoSelect(e){
+  const f=e.target.files?.[0];
+  if(!f) return;
+  if(!String(f.type||'').startsWith('video/')){showSnackbar('Выберите видеофайл');return}
+  if(f.size>25*1024*1024){showSnackbar('Видео макс. 25 МБ');return}
+  selectedVideoFile=f;
+  selectedVideoDataURL=await fileToDataURL(f);
+  document.getElementById('uploadVideoUrl').value='';
+  document.getElementById('uploadVideoStatus').textContent='Выбрано видео: '+f.name;
+  document.getElementById('videoUploadZone').innerHTML='<span class="material-symbols-rounded">check_circle</span><span style="font:400 11px/14px \'Inter\',sans-serif;color:var(--md-on-surface-variant);text-align:center;padding:0 4px">'+esc(f.name.slice(0,22))+'</span>';
+}
+async function handleEditTrackVideoSelect(e){
+  const f=e.target.files?.[0];
+  if(!f) return;
+  if(!String(f.type||'').startsWith('video/')){showSnackbar('Выберите видеофайл');return}
+  if(f.size>25*1024*1024){showSnackbar('Видео макс. 25 МБ');return}
+  editTrackVideoData=await fileToDataURL(f);
+  document.getElementById('editTrackVideoUrl').value='';
+  document.getElementById('editTrackVideoStatus').textContent='Выбрано видео: '+f.name;
+}
+function clearEditTrackVideo(){
+  editTrackVideoData='';
+  document.getElementById('editTrackVideoFile').value='';
+  document.getElementById('editTrackVideoUrl').value='';
+  document.getElementById('editTrackVideoStatus').textContent='Видео убрано';
+}
+function closeTrackVideo(){
+  const body=document.getElementById('videoTrackBody');
+  if(body) body.innerHTML='';
+  closeModal('videoTrackModal');
+}
+function openTrackVideo(tid){
+  const t=allTracks[tid];
+  if(!t||!(t.videoData||t.videoUrl)){showSnackbar('У этого трека нет видео');return}
+  const body=document.getElementById('videoTrackBody');
+  const title=document.getElementById('videoTrackTitle');
+  if(title) title.textContent='Видео: '+(t.title||'Трек');
+  const url=normalizeVideoUrl(t.videoUrl||'');
+  if(t.videoData){
+    body.innerHTML='<video controls autoplay playsinline style="width:100%;max-height:min(78vh,720px);background:black" src="'+t.videoData+'"></video>';
+  }else if(/youtube\.com\/embed\//i.test(url)){
+    body.innerHTML='<iframe src="'+url+'" style="width:100%;aspect-ratio:16/9;border:0;background:black" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+  }else{
+    body.innerHTML='<video controls autoplay playsinline style="width:100%;max-height:min(78vh,720px);background:black" src="'+url+'"></video>';
+  }
+  document.getElementById('videoTrackModal').classList.add('open');
+}
 
 async function importTrackFromUrl(){
   const url=(document.getElementById('importTrackUrl').value||'').trim();
@@ -3041,6 +3171,8 @@ async function publishTrack(){
   if(genre==='custom')genre=document.getElementById('uploadCustomGenre').value.trim().toLowerCase()||'other';
   let cover=document.getElementById('uploadCover').value.trim();
   if(selectedCoverDataURL)cover=selectedCoverDataURL;
+  let videoUrl=normalizeVideoUrl(document.getElementById('uploadVideoUrl').value.trim());
+  let videoData=selectedVideoDataURL||'';
   const lyrics=document.getElementById('uploadLyrics').value.trim();
   const musicAuthor=document.getElementById('uploadMusicAuthor').value.trim();
   const pe=document.getElementById('uploadProgress'),pb=document.getElementById('uploadProgressBar'),st=document.getElementById('uploadStatusText'),btn=document.getElementById('publishBtn');
@@ -3069,6 +3201,7 @@ async function publishTrack(){
     const szMB=(publishAudioDataURL.length*0.75)/(1024*1024);
     if(szMB>10){showSnackbar('Файл слишком большой для БД');return}
     if(cover&&cover.startsWith('data:')&&(cover.length*0.75)/(1024*1024)>2){showSnackbar('Обложка слишком большая');return}
+    if(videoData && (videoData.length*0.75)/(1024*1024)>18){showSnackbar('Видео слишком большое для БД');return}
 
     pb.style.width='42%';
     st.textContent='Публикация...';
