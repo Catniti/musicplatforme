@@ -291,11 +291,11 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .loading-spinner{width:40px;height:40px;border:3px solid var(--md-outline-variant);border-top-color:var(--md-primary);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.user-menu{position:fixed;top:68px;right:16px;background:linear-gradient(180deg,rgba(72,75,95,.88),rgba(34,36,50,.78));border-radius:28px;box-shadow:0 18px 44px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);min-width:220px;max-width:min(92vw,280px);overflow:hidden;z-index:1005;display:none;transform-origin:top right;backdrop-filter:blur(18px) saturate(1.06);-webkit-backdrop-filter:blur(18px) saturate(1.06)}
+.user-menu{position:fixed;top:68px;right:16px;background:var(--md-surface-container-high);border-radius:20px;box-shadow:var(--md-elevation-3);border:1px solid var(--md-outline-variant);min-width:220px;max-width:min(92vw,280px);overflow:hidden;z-index:1005;display:none;transform-origin:top right}
 .user-menu.open{display:block;animation:menuIn .25s cubic-bezier(.2,0,0,1)}
 @keyframes menuIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
-.user-menu-item{display:flex;align-items:center;gap:12px;padding:12px 16px;font:400 14px/20px 'Inter',sans-serif;color:#F3F2FA;cursor:pointer;transition:background .2s,border-color .2s;position:relative}
-.user-menu-item:hover{background:rgba(255,255,255,.05)}
+.user-menu-item{display:flex;align-items:center;gap:12px;padding:12px 16px;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);cursor:pointer;transition:background .2s,border-color .2s;position:relative}
+.user-menu-item:hover{background:var(--md-surface-container)}
 
 /* ===== HERO ===== */
 .hero-banner{background:linear-gradient(135deg,var(--md-primary-container),var(--md-tertiary-container));border-radius:var(--md-shape-xl);padding:40px;margin-bottom:32px;position:relative;overflow:hidden;transition:transform .3s}
@@ -466,275 +466,270 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .effect-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 .effect-note{font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:6px}
 
-/* ===== LABS / LIQUID GLASS ===== */
+/* ===== LABS / GLASS ===== */
 .labs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 .labs-card{padding:14px;border-radius:22px;background:var(--md-surface-container-low);border:1px solid var(--md-outline-variant);transition:all .25s cubic-bezier(.2,0,0,1)}
 .labs-card:hover{transform:translateY(-2px);box-shadow:var(--md-elevation-1)}
 .labs-card-title{display:flex;align-items:center;gap:10px;font:700 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:8px}
 .labs-card-sub{font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:12px}
-body[data-ui-style="liquid-glass"]{
-  --glass-menu-bg:linear-gradient(180deg,rgba(72,75,95,.88),rgba(34,36,50,.78));
-  --glass-menu-bg-soft:linear-gradient(180deg,rgba(68,72,92,.76),rgba(31,33,46,.68));
-  --glass-menu-border:rgba(255,255,255,.14);
-  --glass-menu-highlight:rgba(255,255,255,.12);
-  --glass-menu-shadow:0 18px 44px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.12);
-  --glass-menu-hover:rgba(255,255,255,.05);
-  --glass-menu-text:#F3F2FA;
-  --glass-menu-sub:#D6D3E6;
+body[data-ui-style="glass"]{
+  --glass-bg:linear-gradient(180deg,rgba(72,75,95,.88),rgba(34,36,50,.78));
+  --glass-bg-soft:linear-gradient(180deg,rgba(68,72,92,.76),rgba(31,33,46,.68));
+  --glass-border:rgba(255,255,255,.14);
+  --glass-highlight:rgba(255,255,255,.12);
+  --glass-shadow:0 18px 44px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.12);
+  --glass-hover:rgba(255,255,255,.05);
+  --glass-text:#F3F2FA;
+  --glass-sub:#D6D3E6;
 }
-body[data-ui-style="liquid-glass"][data-theme="dark"]{
-  --glass-menu-bg:linear-gradient(180deg,rgba(72,75,95,.88),rgba(34,36,50,.78));
-  --glass-menu-bg-soft:linear-gradient(180deg,rgba(68,72,92,.76),rgba(31,33,46,.68));
-  --glass-menu-border:rgba(255,255,255,.14);
-  --glass-menu-highlight:rgba(255,255,255,.12);
-  --glass-menu-shadow:0 18px 44px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.10);
-  --glass-menu-hover:rgba(255,255,255,.05);
-  --glass-menu-text:#F3F2FA;
-  --glass-menu-sub:#D6D3E6;
-}
-body[data-ui-style="liquid-glass"] .top-bar,
-body[data-ui-style="liquid-glass"] .player-bar,
-body[data-ui-style="liquid-glass"] .bottom-nav,
-body[data-ui-style="liquid-glass"] .sidebar,
-body[data-ui-style="liquid-glass"] .modal,
-body[data-ui-style="liquid-glass"] .queue-panel,
-body[data-ui-style="liquid-glass"] .track-context-menu,
-body[data-ui-style="liquid-glass"] .tab-bar,
-body[data-ui-style="liquid-glass"] .settings-item,
-body[data-ui-style="liquid-glass"] .track-item,
-body[data-ui-style="liquid-glass"] .radio-card,
-body[data-ui-style="liquid-glass"] .labs-card,
-body[data-ui-style="liquid-glass"] .md-card,
-body[data-ui-style="liquid-glass"] .effect-card,
-body[data-ui-style="liquid-glass"] .stat-card,
-body[data-ui-style="liquid-glass"] .device-item,
-body[data-ui-style="liquid-glass"] .profile-pinned-wrap,
-body[data-ui-style="liquid-glass"] .hero-banner,
-body[data-ui-style="liquid-glass"] .upload-zone,
-body[data-ui-style="liquid-glass"] .import-box,
-body[data-ui-style="liquid-glass"] .cover-upload-zone,
-body[data-ui-style="liquid-glass"] .lyrics-container,
-body[data-ui-style="liquid-glass"] .auth-form,
-body[data-ui-style="liquid-glass"] .creator-console,
-body[data-ui-style="liquid-glass"] .chip,
-body[data-ui-style="liquid-glass"] .btn-tonal,
-body[data-ui-style="liquid-glass"] .btn-outlined,
-body[data-ui-style="liquid-glass"] .btn-icon,
-body[data-ui-style="liquid-glass"] .search-bar input,
-body[data-ui-style="liquid-glass"] .bottom-nav .nav-tab.active .nav-tab-indicator{
-  background:var(--glass-menu-bg-soft)!important;
-  border:1px solid var(--glass-menu-border)!important;
-  box-shadow:var(--glass-menu-shadow)!important;
+body[data-ui-style="glass"] .top-bar,
+body[data-ui-style="glass"] .player-bar,
+body[data-ui-style="glass"] .bottom-nav,
+body[data-ui-style="glass"] .sidebar,
+body[data-ui-style="glass"] .modal,
+body[data-ui-style="glass"] .queue-panel,
+body[data-ui-style="glass"] .track-context-menu,
+body[data-ui-style="glass"] .tab-bar,
+body[data-ui-style="glass"] .settings-item,
+body[data-ui-style="glass"] .track-item,
+body[data-ui-style="glass"] .radio-card,
+body[data-ui-style="glass"] .labs-card,
+body[data-ui-style="glass"] .md-card,
+body[data-ui-style="glass"] .effect-card,
+body[data-ui-style="glass"] .stat-card,
+body[data-ui-style="glass"] .device-item,
+body[data-ui-style="glass"] .profile-pinned-wrap,
+body[data-ui-style="glass"] .hero-banner,
+body[data-ui-style="glass"] .upload-zone,
+body[data-ui-style="glass"] .import-box,
+body[data-ui-style="glass"] .cover-upload-zone,
+body[data-ui-style="glass"] .lyrics-container,
+body[data-ui-style="glass"] .auth-form,
+body[data-ui-style="glass"] .creator-console,
+body[data-ui-style="glass"] .chip,
+body[data-ui-style="glass"] .btn-tonal,
+body[data-ui-style="glass"] .btn-outlined,
+body[data-ui-style="glass"] .btn-icon,
+body[data-ui-style="glass"] .search-bar,
+body[data-ui-style="glass"] .search-bar input,
+body[data-ui-style="glass"] .bottom-nav .nav-tab.active .nav-tab-indicator,
+body[data-ui-style="glass"] .user-avatar,
+body[data-ui-style="glass"] .player-thumb,
+body[data-ui-style="glass"] .video-secondary-btn,
+body[data-ui-style="glass"] .nav-item.active,
+body[data-ui-style="glass"] .chip.active,
+body[data-ui-style="glass"] .tab-item.active,
+body[data-ui-style="glass"] .md-input,
+body[data-ui-style="glass"] select.md-input,
+body[data-ui-style="glass"] textarea.md-input{
+  background:var(--glass-bg-soft)!important;
+  border:1px solid var(--glass-border)!important;
+  box-shadow:var(--glass-shadow)!important;
+  color:var(--glass-text)!important;
   backdrop-filter:blur(18px) saturate(1.06)!important;
   -webkit-backdrop-filter:blur(18px) saturate(1.06)!important;
 }
-body[data-ui-style="liquid-glass"] .top-bar,
-body[data-ui-style="liquid-glass"] .player-bar,
-body[data-ui-style="liquid-glass"] .bottom-nav,
-body[data-ui-style="liquid-glass"] .sidebar,
-body[data-ui-style="liquid-glass"] .modal,
-body[data-ui-style="liquid-glass"] .queue-panel,
-body[data-ui-style="liquid-glass"] .track-context-menu,
-body[data-ui-style="liquid-glass"] .tab-bar,
-body[data-ui-style="liquid-glass"] .settings-item,
-body[data-ui-style="liquid-glass"] .track-item,
-body[data-ui-style="liquid-glass"] .radio-card,
-body[data-ui-style="liquid-glass"] .labs-card,
-body[data-ui-style="liquid-glass"] .md-card,
-body[data-ui-style="liquid-glass"] .effect-card,
-body[data-ui-style="liquid-glass"] .stat-card,
-body[data-ui-style="liquid-glass"] .device-item,
-body[data-ui-style="liquid-glass"] .profile-pinned-wrap,
-body[data-ui-style="liquid-glass"] .hero-banner,
-body[data-ui-style="liquid-glass"] .upload-zone,
-body[data-ui-style="liquid-glass"] .import-box,
-body[data-ui-style="liquid-glass"] .cover-upload-zone,
-body[data-ui-style="liquid-glass"] .lyrics-container,
-body[data-ui-style="liquid-glass"] .auth-form,
-body[data-ui-style="liquid-glass"] .creator-console,
-body[data-ui-style="liquid-glass"] .search-bar input{
+body[data-ui-style="glass"] .top-bar,
+body[data-ui-style="glass"] .player-bar,
+body[data-ui-style="glass"] .bottom-nav,
+body[data-ui-style="glass"] .sidebar,
+body[data-ui-style="glass"] .modal,
+body[data-ui-style="glass"] .queue-panel,
+body[data-ui-style="glass"] .track-context-menu,
+body[data-ui-style="glass"] .settings-item,
+body[data-ui-style="glass"] .track-item,
+body[data-ui-style="glass"] .radio-card,
+body[data-ui-style="glass"] .labs-card,
+body[data-ui-style="glass"] .md-card,
+body[data-ui-style="glass"] .effect-card,
+body[data-ui-style="glass"] .stat-card,
+body[data-ui-style="glass"] .device-item,
+body[data-ui-style="glass"] .profile-pinned-wrap,
+body[data-ui-style="glass"] .hero-banner,
+body[data-ui-style="glass"] .upload-zone,
+body[data-ui-style="glass"] .import-box,
+body[data-ui-style="glass"] .cover-upload-zone,
+body[data-ui-style="glass"] .lyrics-container,
+body[data-ui-style="glass"] .auth-form,
+body[data-ui-style="glass"] .creator-console,
+body[data-ui-style="glass"] .search-bar,
+body[data-ui-style="glass"] .search-bar input,
+body[data-ui-style="glass"] .chip,
+body[data-ui-style="glass"] .btn-tonal,
+body[data-ui-style="glass"] .btn-outlined,
+body[data-ui-style="glass"] .btn-icon,
+body[data-ui-style="glass"] .nav-item.active,
+body[data-ui-style="glass"] .chip.active,
+body[data-ui-style="glass"] .tab-item.active,
+body[data-ui-style="glass"] .bottom-nav .nav-tab.active .nav-tab-indicator,
+body[data-ui-style="glass"] .md-input,
+body[data-ui-style="glass"] select.md-input,
+body[data-ui-style="glass"] textarea.md-input,
+body[data-ui-style="glass"] .player-thumb,
+body[data-ui-style="glass"] .user-avatar,
+body[data-ui-style="glass"] .video-secondary-btn{
   position:relative;
   overflow:hidden;
 }
-body[data-ui-style="liquid-glass"] .top-bar::before,
-body[data-ui-style="liquid-glass"] .player-bar::before,
-body[data-ui-style="liquid-glass"] .bottom-nav::before,
-body[data-ui-style="liquid-glass"] .sidebar::before,
-body[data-ui-style="liquid-glass"] .modal::before,
-body[data-ui-style="liquid-glass"] .queue-panel::before,
-body[data-ui-style="liquid-glass"] .track-context-menu::before,
-body[data-ui-style="liquid-glass"] .tab-bar::before,
-body[data-ui-style="liquid-glass"] .settings-item::before,
-body[data-ui-style="liquid-glass"] .track-item::before,
-body[data-ui-style="liquid-glass"] .radio-card::before,
-body[data-ui-style="liquid-glass"] .labs-card::before,
-body[data-ui-style="liquid-glass"] .md-card::before,
-body[data-ui-style="liquid-glass"] .effect-card::before,
-body[data-ui-style="liquid-glass"] .stat-card::before,
-body[data-ui-style="liquid-glass"] .device-item::before,
-body[data-ui-style="liquid-glass"] .profile-pinned-wrap::before,
-body[data-ui-style="liquid-glass"] .hero-banner::before,
-body[data-ui-style="liquid-glass"] .upload-zone::before,
-body[data-ui-style="liquid-glass"] .import-box::before,
-body[data-ui-style="liquid-glass"] .cover-upload-zone::before,
-body[data-ui-style="liquid-glass"] .lyrics-container::before,
-body[data-ui-style="liquid-glass"] .auth-form::before,
-body[data-ui-style="liquid-glass"] .creator-console::before,
-body[data-ui-style="liquid-glass"] .search-bar input::before{
+body[data-ui-style="glass"] .top-bar::before,
+body[data-ui-style="glass"] .player-bar::before,
+body[data-ui-style="glass"] .bottom-nav::before,
+body[data-ui-style="glass"] .sidebar::before,
+body[data-ui-style="glass"] .modal::before,
+body[data-ui-style="glass"] .queue-panel::before,
+body[data-ui-style="glass"] .track-context-menu::before,
+body[data-ui-style="glass"] .settings-item::before,
+body[data-ui-style="glass"] .track-item::before,
+body[data-ui-style="glass"] .radio-card::before,
+body[data-ui-style="glass"] .labs-card::before,
+body[data-ui-style="glass"] .md-card::before,
+body[data-ui-style="glass"] .effect-card::before,
+body[data-ui-style="glass"] .stat-card::before,
+body[data-ui-style="glass"] .device-item::before,
+body[data-ui-style="glass"] .profile-pinned-wrap::before,
+body[data-ui-style="glass"] .hero-banner::before,
+body[data-ui-style="glass"] .upload-zone::before,
+body[data-ui-style="glass"] .import-box::before,
+body[data-ui-style="glass"] .cover-upload-zone::before,
+body[data-ui-style="glass"] .lyrics-container::before,
+body[data-ui-style="glass"] .auth-form::before,
+body[data-ui-style="glass"] .creator-console::before,
+body[data-ui-style="glass"] .search-bar::before,
+body[data-ui-style="glass"] .chip::before,
+body[data-ui-style="glass"] .btn-tonal::before,
+body[data-ui-style="glass"] .btn-outlined::before,
+body[data-ui-style="glass"] .btn-icon::before,
+body[data-ui-style="glass"] .nav-item.active::before,
+body[data-ui-style="glass"] .chip.active::before,
+body[data-ui-style="glass"] .tab-item.active::before,
+body[data-ui-style="glass"] .bottom-nav .nav-tab.active .nav-tab-indicator::before,
+body[data-ui-style="glass"] .md-input::before,
+body[data-ui-style="glass"] select.md-input::before,
+body[data-ui-style="glass"] textarea.md-input::before,
+body[data-ui-style="glass"] .player-thumb::before,
+body[data-ui-style="glass"] .user-avatar::before,
+body[data-ui-style="glass"] .video-secondary-btn::before{
   content:'';
   position:absolute;
   inset:0;
   pointer-events:none;
   background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0) 42%);
 }
-body[data-ui-style="liquid-glass"] .top-bar,
-body[data-ui-style="liquid-glass"] .player-bar,
-body[data-ui-style="liquid-glass"] .bottom-nav{
-  background:var(--glass-menu-bg)!important;
-}
-body[data-ui-style="liquid-glass"] .user-menu{
-  background:linear-gradient(180deg,rgba(72,75,95,.88),rgba(34,36,50,.78))!important;
+body[data-ui-style="glass"] .top-bar,
+body[data-ui-style="glass"] .player-bar,
+body[data-ui-style="glass"] .bottom-nav,
+body[data-ui-style="glass"] .sidebar,
+body[data-ui-style="glass"] .modal,
+body[data-ui-style="glass"] .queue-panel,
+body[data-ui-style="glass"] .track-context-menu,
+body[data-ui-style="glass"] .settings-item,
+body[data-ui-style="glass"] .track-item,
+body[data-ui-style="glass"] .radio-card,
+body[data-ui-style="glass"] .labs-card,
+body[data-ui-style="glass"] .md-card,
+body[data-ui-style="glass"] .effect-card,
+body[data-ui-style="glass"] .stat-card,
+body[data-ui-style="glass"] .device-item,
+body[data-ui-style="glass"] .profile-pinned-wrap,
+body[data-ui-style="glass"] .hero-banner,
+body[data-ui-style="glass"] .upload-zone,
+body[data-ui-style="glass"] .import-box,
+body[data-ui-style="glass"] .cover-upload-zone,
+body[data-ui-style="glass"] .lyrics-container,
+body[data-ui-style="glass"] .auth-form,
+body[data-ui-style="glass"] .creator-console,
+body[data-ui-style="glass"] .search-bar,
+body[data-ui-style="glass"] .chip,
+body[data-ui-style="glass"] .btn-tonal,
+body[data-ui-style="glass"] .btn-outlined,
+body[data-ui-style="glass"] .btn-icon,
+body[data-ui-style="glass"] .nav-item.active,
+body[data-ui-style="glass"] .chip.active,
+body[data-ui-style="glass"] .tab-item.active,
+body[data-ui-style="glass"] .bottom-nav .nav-tab.active .nav-tab-indicator,
+body[data-ui-style="glass"] .md-input,
+body[data-ui-style="glass"] select.md-input,
+body[data-ui-style="glass"] textarea.md-input,
+body[data-ui-style="glass"] .player-thumb,
+body[data-ui-style="glass"] .user-avatar,
+body[data-ui-style="glass"] .video-secondary-btn{
   border-radius:28px!important;
-  box-shadow:0 18px 44px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.12)!important;
-  border:1px solid rgba(255,255,255,.14)!important;
+}
+body[data-ui-style="glass"] .user-menu{
+  background:var(--glass-bg)!important;
+  border-radius:28px!important;
+  box-shadow:var(--glass-shadow)!important;
+  border:1px solid var(--glass-border)!important;
   backdrop-filter:blur(18px) saturate(1.06)!important;
   -webkit-backdrop-filter:blur(18px) saturate(1.06)!important;
 }
-body[data-ui-style="liquid-glass"] .user-menu-item,
-body[data-ui-style="liquid-glass"] .user-menu-header,
-body[data-ui-style="liquid-glass"] .track-context-item{
-  color:var(--glass-menu-text)!important;
+body[data-ui-style="glass"] .user-menu-item,
+body[data-ui-style="glass"] .user-menu-header,
+body[data-ui-style="glass"] .track-context-item,
+body[data-ui-style="glass"] .settings-item,
+body[data-ui-style="glass"] .track-name,
+body[data-ui-style="glass"] .card-title,
+body[data-ui-style="glass"] .section-title,
+body[data-ui-style="glass"] .modal-title,
+body[data-ui-style="glass"] .queue-track-name,
+body[data-ui-style="glass"] .settings-item-title,
+body[data-ui-style="glass"] .radio-name,
+body[data-ui-style="glass"] .labs-card-title,
+body[data-ui-style="glass"] .effect-name,
+body[data-ui-style="glass"] .device-name{
+  color:var(--glass-text)!important;
 }
-body[data-ui-style="liquid-glass"] .user-menu-item:hover,
-body[data-ui-style="liquid-glass"] .track-context-item:hover{
-  background:var(--glass-menu-hover)!important;
+body[data-ui-style="glass"] .track-artist,
+body[data-ui-style="glass"] .card-sub,
+body[data-ui-style="glass"] .section-sub,
+body[data-ui-style="glass"] .settings-item-sub,
+body[data-ui-style="glass"] .queue-track-artist,
+body[data-ui-style="glass"] .radio-sub,
+body[data-ui-style="glass"] .labs-card-sub,
+body[data-ui-style="glass"] .effect-sub,
+body[data-ui-style="glass"] .device-sub,
+body[data-ui-style="glass"] .lyrics-container,
+body[data-ui-style="glass"] .md-input::placeholder{
+  color:var(--glass-sub)!important;
 }
-body[data-ui-style="liquid-glass"] .nav-tab.active .nav-tab-indicator{
-  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,0) 46%),var(--glass-menu-bg-soft)!important;
+body[data-ui-style="glass"] .user-menu-item:hover,
+body[data-ui-style="glass"] .track-context-item:hover,
+body[data-ui-style="glass"] .settings-item:hover,
+body[data-ui-style="glass"] .track-item:hover,
+body[data-ui-style="glass"] .md-card:hover,
+body[data-ui-style="glass"] .labs-card:hover,
+body[data-ui-style="glass"] .radio-card:hover,
+body[data-ui-style="glass"] .btn-tonal:hover,
+body[data-ui-style="glass"] .btn-outlined:hover,
+body[data-ui-style="glass"] .btn-icon:hover,
+body[data-ui-style="glass"] .chip:hover{
+  background:var(--glass-hover)!important;
+  filter:none!important;
+  transform:translateY(-1px);
 }
-body[data-ui-style="liquid-glass"] .search-bar input,
-body[data-ui-style="liquid-glass"] .btn-icon,
-body[data-ui-style="liquid-glass"] .btn-tonal,
-body[data-ui-style="liquid-glass"] .btn-outlined,
-body[data-ui-style="liquid-glass"] .chip{
-  color:var(--glass-menu-text)!important;
+body[data-ui-style="glass"] .top-bar,
+body[data-ui-style="glass"] .player-bar,
+body[data-ui-style="glass"] .bottom-nav{
+  background:var(--glass-bg)!important;
 }
-body[data-ui-style="liquid-glass"] .search-bar::before,
-body[data-ui-style="liquid-glass"] .chip::before,
-body[data-ui-style="liquid-glass"] .btn-tonal::before,
-body[data-ui-style="liquid-glass"] .btn-outlined::before,
-body[data-ui-style="liquid-glass"] .btn-icon::before{
-  content:'';
-  position:absolute;
-  inset:0;
-  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,0) 42%);
-  pointer-events:none;
+body[data-ui-style="glass"] .search-bar input{background:transparent!important;z-index:1}
+body[data-ui-style="glass"] .bottom-nav .nav-tab.active .nav-tab-indicator,
+body[data-ui-style="glass"] .nav-item.active,
+body[data-ui-style="glass"] .chip.active,
+body[data-ui-style="glass"] .tab-item.active{
+  background:var(--glass-bg-soft)!important;
+  border-color:var(--glass-border)!important;
 }
-body[data-ui-style="liquid-glass"] .sidebar::after,
-body[data-ui-style="liquid-glass"] .top-bar::after,
-body[data-ui-style="liquid-glass"] .player-bar::after,
-body[data-ui-style="liquid-glass"] .bottom-nav::after,
-body[data-ui-style="liquid-glass"] .modal::after,
-body[data-ui-style="liquid-glass"] .queue-panel::after,
-body[data-ui-style="liquid-glass"] .user-menu::after,
-body[data-ui-style="liquid-glass"] .track-context-menu::after,
-body[data-ui-style="liquid-glass"] .md-card::after,
-body[data-ui-style="liquid-glass"] .effect-card::after,
-body[data-ui-style="liquid-glass"] .stat-card::after,
-body[data-ui-style="liquid-glass"] .profile-pinned-wrap::after,
-body[data-ui-style="liquid-glass"] .upload-zone::after,
-body[data-ui-style="liquid-glass"] .settings-item::after,
-body[data-ui-style="liquid-glass"] .import-box::after,
-body[data-ui-style="liquid-glass"] .labs-card::after,
-body[data-ui-style="liquid-glass"] .hero-banner::after,
-body[data-ui-style="liquid-glass"] .radio-card::after,
-body[data-ui-style="liquid-glass"] .lyrics-container::after,
-body[data-ui-style="liquid-glass"] .cover-upload-zone::after,
-body[data-ui-style="liquid-glass"] .device-item::after,
-body[data-ui-style="liquid-glass"] .track-item::after,
-body[data-ui-style="liquid-glass"] .creator-console::after,
-body[data-ui-style="liquid-glass"] .tab-bar::after,
-body[data-ui-style="liquid-glass"] .search-bar::after,
-body[data-ui-style="liquid-glass"] .chip::after,
-body[data-ui-style="liquid-glass"] .btn-tonal::after,
-body[data-ui-style="liquid-glass"] .btn-outlined::after,
-body[data-ui-style="liquid-glass"] .btn-icon::after{
-  content:'';
-  position:absolute;
-  inset:0;
-  border-radius:inherit;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
-  pointer-events:none;
-  opacity:.9;
-}
-body[data-ui-style="liquid-glass"] .md-input,
-body[data-ui-style="liquid-glass"] select.md-input,
-body[data-ui-style="liquid-glass"] textarea.md-input{
-  background:linear-gradient(180deg,rgba(72,75,94,.76),rgba(34,36,50,.62))!important;
-  border:1px solid rgba(255,255,255,.14)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 8px 18px rgba(0,0,0,.10)!important;
-  color:var(--glass-menu-text)!important;
-}
-body[data-ui-style="liquid-glass"] .top-bar,
-body[data-ui-style="liquid-glass"] .player-bar,
-body[data-ui-style="liquid-glass"] .bottom-nav,
-body[data-ui-style="liquid-glass"] .sidebar{border-color:rgba(255,255,255,.10)!important}
-body[data-ui-style="liquid-glass"] .settings-item:hover,
-body[data-ui-style="liquid-glass"] .md-card:hover,
-body[data-ui-style="liquid-glass"] .labs-card:hover,
-body[data-ui-style="liquid-glass"] .radio-card:hover,
-body[data-ui-style="liquid-glass"] .track-item:hover,
-body[data-ui-style="liquid-glass"] .btn-tonal:hover,
-body[data-ui-style="liquid-glass"] .btn-outlined:hover,
-body[data-ui-style="liquid-glass"] .btn-icon:hover,
-body[data-ui-style="liquid-glass"] .chip:hover{filter:brightness(1.015);transform:translateY(-1px)}
-body[data-ui-style="liquid-glass"] .hero-banner::before,
-body[data-ui-style="liquid-glass"] .hero-banner::after{opacity:.06}
-body[data-ui-style="liquid-glass"] .btn-primary{box-shadow:0 10px 22px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.14)}
-body[data-ui-style="liquid-glass"] .search-bar{position:relative;border-radius:999px;overflow:hidden}
-body[data-ui-style="liquid-glass"] .search-bar input{background:transparent!important;position:relative;z-index:1}
-body[data-ui-style="liquid-glass"] .nav-item.active,
-body[data-ui-style="liquid-glass"] .tab-item.active,
-body[data-ui-style="liquid-glass"] .chip.active{background:linear-gradient(180deg,rgba(92,95,118,.85),rgba(40,42,58,.72))!important;color:#fff!important;border-color:rgba(255,255,255,.14)!important}
-body[data-ui-style="liquid-glass"] .modal,
-body[data-ui-style="liquid-glass"] .user-menu,
-body[data-ui-style="liquid-glass"] .track-context-menu{border-radius:28px}
-body[data-ui-style="liquid-glass"] .top-bar,
-body[data-ui-style="liquid-glass"] .player-bar,
-body[data-ui-style="liquid-glass"] .bottom-nav{backdrop-filter:blur(18px) saturate(1.06);-webkit-backdrop-filter:blur(18px) saturate(1.06)}
-body[data-ui-style="liquid-glass"] .player-bar::before,
-body[data-ui-style="liquid-glass"] .bottom-nav::before,
-body[data-ui-style="liquid-glass"] .top-bar::before,
-body[data-ui-style="liquid-glass"] .user-menu::before{
-  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.01) 42%);
-}
-body[data-ui-style="liquid-glass"] .player-bar::after,
-body[data-ui-style="liquid-glass"] .bottom-nav::after,
-body[data-ui-style="liquid-glass"] .top-bar::after,
-body[data-ui-style="liquid-glass"] .user-menu::after{
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
-}
-body[data-ui-style="liquid-glass"] .player-thumb,
-body[data-ui-style="liquid-glass"] .user-avatar,
-body[data-ui-style="liquid-glass"] .video-secondary-btn{
-  background:linear-gradient(180deg,rgba(88,91,110,.78),rgba(44,46,60,.64));
-  border:1px solid rgba(255,255,255,.14);
-  box-shadow:0 8px 20px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.12);
-}
-body[data-ui-style="liquid-glass"][data-theme="dark"] .player-thumb,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .user-avatar,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .video-secondary-btn{
-  background:linear-gradient(180deg,rgba(88,91,110,.78),rgba(44,46,60,.64));
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 8px 20px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.10);
-}
-body[data-ui-style="liquid-glass"] .creator-console{background:linear-gradient(180deg,rgba(12,19,18,.84),rgba(8,13,12,.72))!important}
+body[data-ui-style="glass"] .creator-console{background:linear-gradient(180deg,rgba(20,24,33,.88),rgba(26,28,40,.78))!important;color:#eaf0ff!important}
 @media(max-width:640px){
-  body[data-ui-style="liquid-glass"] .top-bar,
-  body[data-ui-style="liquid-glass"] .player-bar,
-  body[data-ui-style="liquid-glass"] .bottom-nav,
-  body[data-ui-style="liquid-glass"] .modal,
-  body[data-ui-style="liquid-glass"] .sidebar{backdrop-filter:blur(16px) saturate(1.06);-webkit-backdrop-filter:blur(16px) saturate(1.06)}
+  body[data-ui-style="glass"] .top-bar,
+  body[data-ui-style="glass"] .player-bar,
+  body[data-ui-style="glass"] .bottom-nav,
+  body[data-ui-style="glass"] .modal,
+  body[data-ui-style="glass"] .sidebar,
+  body[data-ui-style="glass"] .queue-panel,
+  body[data-ui-style="glass"] .track-context-menu,
+  body[data-ui-style="glass"] .user-menu{backdrop-filter:blur(16px) saturate(1.04)!important;-webkit-backdrop-filter:blur(16px) saturate(1.04)!important}
 }
 
 /* ===== RADIO ===== */
@@ -1591,7 +1586,12 @@ let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null
 let creatorLogs=[];
 let radioStations=[];
 let activeRadioStation=null;
-let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"liquidGlass":false}');
+let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"glass":false}');
+if(labsSettings && labsSettings.liquidGlass!==undefined && labsSettings.glass===undefined){
+  labsSettings.glass=!!labsSettings.liquidGlass;
+  delete labsSettings.liquidGlass;
+  localStorage.setItem('mp_labs_settings',JSON.stringify(labsSettings));
+}
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
 let uploadExplicitManual=false,editExplicitManual=false,editExplicitLockedByAI=false;
@@ -4266,9 +4266,13 @@ function pushCreatorLog(level,msg){
 }
 function showSnackbar(msg){const s=document.getElementById('snackbar');s.textContent=msg;s.classList.remove('show');void s.offsetWidth;s.classList.add('show');clearTimeout(s._t);s._t=setTimeout(()=>s.classList.remove('show'),3000);pushCreatorLog('info','SNACKBAR: '+msg)}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
-function saveLabsSettings(){localStorage.setItem('mp_labs_settings',JSON.stringify(labsSettings));applyLabsSettings()}
+function saveLabsSettings(){
+  if(labsSettings.liquidGlass!==undefined) delete labsSettings.liquidGlass;
+  localStorage.setItem('mp_labs_settings',JSON.stringify(labsSettings));
+  applyLabsSettings();
+}
 function applyLabsSettings(){
-  if(labsSettings.liquidGlass) document.body.setAttribute('data-ui-style','liquid-glass');
+  if(labsSettings.glass) document.body.setAttribute('data-ui-style','glass');
   else document.body.removeAttribute('data-ui-style');
   applyThemePreference();
   if(currentTrackId&&allTracks[currentTrackId]) updateFullscreenMediaSurface(allTracks[currentTrackId]);
@@ -4276,6 +4280,8 @@ function applyLabsSettings(){
 function toggleLabsFlag(key){labsSettings[key]=!labsSettings[key];saveLabsSettings();renderLabsModal()}
 function setAdaptiveThemeMode(mode){localStorage.setItem('mp_theme_mode',mode);applyThemePreference();openSettings()}
 function applyThemePreference(){
+
+
   const mode=localStorage.getItem('mp_theme_mode')||'device';
   const prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
   let finalTheme='light';
@@ -4289,7 +4295,7 @@ function renderLabsModal(){
   if(!grid) return;
   const items=[
     ['videoInsteadOfCover','smart_display','Видео вместо обложки','Если у трека есть видео, в полноэкранном плеере вместо статичной обложки будет показываться само видео. Экспериментально.'],
-    ['liquidGlass','blur_on','Apple Liquid Glass','Стеклянный стиль с сильным blur, layered highlights, рефлексами и аккуратной контрастностью поверх текущего интерфейса.']
+    ['glass','blur_on','Glass','Стеклянный стиль всего интерфейса по образцу меню профиля: тёмное мягкое стекло, границы, глубина и чистый blur только в Labs.']
   ];
   grid.innerHTML=items.map(([key,icon,title,sub])=>'<div class="labs-card"><div class="labs-card-title"><span class="material-symbols-rounded">'+icon+'</span>'+title+'</div><div class="labs-card-sub">'+sub+'</div><div class="effect-row" style="margin:0"><div class="effect-meta"><div class="effect-sub">Состояние</div></div><div class="toggle '+(labsSettings[key]?'on':'')+'" onclick="toggleLabsFlag(\''+key+'\')"></div></div></div>').join('');
 }
