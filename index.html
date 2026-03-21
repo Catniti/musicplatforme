@@ -473,28 +473,30 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .labs-card-title{display:flex;align-items:center;gap:10px;font:700 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:8px}
 .labs-card-sub{font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:12px}
 body[data-ui-style="liquid-glass"]{
-  --glass-bg:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.12));
-  --glass-bg-strong:linear-gradient(180deg,rgba(255,255,255,.36),rgba(255,255,255,.18));
-  --glass-bg-soft:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.09));
-  --glass-border:rgba(255,255,255,.34);
-  --glass-edge:rgba(255,255,255,.58);
-  --glass-shadow:0 18px 52px rgba(28,38,76,.12),0 2px 10px rgba(22,24,40,.06),inset 0 1px 0 rgba(255,255,255,.48),inset 0 -1px 0 rgba(255,255,255,.10);
-  --glass-inner-shadow:inset 0 1px 0 rgba(255,255,255,.42), inset 0 -1px 0 rgba(255,255,255,.08);
-  --glass-outline:rgba(103,80,164,.10);
-  --glass-glow:radial-gradient(120% 90% at 8% 0%,rgba(255,255,255,.52),transparent 36%),radial-gradient(120% 100% at 100% 100%,rgba(255,255,255,.12),transparent 40%),linear-gradient(180deg,rgba(255,255,255,.18),transparent 40%);
-  --glass-refraction:radial-gradient(70% 56% at var(--glass-x,18%) var(--glass-y,12%),rgba(255,255,255,.18),transparent 48%);
+  --glass-bg:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.18));
+  --glass-bg-strong:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.22));
+  --glass-bg-soft:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.14));
+  --glass-border:rgba(255,255,255,.52);
+  --glass-edge:rgba(255,255,255,.76);
+  --glass-shadow:0 22px 70px rgba(22,32,72,.13),0 6px 18px rgba(22,24,40,.08),inset 0 1px 0 rgba(255,255,255,.72),inset 0 -1px 0 rgba(255,255,255,.12);
+  --glass-inner-shadow:inset 0 1px 0 rgba(255,255,255,.58), inset 0 -1px 0 rgba(255,255,255,.10);
+  --glass-outline:rgba(255,255,255,.16);
+  --glass-glow:radial-gradient(120% 90% at 14% 0%,rgba(255,255,255,.82),transparent 34%),radial-gradient(80% 70% at 86% 100%,rgba(255,255,255,.22),transparent 42%),linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.02) 48%);
+  --glass-refraction:radial-gradient(78% 58% at var(--glass-x,20%) var(--glass-y,16%),rgba(255,255,255,.22),transparent 44%),radial-gradient(46% 26% at 50% 100%,rgba(255,255,255,.10),transparent 56%);
+  --glass-tint:rgba(247,247,250,.34);
 }
 body[data-ui-style="liquid-glass"][data-theme="dark"]{
-  --glass-bg:linear-gradient(180deg,rgba(26,30,38,.70),rgba(15,18,25,.54));
-  --glass-bg-strong:linear-gradient(180deg,rgba(38,44,56,.76),rgba(19,22,29,.62));
-  --glass-bg-soft:linear-gradient(180deg,rgba(34,40,52,.48),rgba(18,22,29,.32));
-  --glass-border:rgba(255,255,255,.13);
-  --glass-edge:rgba(255,255,255,.18);
-  --glass-shadow:0 22px 60px rgba(0,0,0,.34),0 2px 10px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(255,255,255,.04);
-  --glass-inner-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(255,255,255,.03);
-  --glass-outline:rgba(208,188,255,.10);
-  --glass-glow:radial-gradient(120% 90% at 8% 0%,rgba(255,255,255,.12),transparent 30%),radial-gradient(120% 100% at 100% 100%,rgba(255,255,255,.06),transparent 40%),linear-gradient(180deg,rgba(255,255,255,.07),transparent 36%);
-  --glass-refraction:radial-gradient(70% 56% at var(--glass-x,18%) var(--glass-y,12%),rgba(255,255,255,.08),transparent 48%);
+  --glass-bg:linear-gradient(180deg,rgba(38,43,54,.78),rgba(18,22,29,.52));
+  --glass-bg-strong:linear-gradient(180deg,rgba(52,58,72,.82),rgba(20,24,31,.60));
+  --glass-bg-soft:linear-gradient(180deg,rgba(45,50,63,.54),rgba(18,22,29,.28));
+  --glass-border:rgba(255,255,255,.18);
+  --glass-edge:rgba(255,255,255,.26);
+  --glass-shadow:0 26px 70px rgba(0,0,0,.40),0 8px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.12),inset 0 -1px 0 rgba(255,255,255,.05);
+  --glass-inner-shadow:inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(255,255,255,.04);
+  --glass-outline:rgba(255,255,255,.08);
+  --glass-glow:radial-gradient(120% 90% at 14% 0%,rgba(255,255,255,.16),transparent 28%),radial-gradient(80% 70% at 86% 100%,rgba(255,255,255,.08),transparent 42%),linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.01) 44%);
+  --glass-refraction:radial-gradient(78% 58% at var(--glass-x,20%) var(--glass-y,16%),rgba(255,255,255,.09),transparent 44%),radial-gradient(46% 26% at 50% 100%,rgba(255,255,255,.04),transparent 56%);
+  --glass-tint:rgba(22,26,34,.30);
 }
 body[data-ui-style="liquid-glass"] .sidebar,
 body[data-ui-style="liquid-glass"] .top-bar,
@@ -542,7 +544,44 @@ body[data-ui-style="liquid-glass"] .user-menu,
 body[data-ui-style="liquid-glass"] .track-context-menu,
 body[data-ui-style="liquid-glass"] .queue-panel,
 body[data-ui-style="liquid-glass"] .tab-bar{
-  background:var(--glass-bg-strong)!important;
+  background:linear-gradient(180deg,var(--glass-tint),transparent),var(--glass-bg-strong)!important;
+}
+body[data-ui-style="liquid-glass"] .bottom-nav{
+  left:50%;right:auto;bottom:12px;transform:translateX(-50%);
+  width:min(calc(100vw - 22px),460px);height:68px;
+  border:1px solid var(--glass-border)!important;border-radius:999px;
+  box-shadow:var(--glass-shadow),0 12px 28px rgba(0,0,0,.08)!important;
+  padding:0 8px;
+}
+body[data-ui-style="liquid-glass"] .bottom-nav .nav-tab{flex:1;position:relative;border-radius:999px;min-width:0;height:56px;justify-content:center}
+body[data-ui-style="liquid-glass"] .bottom-nav .nav-tab-indicator{
+  width:100%;max-width:86px;height:48px;border-radius:999px;
+  background:transparent;box-shadow:none;transition:all .28s cubic-bezier(.2,0,0,1)
+}
+body[data-ui-style="liquid-glass"] .bottom-nav .nav-tab.active .nav-tab-indicator{
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.22))!important;
+  border:1px solid rgba(255,255,255,.56);box-shadow:0 10px 26px rgba(255,255,255,.18),inset 0 1px 0 rgba(255,255,255,.78)
+}
+body[data-ui-style="liquid-glass"] .player-bar{
+  left:50%;right:auto;bottom:92px;transform:translateX(-50%);
+  width:min(calc(100vw - 22px),560px);height:72px;padding:0 14px 0 10px;
+  border:1px solid var(--glass-border)!important;border-radius:999px;
+  box-shadow:var(--glass-shadow),0 14px 34px rgba(0,0,0,.10)!important;
+}
+body[data-ui-style="liquid-glass"] .top-bar{
+  margin:10px 14px 0;border-radius:999px;border:1px solid var(--glass-border)!important;
+}
+@media(min-width:1025px){
+  body[data-ui-style="liquid-glass"] .player-bar{left:calc(50% + var(--sidebar-width)/2);}
+}
+@media(max-width:1024px){
+  body[data-ui-style="liquid-glass"] .player-bar{bottom:88px;width:min(calc(100vw - 20px),560px)}
+  body[data-ui-style="liquid-glass"] .bottom-nav{display:flex}
+}
+@media(max-width:600px){
+  body[data-ui-style="liquid-glass"] .bottom-nav{height:64px;bottom:10px;width:min(calc(100vw - 16px),440px)}
+  body[data-ui-style="liquid-glass"] .player-bar{bottom:84px;height:68px;width:min(calc(100vw - 16px),520px)}
+  body[data-ui-style="liquid-glass"] .top-bar{margin:8px 10px 0}
 }
 body[data-ui-style="liquid-glass"] .settings-item,
 body[data-ui-style="liquid-glass"] .track-item,
@@ -674,7 +713,38 @@ body[data-ui-style="liquid-glass"] .user-menu,
 body[data-ui-style="liquid-glass"] .track-context-menu{border-radius:28px}
 body[data-ui-style="liquid-glass"] .top-bar,
 body[data-ui-style="liquid-glass"] .player-bar,
-body[data-ui-style="liquid-glass"] .bottom-nav{backdrop-filter:blur(34px) saturate(1.55) contrast(1.04);-webkit-backdrop-filter:blur(34px) saturate(1.55) contrast(1.04)}
+body[data-ui-style="liquid-glass"] .bottom-nav{backdrop-filter:blur(38px) saturate(1.65) contrast(1.05);-webkit-backdrop-filter:blur(38px) saturate(1.65) contrast(1.05)}
+body[data-ui-style="liquid-glass"] .player-bar::before,
+body[data-ui-style="liquid-glass"] .bottom-nav::before,
+body[data-ui-style="liquid-glass"] .top-bar::before{
+  background:
+    radial-gradient(140% 100% at 10% 0%,rgba(255,255,255,.92),transparent 28%),
+    radial-gradient(90% 80% at 90% 100%,rgba(255,255,255,.18),transparent 42%),
+    linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,.02) 48%),
+    var(--glass-refraction);
+}
+body[data-ui-style="liquid-glass"] .player-bar::after,
+body[data-ui-style="liquid-glass"] .bottom-nav::after,
+body[data-ui-style="liquid-glass"] .top-bar::after{
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.92),
+    inset 0 -1px 0 rgba(255,255,255,.10),
+    0 0 0 1px rgba(255,255,255,.42);
+}
+body[data-ui-style="liquid-glass"] .player-thumb,
+body[data-ui-style="liquid-glass"] .user-avatar,
+body[data-ui-style="liquid-glass"] .video-secondary-btn{
+  background:linear-gradient(180deg,rgba(255,255,255,.52),rgba(255,255,255,.18));
+  border:1px solid rgba(255,255,255,.44);
+  box-shadow:0 10px 24px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.82);
+}
+body[data-ui-style="liquid-glass"][data-theme="dark"] .player-thumb,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .user-avatar,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .video-secondary-btn{
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.07));
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 10px 24px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.18);
+}
 body[data-ui-style="liquid-glass"] .creator-console{background:linear-gradient(180deg,rgba(9,20,15,.74),rgba(5,12,9,.62))!important}
 @media(max-width:640px){
   body[data-ui-style="liquid-glass"] .top-bar,
@@ -3662,10 +3732,37 @@ function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.ran
 const RADIO_API_SERVERS=[
   'https://de1.api.radio-browser.info/json',
   'https://nl1.api.radio-browser.info/json',
-  'https://fr1.api.radio-browser.info/json'
+  'https://fr1.api.radio-browser.info/json',
+  'https://all.api.radio-browser.info/json'
 ];
+const RADIO_FALLBACK_STATIONS={
+  RU:[
+    {name:'Record Dance Radio',country:'Россия',language:'ru',tags:'dance,electronic',bitrate:128,favicon:'',url_resolved:'https://radiorecord.hostingradio.ru/rr_main96.aacp'},
+    {name:'Relax FM',country:'Россия',language:'ru',tags:'relax,chillout',bitrate:128,favicon:'',url_resolved:'https://pub0301.101.ru:8443/stream/trust/mp3/128/200'},
+    {name:'Radio Monte Carlo',country:'Россия',language:'ru',tags:'pop,lounge',bitrate:128,favicon:'',url_resolved:'https://montecarlo.hostingradio.ru/montecarlo96.aacp'}
+  ],
+  US:[
+    {name:'181.FM The Buzz',country:'USA',language:'en',tags:'rock,alternative',bitrate:128,favicon:'',url_resolved:'https://listen.181fm.com/181-buzz_128k.mp3'},
+    {name:'181.FM Chillout',country:'USA',language:'en',tags:'chillout,ambient',bitrate:128,favicon:'',url_resolved:'https://listen.181fm.com/181-chill_128k.mp3'}
+  ],
+  DE:[
+    {name:'TechnoBase.FM',country:'Germany',language:'de',tags:'techno,dance',bitrate:128,favicon:'',url_resolved:'https://listen.technobase.fm/tunein-dsl-pls'}
+  ]
+};
 let radioApiServerIndex=0;
 function getRadioApiBase(){return RADIO_API_SERVERS[radioApiServerIndex]||RADIO_API_SERVERS[0]}
+function normalizeRadioStations(list,country){
+  return (Array.isArray(list)?list:[])
+    .map(s=>({
+      ...s,
+      url_resolved:s.url_resolved||s.urlResolved||s.url||'',
+      country:s.country||country||'',
+      language:s.language||s.languagecodes||'',
+      tags:s.tags||''
+    }))
+    .filter(s=>s.url_resolved)
+    .slice(0,24);
+}
 async function radioFetchJson(path){
   let lastErr=null;
   for(let i=0;i<RADIO_API_SERVERS.length;i++){
@@ -3673,16 +3770,14 @@ async function radioFetchJson(path){
     const base=RADIO_API_SERVERS[idx];
     try{
       const controller=new AbortController();
-      const timeout=setTimeout(()=>controller.abort(),12000);
-      const res=await fetch(base+path,{headers:{'Accept':'application/json'},signal:controller.signal});
+      const timeout=setTimeout(()=>controller.abort(),8000);
+      const res=await fetch(base+path,{headers:{'Accept':'application/json'},signal:controller.signal,cache:'no-store'});
       clearTimeout(timeout);
       if(!res.ok) throw new Error('radio-http-'+res.status);
       const data=await res.json();
       radioApiServerIndex=idx;
       return data;
-    }catch(e){
-      lastErr=e;
-    }
+    }catch(e){ lastErr=e; }
   }
   throw lastErr||new Error('radio-unavailable');
 }
@@ -3692,23 +3787,31 @@ async function loadRealRadio(){
   const status=document.getElementById('radioStatus');
   const grid=document.getElementById('radioGrid');
   if(!grid||!status) return;
-  status.textContent='Загружаем реальные станции...';
+  status.textContent='Загружаем радиостанции...';
   grid.innerHTML='<div class="loading-spinner"></div>';
   pushCreatorLog('info','RADIO load: country='+country+', tag='+(tag||'—'));
   try{
-    let path='/stations/search?hidebroken=true&limit=36&order=votes&reverse=true&countrycode='+encodeURIComponent(country);
-    if(tag) path+='&tag='+encodeURIComponent(tag);
-    const data=await radioFetchJson(path);
-    radioStations=(Array.isArray(data)?data:[])
-      .filter(s=>(s.url_resolved||s.url) && (s.lastcheckok===1 || s.lastcheckok===true || s.lastcheckok===undefined))
-      .sort((a,b)=>(Number(b.votes||0)+Number(b.clickcount||0))-(Number(a.votes||0)+Number(a.clickcount||0)))
-      .slice(0,24);
-    status.textContent=radioStations.length?'Выбери станцию ниже: найдено '+radioStations.length:'Станции не найдены. Попробуй другую страну или жанр.';
+    let data=[];
+    if(tag){
+      data=await radioFetchJson('/stations/bytag/'+encodeURIComponent(tag)+'?hidebroken=true&limit=50&order=votes&reverse=true');
+      data=normalizeRadioStations(data,country).filter(s=>!country || String(s.countrycode||'').toUpperCase()===country || String(s.country||'').toUpperCase().includes(country));
+    }
+    if(!data.length){
+      data=await radioFetchJson('/stations/search?hidebroken=true&limit=50&order=votes&reverse=true&countrycode='+encodeURIComponent(country));
+      data=normalizeRadioStations(data,country);
+    }
+    if(!data.length && RADIO_FALLBACK_STATIONS[country]){
+      data=normalizeRadioStations(RADIO_FALLBACK_STATIONS[country],country);
+      pushCreatorLog('warn','RADIO fallback catalog used for '+country);
+    }
+    radioStations=data;
+    status.textContent=radioStations.length ? 'Выбери радиостанцию ниже: найдено '+radioStations.length : 'Станции не найдены. Попробуй другой регион или жанр.';
     renderRadioGrid();
   }catch(e){
-    status.textContent='Не удалось загрузить радио.';
-    grid.innerHTML='<div class="empty-state"><span class="material-symbols-rounded">radio</span><h3>Радио недоступно</h3><p>Попробуйте позже или смените страну.</p></div>';
-    pushCreatorLog('error','RADIO fail: '+(e?.message||e));
+    radioStations=normalizeRadioStations(RADIO_FALLBACK_STATIONS[country]||RADIO_FALLBACK_STATIONS.RU,country);
+    status.textContent=radioStations.length ? 'Каталог радио загружен из запасного списка.' : 'Не удалось загрузить радио.';
+    renderRadioGrid();
+    pushCreatorLog('warn','RADIO fail, fallback used: '+(e?.message||e));
   }
 }
 function renderRadioGrid(){
@@ -3718,14 +3821,12 @@ function renderRadioGrid(){
     const logo=s.favicon?'<img src="'+s.favicon+'" alt="" loading="lazy" onerror="this.remove()">':'<span class="material-symbols-rounded" style="font-size:28px;color:var(--md-outline)">radio</span>';
     const tags=String(s.tags||'').split(',').map(v=>v.trim()).filter(Boolean).slice(0,3).map(t=>'<span class="radio-tag">'+esc(t)+'</span>').join('');
     const bitrate=Number(s.bitrate||0)>0?('<span class="badge">'+Math.round(Number(s.bitrate||0))+' kbps</span>'):'';
-    return '<div class="radio-card"><div class="radio-card-top"><div class="radio-logo">'+logo+'</div><div style="min-width:0"><div class="radio-name">'+esc(s.name||'Радио')+'</div><div class="radio-sub">'+esc((s.country||'')+' • '+(s.language||'')).replace(/^ • | • $/g,'')+'</div></div></div><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span class="radio-live-badge"><span class="material-symbols-rounded" style="font-size:14px">sensors</span> LIVE</span><div style="display:flex;gap:6px;align-items:center">'+bitrate+'<span class="badge">❤ '+Math.round(Number(s.votes||0))+'</span></div></div><div class="radio-tags">'+tags+'</div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn-primary" onclick="event.stopPropagation();playRadioStation('+i+')"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>'+(s.homepage?'<a class="btn-outlined" href="'+esc(s.homepage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="material-symbols-rounded">public</span> Сайт</a>':'')+'</div></div>';
-  }).join(''):'<div class="empty-state"><span class="material-symbols-rounded">radio</span><h3>Нет станций</h3></div>';
+    return '<div class="radio-card"><div class="radio-card-top"><div class="radio-logo">'+logo+'</div><div style="min-width:0"><div class="radio-name">'+esc(s.name||'Радио')+'</div><div class="radio-sub">'+esc((s.country||'')+' • '+(s.language||'')).replace(/^ • | • $/g,'')+'</div></div></div><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span class="radio-live-badge"><span class="material-symbols-rounded" style="font-size:14px">sensors</span> LIVE</span><div style="display:flex;gap:6px;align-items:center">'+bitrate+'</div></div><div class="radio-tags">'+tags+'</div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn-primary" onclick="event.stopPropagation();playRadioStation('+i+')"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>'+(s.homepage?'<a class="btn-outlined" href="'+esc(s.homepage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="material-symbols-rounded">public</span> Сайт</a>':'')+'</div></div>';
+  }).join(''):'<div class="empty-state"><span class="material-symbols-rounded">radio</span><h3>Нет станций</h3><p>Попробуйте выбрать другой регион.</p></div>';
 }
-function playRadioStation(index){
-  const s=radioStations[index];
-  if(!s) return;
+function setRadioPlayerMeta(s){
   activeRadioStation=s;
-  currentTrackId='radio:'+String(s.stationuuid||index);
+  currentTrackId='radio:'+String(s.stationuuid||s.name||Date.now());
   showPlayer();
   document.getElementById('playerSong').textContent=s.name||'Радио';
   document.getElementById('playerArtist').textContent=(s.country||'')+(s.language?' • '+s.language:'');
@@ -3737,24 +3838,41 @@ function playRadioStation(index){
   document.getElementById('fsMusicAuthor').style.display='none';
   document.getElementById('totalTime').textContent='LIVE';
   document.getElementById('fsTotalTime').textContent='LIVE';
-  audio.src=s.url_resolved||s.url||'';
-  audio.load();
-  audio.play().then(()=>{
-    isPlaying=true;
-    updatePlayButton();
-    pushCreatorLog('info','RADIO play: '+(s.name||'station'));
-    showSnackbar('Играет: '+(s.name||'Радио'));
+}
+function tryPlayStreamCandidates(candidates,stationName){
+  return new Promise((resolve,reject)=>{
+    let idx=0;
+    const next=()=>{
+      if(idx>=candidates.length){reject(new Error('all-streams-failed'));return}
+      const src=candidates[idx++];
+      if(!src){next();return}
+      const onCanPlay=()=>{cleanup();audio.play().then(resolve).catch(()=>next())};
+      const onError=()=>{cleanup();next()};
+      const cleanup=()=>{clearTimeout(timer);audio.removeEventListener('canplay',onCanPlay);audio.removeEventListener('error',onError)};
+      const timer=setTimeout(()=>{cleanup();next()},7000);
+      audio.addEventListener('canplay',onCanPlay,{once:true});
+      audio.addEventListener('error',onError,{once:true});
+      audio.src=src;audio.load();
+    };
+    next();
+  });
+}
+function playRadioStation(index){
+  const s=radioStations[index];
+  if(!s) return;
+  setRadioPlayerMeta(s);
+  const candidates=[s.url_resolved,s.url,s.url_resolved?.replace('http://','https://'),s.url?.replace('http://','https://')].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+  tryPlayStreamCandidates(candidates,s.name||'Радио').then(()=>{
+    isPlaying=true;updatePlayButton();pushCreatorLog('info','RADIO play: '+(s.name||'station'));showSnackbar('Играет: '+(s.name||'Радио'));
   }).catch((e)=>{
     pushCreatorLog('warn','RADIO play fail: '+(e?.message||e));
-    showSnackbar('Не удалось воспроизвести эту станцию. Выбери другую.');
+    showSnackbar('Эта станция не открылась. Попробуйте другую.');
   });
-  try{fetch(getRadioApiBase()+'/url/'+encodeURIComponent(s.stationuuid||''),{method:'GET'}).catch(()=>{})}catch(e){}
+  try{ if(s.stationuuid) fetch(getRadioApiBase()+'/url/'+encodeURIComponent(s.stationuuid),{method:'GET'}).catch(()=>{}); }catch(e){}
 }
 function playRecommendedRadio(){
   if(!radioStations.length){loadRealRadio();return}
-  const best=[...radioStations].sort((a,b)=>(Number(b.votes||0)+Number(b.clickcount||0))-(Number(a.votes||0)+Number(a.clickcount||0)))[0];
-  const idx=radioStations.indexOf(best);
-  playRadioStation(Math.max(0,idx));
+  playRadioStation(0);
 }
 
 /* ===== UPLOAD ===== */
