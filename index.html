@@ -224,6 +224,17 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .profile-stats{display:flex;gap:24px;margin-top:8px;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant)}
 .profile-stats strong{color:var(--md-on-surface);font-weight:600}
 .profile-stats span{transition:color .2s;cursor:default}.profile-stats span:hover{color:var(--md-on-surface)}
+.profile-pinned-wrap{margin:0 0 24px;padding:16px 18px;border-radius:20px;background:linear-gradient(180deg,var(--md-surface-container-low),var(--md-surface-container));border:1px solid var(--md-outline-variant)}
+.profile-pinned-title{display:flex;align-items:center;gap:8px;font:700 15px/22px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:12px}
+.profile-pinned-sub{font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:12px}
+.creator-profile .profile-avatar{background:linear-gradient(135deg,#0d7a43,#3fd27d);box-shadow:0 0 0 4px rgba(63,210,125,.18),var(--md-elevation-2)}
+.creator-profile .profile-avatar .material-symbols-rounded{color:#fff}
+.creator-profile .profile-name{color:#179c52}
+.creator-badge{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:8px;width:24px;height:24px;border:none;border-radius:50%;background:#18a957;color:#fff;cursor:pointer;box-shadow:0 2px 10px rgba(24,169,87,.28);transition:transform .2s,filter .2s}
+.creator-badge:hover{transform:translateY(-1px) scale(1.06);filter:brightness(1.06)}
+.creator-badge .material-symbols-rounded{font-size:16px;color:#fff}
+.creator-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(24,169,87,.12);color:#14944d;font:600 12px/16px 'Inter',sans-serif;margin-top:8px}
+.pinned-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#ffe9b3;color:#8a5a00;font:700 11px/16px 'Inter',sans-serif}
 
 /* ===== BOTTOM NAV ===== */
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--nav-height);background:var(--md-surface-container);border-top:1px solid var(--md-outline-variant);z-index:200;align-items:center;justify-content:space-around}
@@ -767,9 +778,10 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
     <div id="profileContent" style="display:none">
       <div class="profile-header">
         <div class="profile-avatar" id="profileAvatar"><span class="material-symbols-rounded">person</span></div>
-        <div class="profile-info">
+        <div class="profile-info" id="profileInfo">
           <div class="profile-name" id="profileName">Пользователь</div>
           <div style="font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:2px" id="profileLogin">@user</div>
+          <div id="profileCreatorMeta"></div>
           <div class="profile-stats">
             <span><strong id="profileTracks">0</strong> треков</span>
             <span><strong id="profileLikes">0</strong> лайков</span>
@@ -780,6 +792,11 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
             <button class="btn-outlined" onclick="signOutUser()"><span class="material-symbols-rounded">logout</span> Выйти</button>
           </div>
         </div>
+      </div>
+      <div class="profile-pinned-wrap" id="profilePinnedWrap" style="display:none">
+        <div class="profile-pinned-title"><span class="material-symbols-rounded">push_pin</span> Закреплённые треки</div>
+        <div class="profile-pinned-sub">Треки, которые пользователь выбрал главными в своём профиле.</div>
+        <div class="track-list" id="profilePinnedTracks"></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px" id="profileStatsGrid"></div>
       <div class="tab-bar">
@@ -1186,7 +1203,7 @@ const db=firebase.database();
 /* ===== STATE ===== */
 let currentUser=null,allTracks={},currentTrackId=null,playlist=[],playlistIndex=-1;
 let isPlaying=false,isShuffle=false,repeatMode=0;
-let favorites={},subscriptions={},userPlaylists={},deleteTrackId=null;
+let favorites={},subscriptions={},userPlaylists={},pinnedTracks={},deleteTrackId=null;
 let selectedAudioFile=null,selectedAudioDataURL=null,playerVisible=false;
 let selectedCoverDataURL=null,selectedVideoDataURL=null,selectedVideoFile=null,reportTrackId=null,contextTrackId=null;
 let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null,editTrackVideoData='';
@@ -1311,50 +1328,13 @@ function dataUrlByteSize(dataUrl=''){
 }
 const AUDIO_CACHE_PREFIX='mp_audio_cache_';
 const AUDIO_CACHE_INDEX_KEY='mp_audio_cache_index';
-const AUDIO_CACHE_MAX_BYTES=18*1024*1024;
-function readAudioCacheIndex(){
-  try{return JSON.parse(localStorage.getItem(AUDIO_CACHE_INDEX_KEY)||'{}')}catch(e){return {}}
-}
-function writeAudioCacheIndex(index){
-  try{localStorage.setItem(AUDIO_CACHE_INDEX_KEY,JSON.stringify(index||{}))}catch(e){}
-}
-function getCachedAudioData(trackId){
-  try{return localStorage.getItem(AUDIO_CACHE_PREFIX+trackId)||''}catch(e){return ''}
-}
-function trimAudioCache(requiredBytes=0){
-  try{
-    const index=readAudioCacheIndex();
-    const entries=Object.entries(index).sort((a,b)=>(a[1]?.lastAccess||0)-(b[1]?.lastAccess||0));
-    let total=entries.reduce((s,[,v])=>s+Number(v?.bytes||0),0);
-    for(const [id,meta] of entries){
-      if(total+requiredBytes<=AUDIO_CACHE_MAX_BYTES) break;
-      try{localStorage.removeItem(AUDIO_CACHE_PREFIX+id)}catch(e){}
-      total-=Number(meta?.bytes||0);
-      delete index[id];
-    }
-    writeAudioCacheIndex(index);
-  }catch(e){}
-}
-function cacheAudioData(trackId,dataUrl){
-  try{
-    const safeId=String(trackId||'').trim();
-    const safeData=String(dataUrl||'').trim();
-    if(!safeId||!safeData.startsWith('data:')) return;
-    const bytes=dataUrlByteSize(safeData);
-    if(!bytes||bytes>6*1024*1024) return;
-    trimAudioCache(bytes);
-    localStorage.setItem(AUDIO_CACHE_PREFIX+safeId,safeData);
-    const index=readAudioCacheIndex();
-    index[safeId]={bytes,lastAccess:Date.now()};
-    writeAudioCacheIndex(index);
-  }catch(e){}
-}
-function touchAudioCache(trackId){
-  try{
-    const index=readAudioCacheIndex();
-    if(index[trackId]){index[trackId].lastAccess=Date.now();writeAudioCacheIndex(index)}
-  }catch(e){}
-}
+const AUDIO_CACHE_MAX_BYTES=0;
+function readAudioCacheIndex(){return {}}
+function writeAudioCacheIndex(index){}
+function getCachedAudioData(trackId){return ''}
+function trimAudioCache(requiredBytes=0){}
+function cacheAudioData(trackId,dataUrl){}
+function touchAudioCache(trackId){}
 function splitIntoChunks(str,size=350000){
   const out=[];
   for(let i=0;i<str.length;i+=size) out.push(str.slice(i,i+size));
@@ -1952,6 +1932,26 @@ function openTgPopup(cbName){
 }
 
 /* ===== AUTH UI ===== */
+function isCreatorUser(user){
+  return !!(user && String(user.email||'').toLowerCase()==='vriskas@catniti.ru');
+}
+function updateCreatorProfileUi(){
+  const content=document.getElementById('profileContent');
+  const meta=document.getElementById('profileCreatorMeta');
+  const nameEl=document.getElementById('profileName');
+  if(!content||!meta||!nameEl) return;
+  content.classList.toggle('creator-profile', !!isCreatorUser(currentUser));
+  if(isCreatorUser(currentUser)){
+    nameEl.innerHTML=esc(currentUser.displayName||'Пользователь')+' <button class="creator-badge" onclick="showCreatorBadgeInfo()" title="Создатель сервиса"><span class="material-symbols-rounded filled">verified</span></button>';
+    meta.innerHTML='<div class="creator-chip"><span class="material-symbols-rounded filled" style="font-size:16px">eco</span> Создатель MusicPlatforme</div>';
+  }else{
+    nameEl.textContent=currentUser?.displayName||'Пользователь';
+    meta.innerHTML='';
+  }
+}
+function showCreatorBadgeInfo(){
+  showSnackbar('Это создатель сервиса MusicPlatforme');
+}
 function updateAuthUI(){
   const ai=document.getElementById('avatarIcon'),am=document.getElementById('avatarImg');
   if(currentUser){
@@ -1962,10 +1962,13 @@ function updateAuthUI(){
     document.getElementById('profileLogin').textContent='@'+(currentUser.username||'user');
     const pa=document.getElementById('profileAvatar');
     pa.innerHTML=currentUser.photo?'<img src="'+currentUser.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:48px;color:var(--md-primary)">person</span>';
+    updateCreatorProfileUi();
   }else{
     ai.style.display='';am.style.display='none';
     document.getElementById('uploadAuthMsg').style.display='block';document.getElementById('uploadForm').style.display='none';
     document.getElementById('profileAuthMsg').style.display='block';document.getElementById('profileContent').style.display='none';
+    document.getElementById('profileContent').classList.remove('creator-profile');
+    const meta=document.getElementById('profileCreatorMeta'); if(meta) meta.innerHTML='';
   }
   updateUserMenu();
 }
@@ -2084,6 +2087,7 @@ function loadUserData(){
   });
   db.ref('subscriptions/'+uid).on('value',s=>{subscriptions=s.val()||{};renderSubscriptions()});
   db.ref('playlists/'+uid).on('value',s=>{userPlaylists=s.val()||{};renderPlaylists()});
+  db.ref('pinnedTracks/'+uid).on('value',s=>{pinnedTracks=s.val()||{};renderPinnedTracks()});
   db.ref('history/'+uid).orderByChild('time').limitToLast(100).on('value',s=>{
     listeningHistory=[];s.forEach(c=>{listeningHistory.unshift({id:c.key,...c.val()})});renderHistory();
   });
@@ -2109,30 +2113,34 @@ function loadMyTracks(){
   });
 }
 function loadProfileStats(){if(!currentUser)return;db.ref('subscribers/'+currentUser.uid).on('value',s=>{document.getElementById('profileSubs').textContent=Object.keys(s.val()||{}).length})}
+function renderPinnedTracks(){
+  const wrap=document.getElementById('profilePinnedWrap');
+  const list=document.getElementById('profilePinnedTracks');
+  if(!wrap||!list||!currentUser) return;
+  const ids=Object.keys(pinnedTracks||{}).sort((a,b)=>(pinnedTracks[a]||0)-(pinnedTracks[b]||0)).filter(id=>allTracks[id]);
+  if(!ids.length){wrap.style.display='none';list.innerHTML='';return}
+  wrap.style.display='block';
+  list.innerHTML=ids.map((id,i)=>renderTrackItem(id,allTracks[id],i+1,false)).join('');
+}
+async function togglePinTrack(trackId){
+  if(!currentUser){showSnackbar('Войдите');return}
+  const track=allTracks[trackId];
+  if(!track||track.artistId!==currentUser.uid){showSnackbar('Можно закреплять только свои треки');return}
+  const ref=db.ref('pinnedTracks/'+currentUser.uid+'/'+trackId);
+  if(pinnedTracks[trackId]){
+    await ref.remove();
+    showSnackbar('Трек откреплён');
+  }else{
+    const ids=Object.keys(pinnedTracks||{});
+    if(ids.length>=3){showSnackbar('Можно закрепить максимум 3 трека');return}
+    await ref.set(Date.now());
+    showSnackbar('Трек закреплён в профиле');
+  }
+}
 
 /* ===== TRACKS LISTENER ===== */
-try{
-  const cachedTracks=JSON.parse(localStorage.getItem('mp_tracks_meta_cache')||'null');
-  if(cachedTracks&&typeof cachedTracks==='object'){
-    allTracks=cachedTracks;
-    renderHome();
-    renderExplore();
-    renderCharts();
-    renderNewReleases();
-    renderFavorites();
-    renderSubscriptions();
-    renderPlaylists();
-  }
-}catch(e){}
 db.ref('tracks').on('value',snap=>{
   allTracks=snap.val()||{};
-  try{
-    const metaOnly={};
-    Object.entries(allTracks).forEach(([id,t])=>{
-      metaOnly[id]={...t,audioData:t.audioData?('data:cached:'+id):'',videoData:''};
-    });
-    localStorage.setItem('mp_tracks_meta_cache',JSON.stringify(metaOnly));
-  }catch(e){}
   renderHome();
   renderExplore();
   renderCharts();
@@ -2150,10 +2158,11 @@ db.ref('tracks').on('value',snap=>{
 function renderTrackItem(id,track,num,showDel){
   const isExp=track.explicit,isFav=favorites[id],isNP=currentTrackId===id,dur=track.duration?formatTime(track.duration):'—';
   const plays=track.plays||0;
+  const isPinned=!!(currentUser&&track.artistId===currentUser.uid&&pinnedTracks[id]);
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
     '<div class="track-num">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
     '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
-    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isExp?'<span class="explicit-badge" title="Explicit">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав">©?</span>':'')+'</div>'+
+    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав">©?</span>':'')+'</div>'+
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
     '<div style="font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Автор музыки: '+esc(track.musicAuthor||track.artistName||'Не указан')+'</div></div>'+
     '<div class="track-plays"><span class="material-symbols-rounded">play_arrow</span>'+formatPlays(plays)+'</div>'+
@@ -2184,6 +2193,7 @@ function openTrackContextMenu(e,tid){
   if(track.videoData||track.videoUrl){items+='<div class="track-context-item" onclick="openTrackVideo(\''+tid+'\');this.parentElement.remove()"><span class="material-symbols-rounded">smart_display</span>Смотреть видео</div>'}
   items+='<div class="track-context-item" onclick="shareTrackById(\''+tid+'\');this.parentElement.remove()"><span class="material-symbols-rounded">share</span>Поделиться</div>';
   if(isOwner){
+    items+='<div class="track-context-item" onclick="togglePinTrack(\''+tid+'\');this.parentElement.remove()"><span class="material-symbols-rounded">push_pin</span>'+(pinnedTracks[tid]?'Открепить из профиля':'Закрепить в профиле')+'</div>';
     items+='<div class="track-context-item" onclick="openEditTrack(\''+tid+'\');this.parentElement.remove()"><span class="material-symbols-rounded">edit</span>Редактировать</div>';
     items+='<div class="track-context-item danger" onclick="deleteTrack(\''+tid+'\');this.parentElement.remove()"><span class="material-symbols-rounded">delete</span>Удалить</div>';
   }else if(currentUser){
