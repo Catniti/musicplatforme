@@ -613,7 +613,7 @@ body[data-ui-style="glass"] .video-secondary-btn::before{
   position:absolute;
   inset:0;
   pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0) 42%);
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0) 34%);
 }
 body[data-ui-style="glass"] .top-bar,
 body[data-ui-style="glass"] .player-bar,
@@ -719,8 +719,42 @@ body[data-ui-style="glass"] .chip.active,
 body[data-ui-style="glass"] .tab-item.active{
   background:var(--glass-bg-soft)!important;
   border-color:var(--glass-border)!important;
+  box-shadow:none!important;
+  filter:none!important;
 }
 body[data-ui-style="glass"] .creator-console{background:linear-gradient(180deg,rgba(20,24,33,.88),rgba(26,28,40,.78))!important;color:#eaf0ff!important}
+body[data-ui-style="glass"] .btn-tonal,
+body[data-ui-style="glass"] .btn-outlined,
+body[data-ui-style="glass"] .btn-icon,
+body[data-ui-style="glass"] .chip,
+body[data-ui-style="glass"] .nav-item.active,
+body[data-ui-style="glass"] .chip.active,
+body[data-ui-style="glass"] .tab-item.active,
+body[data-ui-style="glass"] .bottom-nav .nav-tab.active .nav-tab-indicator,
+body[data-ui-style="glass"] .video-secondary-btn,
+body[data-ui-style="glass"] .player-play-btn,
+body[data-ui-style="glass"] .fs-play-btn{
+  box-shadow:none!important;
+  filter:none!important;
+}
+body[data-ui-style="glass"] .btn-tonal::before,
+body[data-ui-style="glass"] .btn-outlined::before,
+body[data-ui-style="glass"] .btn-icon::before,
+body[data-ui-style="glass"] .chip::before,
+body[data-ui-style="glass"] .nav-item.active::before,
+body[data-ui-style="glass"] .chip.active::before,
+body[data-ui-style="glass"] .tab-item.active::before,
+body[data-ui-style="glass"] .bottom-nav .nav-tab.active .nav-tab-indicator::before,
+body[data-ui-style="glass"] .video-secondary-btn::before{
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0) 34%)!important;
+}
+body[data-ui-style="glass"] .btn-tonal:hover,
+body[data-ui-style="glass"] .btn-outlined:hover,
+body[data-ui-style="glass"] .btn-icon:hover,
+body[data-ui-style="glass"] .chip:hover,
+body[data-ui-style="glass"] .video-secondary-btn:hover{
+  transform:none!important;
+}
 @media(max-width:640px){
   body[data-ui-style="glass"] .top-bar,
   body[data-ui-style="glass"] .player-bar,
@@ -730,6 +764,25 @@ body[data-ui-style="glass"] .creator-console{background:linear-gradient(180deg,r
   body[data-ui-style="glass"] .queue-panel,
   body[data-ui-style="glass"] .track-context-menu,
   body[data-ui-style="glass"] .user-menu{backdrop-filter:blur(16px) saturate(1.04)!important;-webkit-backdrop-filter:blur(16px) saturate(1.04)!important}
+  body[data-ui-style="glass"] .top-bar{padding:8px 10px!important;gap:8px!important}
+  body[data-ui-style="glass"] .page{padding:10px 12px!important}
+  body[data-ui-style="glass"] .bottom-nav{left:8px!important;right:8px!important;bottom:8px!important;height:60px!important;border-radius:24px!important}
+  body[data-ui-style="glass"] .player-bar{left:8px!important;right:8px!important;bottom:calc(var(--nav-height) + 12px)!important;height:76px!important;border-radius:24px!important;padding:0 12px!important}
+  body[data-ui-style="glass"] .main-content{padding-bottom:calc(var(--player-height) + var(--nav-height) + 42px)!important}
+  body[data-ui-style="glass"] .search-bar input{padding:10px 14px 10px 42px!important;font-size:14px!important}
+  body[data-ui-style="glass"] .user-menu{top:62px!important;right:10px!important;max-width:calc(100vw - 20px)!important}
+  body[data-ui-style="glass"] .modal{padding:16px!important;border-radius:24px!important;max-height:min(88vh,calc(100dvh - 24px))!important}
+  body[data-ui-style="glass"] .cards-grid{gap:10px!important}
+  body[data-ui-style="glass"] .hero-banner{padding:18px!important;border-radius:24px!important}
+  body[data-ui-style="glass"] .track-item{padding:8px 10px!important;border-radius:20px!important}
+}
+@media(max-width:420px){
+  body[data-ui-style="glass"] .top-bar{padding:6px 8px!important}
+  body[data-ui-style="glass"] .bottom-nav{left:6px!important;right:6px!important;bottom:6px!important;height:58px!important}
+  body[data-ui-style="glass"] .player-bar{left:6px!important;right:6px!important;bottom:calc(var(--nav-height) + 10px)!important;padding:0 10px!important}
+  body[data-ui-style="glass"] .page{padding:8px 10px!important}
+  body[data-ui-style="glass"] .search-bar{max-width:none!important}
+  body[data-ui-style="glass"] .search-bar input{padding-right:10px!important}
 }
 
 /* ===== RADIO ===== */
