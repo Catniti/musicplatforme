@@ -472,6 +472,30 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .labs-card:hover{transform:translateY(-2px);box-shadow:var(--md-elevation-1)}
 .labs-card-title{display:flex;align-items:center;gap:10px;font:700 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:8px}
 .labs-card-sub{font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:12px}
+body[data-ui-style="liquid-glass"]{
+  --glass-bg:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.12));
+  --glass-bg-strong:linear-gradient(180deg,rgba(255,255,255,.36),rgba(255,255,255,.18));
+  --glass-bg-soft:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.09));
+  --glass-border:rgba(255,255,255,.34);
+  --glass-edge:rgba(255,255,255,.58);
+  --glass-shadow:0 18px 52px rgba(28,38,76,.12),0 2px 10px rgba(22,24,40,.06),inset 0 1px 0 rgba(255,255,255,.48),inset 0 -1px 0 rgba(255,255,255,.10);
+  --glass-inner-shadow:inset 0 1px 0 rgba(255,255,255,.42), inset 0 -1px 0 rgba(255,255,255,.08);
+  --glass-outline:rgba(103,80,164,.10);
+  --glass-glow:radial-gradient(120% 90% at 8% 0%,rgba(255,255,255,.52),transparent 36%),radial-gradient(120% 100% at 100% 100%,rgba(255,255,255,.12),transparent 40%),linear-gradient(180deg,rgba(255,255,255,.18),transparent 40%);
+  --glass-refraction:radial-gradient(70% 56% at var(--glass-x,18%) var(--glass-y,12%),rgba(255,255,255,.18),transparent 48%);
+}
+body[data-ui-style="liquid-glass"][data-theme="dark"]{
+  --glass-bg:linear-gradient(180deg,rgba(26,30,38,.70),rgba(15,18,25,.54));
+  --glass-bg-strong:linear-gradient(180deg,rgba(38,44,56,.76),rgba(19,22,29,.62));
+  --glass-bg-soft:linear-gradient(180deg,rgba(34,40,52,.48),rgba(18,22,29,.32));
+  --glass-border:rgba(255,255,255,.13);
+  --glass-edge:rgba(255,255,255,.18);
+  --glass-shadow:0 22px 60px rgba(0,0,0,.34),0 2px 10px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(255,255,255,.04);
+  --glass-inner-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(255,255,255,.03);
+  --glass-outline:rgba(208,188,255,.10);
+  --glass-glow:radial-gradient(120% 90% at 8% 0%,rgba(255,255,255,.12),transparent 30%),radial-gradient(120% 100% at 100% 100%,rgba(255,255,255,.06),transparent 40%),linear-gradient(180deg,rgba(255,255,255,.07),transparent 36%);
+  --glass-refraction:radial-gradient(70% 56% at var(--glass-x,18%) var(--glass-y,12%),rgba(255,255,255,.08),transparent 48%);
+}
 body[data-ui-style="liquid-glass"] .sidebar,
 body[data-ui-style="liquid-glass"] .top-bar,
 body[data-ui-style="liquid-glass"] .player-bar,
@@ -488,37 +512,177 @@ body[data-ui-style="liquid-glass"] .upload-zone,
 body[data-ui-style="liquid-glass"] .settings-item,
 body[data-ui-style="liquid-glass"] .import-box,
 body[data-ui-style="liquid-glass"] .labs-card,
-body[data-ui-style="liquid-glass"] .hero-banner{
-  background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.10));
-  backdrop-filter:blur(22px) saturate(1.25);
-  -webkit-backdrop-filter:blur(22px) saturate(1.25);
-  border:1px solid rgba(255,255,255,.22);
-  box-shadow:0 10px 34px rgba(31,38,135,.14), inset 0 1px 0 rgba(255,255,255,.20);
+body[data-ui-style="liquid-glass"] .hero-banner,
+body[data-ui-style="liquid-glass"] .radio-card,
+body[data-ui-style="liquid-glass"] .lyrics-container,
+body[data-ui-style="liquid-glass"] .cover-upload-zone,
+body[data-ui-style="liquid-glass"] .device-item,
+body[data-ui-style="liquid-glass"] .track-item,
+body[data-ui-style="liquid-glass"] .auth-form,
+body[data-ui-style="liquid-glass"] .creator-console,
+body[data-ui-style="liquid-glass"] .tab-bar,
+body[data-ui-style="liquid-glass"] .search-bar input,
+body[data-ui-style="liquid-glass"] .chip,
+body[data-ui-style="liquid-glass"] .btn-tonal,
+body[data-ui-style="liquid-glass"] .btn-outlined,
+body[data-ui-style="liquid-glass"] .btn-icon,
+body[data-ui-style="liquid-glass"] .bottom-nav .nav-tab.active .nav-tab-indicator{
+  background:var(--glass-bg)!important;
+  backdrop-filter:blur(30px) saturate(1.5) contrast(1.03);
+  -webkit-backdrop-filter:blur(30px) saturate(1.5) contrast(1.03);
+  border:1px solid var(--glass-border)!important;
+  box-shadow:var(--glass-shadow)!important;
 }
-body[data-ui-style="liquid-glass"][data-theme="dark"] .sidebar,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .top-bar,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .player-bar,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .bottom-nav,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .modal,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .queue-panel,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .user-menu,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .track-context-menu,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .md-card,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .effect-card,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .stat-card,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .profile-pinned-wrap,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .upload-zone,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .settings-item,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .import-box,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .labs-card,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .hero-banner{
-  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.06));
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 10px 34px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.08);
+body[data-ui-style="liquid-glass"] .top-bar,
+body[data-ui-style="liquid-glass"] .player-bar,
+body[data-ui-style="liquid-glass"] .bottom-nav,
+body[data-ui-style="liquid-glass"] .sidebar,
+body[data-ui-style="liquid-glass"] .modal,
+body[data-ui-style="liquid-glass"] .user-menu,
+body[data-ui-style="liquid-glass"] .track-context-menu,
+body[data-ui-style="liquid-glass"] .queue-panel,
+body[data-ui-style="liquid-glass"] .tab-bar{
+  background:var(--glass-bg-strong)!important;
 }
+body[data-ui-style="liquid-glass"] .settings-item,
+body[data-ui-style="liquid-glass"] .track-item,
+body[data-ui-style="liquid-glass"] .radio-card,
+body[data-ui-style="liquid-glass"] .labs-card,
+body[data-ui-style="liquid-glass"] .md-card,
+body[data-ui-style="liquid-glass"] .effect-card,
+body[data-ui-style="liquid-glass"] .stat-card,
+body[data-ui-style="liquid-glass"] .device-item,
+body[data-ui-style="liquid-glass"] .profile-pinned-wrap,
+body[data-ui-style="liquid-glass"] .hero-banner,
+body[data-ui-style="liquid-glass"] .upload-zone,
+body[data-ui-style="liquid-glass"] .import-box,
+body[data-ui-style="liquid-glass"] .cover-upload-zone,
+body[data-ui-style="liquid-glass"] .lyrics-container{
+  position:relative;
+  overflow:hidden;
+  background:var(--glass-bg-soft)!important;
+}
+body[data-ui-style="liquid-glass"] .sidebar::before,
+body[data-ui-style="liquid-glass"] .top-bar::before,
+body[data-ui-style="liquid-glass"] .player-bar::before,
+body[data-ui-style="liquid-glass"] .bottom-nav::before,
+body[data-ui-style="liquid-glass"] .modal::before,
+body[data-ui-style="liquid-glass"] .queue-panel::before,
+body[data-ui-style="liquid-glass"] .user-menu::before,
+body[data-ui-style="liquid-glass"] .track-context-menu::before,
+body[data-ui-style="liquid-glass"] .md-card::before,
+body[data-ui-style="liquid-glass"] .effect-card::before,
+body[data-ui-style="liquid-glass"] .stat-card::before,
+body[data-ui-style="liquid-glass"] .profile-pinned-wrap::before,
+body[data-ui-style="liquid-glass"] .upload-zone::before,
+body[data-ui-style="liquid-glass"] .settings-item::before,
+body[data-ui-style="liquid-glass"] .import-box::before,
+body[data-ui-style="liquid-glass"] .labs-card::before,
+body[data-ui-style="liquid-glass"] .hero-banner::before,
+body[data-ui-style="liquid-glass"] .radio-card::before,
+body[data-ui-style="liquid-glass"] .lyrics-container::before,
+body[data-ui-style="liquid-glass"] .cover-upload-zone::before,
+body[data-ui-style="liquid-glass"] .device-item::before,
+body[data-ui-style="liquid-glass"] .track-item::before,
+body[data-ui-style="liquid-glass"] .creator-console::before,
+body[data-ui-style="liquid-glass"] .tab-bar::before,
+body[data-ui-style="liquid-glass"] .search-bar::before,
+body[data-ui-style="liquid-glass"] .chip::before,
+body[data-ui-style="liquid-glass"] .btn-tonal::before,
+body[data-ui-style="liquid-glass"] .btn-outlined::before,
+body[data-ui-style="liquid-glass"] .btn-icon::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:var(--glass-glow), var(--glass-refraction);
+  pointer-events:none;
+}
+body[data-ui-style="liquid-glass"] .sidebar::after,
+body[data-ui-style="liquid-glass"] .top-bar::after,
+body[data-ui-style="liquid-glass"] .player-bar::after,
+body[data-ui-style="liquid-glass"] .bottom-nav::after,
+body[data-ui-style="liquid-glass"] .modal::after,
+body[data-ui-style="liquid-glass"] .queue-panel::after,
+body[data-ui-style="liquid-glass"] .user-menu::after,
+body[data-ui-style="liquid-glass"] .track-context-menu::after,
+body[data-ui-style="liquid-glass"] .md-card::after,
+body[data-ui-style="liquid-glass"] .effect-card::after,
+body[data-ui-style="liquid-glass"] .stat-card::after,
+body[data-ui-style="liquid-glass"] .profile-pinned-wrap::after,
+body[data-ui-style="liquid-glass"] .upload-zone::after,
+body[data-ui-style="liquid-glass"] .settings-item::after,
+body[data-ui-style="liquid-glass"] .import-box::after,
+body[data-ui-style="liquid-glass"] .labs-card::after,
+body[data-ui-style="liquid-glass"] .hero-banner::after,
+body[data-ui-style="liquid-glass"] .radio-card::after,
+body[data-ui-style="liquid-glass"] .lyrics-container::after,
+body[data-ui-style="liquid-glass"] .cover-upload-zone::after,
+body[data-ui-style="liquid-glass"] .device-item::after,
+body[data-ui-style="liquid-glass"] .track-item::after,
+body[data-ui-style="liquid-glass"] .creator-console::after,
+body[data-ui-style="liquid-glass"] .tab-bar::after,
+body[data-ui-style="liquid-glass"] .search-bar::after,
+body[data-ui-style="liquid-glass"] .chip::after,
+body[data-ui-style="liquid-glass"] .btn-tonal::after,
+body[data-ui-style="liquid-glass"] .btn-outlined::after,
+body[data-ui-style="liquid-glass"] .btn-icon::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  box-shadow:var(--glass-inner-shadow),0 0 0 1px var(--glass-edge) inset;
+  pointer-events:none;
+  opacity:.95;
+}
+body[data-ui-style="liquid-glass"] .md-input,
+body[data-ui-style="liquid-glass"] select.md-input,
+body[data-ui-style="liquid-glass"] textarea.md-input{
+  background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,.18))!important;
+  border:1px solid rgba(255,255,255,.32)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 10px 22px rgba(31,38,135,.06);
+}
+body[data-ui-style="liquid-glass"][data-theme="dark"] .md-input,
+body[data-ui-style="liquid-glass"][data-theme="dark"] select.md-input,
+body[data-ui-style="liquid-glass"][data-theme="dark"] textarea.md-input{
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.06))!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 10px 22px rgba(0,0,0,.16);
+}
+body[data-ui-style="liquid-glass"] .top-bar,
+body[data-ui-style="liquid-glass"] .player-bar,
+body[data-ui-style="liquid-glass"] .bottom-nav,
+body[data-ui-style="liquid-glass"] .sidebar{border-color:var(--glass-outline)!important}
 body[data-ui-style="liquid-glass"] .settings-item:hover,
 body[data-ui-style="liquid-glass"] .md-card:hover,
-body[data-ui-style="liquid-glass"] .labs-card:hover{filter:brightness(1.02)}
+body[data-ui-style="liquid-glass"] .labs-card:hover,
+body[data-ui-style="liquid-glass"] .radio-card:hover,
+body[data-ui-style="liquid-glass"] .track-item:hover,
+body[data-ui-style="liquid-glass"] .btn-tonal:hover,
+body[data-ui-style="liquid-glass"] .btn-outlined:hover,
+body[data-ui-style="liquid-glass"] .btn-icon:hover,
+body[data-ui-style="liquid-glass"] .chip:hover{filter:brightness(1.04) saturate(1.05);transform:translateY(-2px)}
+body[data-ui-style="liquid-glass"] .hero-banner::before,
+body[data-ui-style="liquid-glass"] .hero-banner::after{opacity:.14}
+body[data-ui-style="liquid-glass"] .btn-primary{box-shadow:0 14px 28px rgba(103,80,164,.20), inset 0 1px 0 rgba(255,255,255,.20)}
+body[data-ui-style="liquid-glass"] .search-bar{position:relative;border-radius:999px;overflow:hidden}
+body[data-ui-style="liquid-glass"] .search-bar input{background:transparent!important;position:relative;z-index:1}
+body[data-ui-style="liquid-glass"] .nav-item.active,
+body[data-ui-style="liquid-glass"] .tab-item.active,
+body[data-ui-style="liquid-glass"] .chip.active{background:var(--glass-bg-strong)!important;color:var(--md-on-surface)!important;border-color:var(--glass-border)!important}
+body[data-ui-style="liquid-glass"] .modal,
+body[data-ui-style="liquid-glass"] .user-menu,
+body[data-ui-style="liquid-glass"] .track-context-menu{border-radius:28px}
+body[data-ui-style="liquid-glass"] .top-bar,
+body[data-ui-style="liquid-glass"] .player-bar,
+body[data-ui-style="liquid-glass"] .bottom-nav{backdrop-filter:blur(34px) saturate(1.55) contrast(1.04);-webkit-backdrop-filter:blur(34px) saturate(1.55) contrast(1.04)}
+body[data-ui-style="liquid-glass"] .creator-console{background:linear-gradient(180deg,rgba(9,20,15,.74),rgba(5,12,9,.62))!important}
+@media(max-width:640px){
+  body[data-ui-style="liquid-glass"] .top-bar,
+  body[data-ui-style="liquid-glass"] .player-bar,
+  body[data-ui-style="liquid-glass"] .bottom-nav,
+  body[data-ui-style="liquid-glass"] .modal,
+  body[data-ui-style="liquid-glass"] .sidebar{backdrop-filter:blur(24px) saturate(1.35) contrast(1.02);-webkit-backdrop-filter:blur(24px) saturate(1.35) contrast(1.02)}
+}
 
 /* ===== RADIO ===== */
 .radio-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
@@ -1253,7 +1417,15 @@ body[data-ui-style="liquid-glass"] .labs-card:hover{filter:brightness(1.02)}
     <div class="modal-title" id="videoTrackTitle" style="margin-bottom:0;flex:1">Видео трека</div>
     <button class="btn-icon" onclick="closeTrackVideo()"><span class="material-symbols-rounded">close</span></button>
   </div>
-  <div id="videoTrackBody" style="padding:0;background:black;min-height:240px;display:flex;align-items:center;justify-content:center;position:relative"></div>
+  <div id="videoTrackBody" class="video-shell" style="padding:0;min-height:240px;display:flex;align-items:center;justify-content:center;position:relative">
+    <div class="video-overlay-top" id="videoTrackOverlayTop" style="display:none">
+      <div class="video-cinematic-info" id="videoTrackMetaInline"><span class="material-symbols-rounded" style="font-size:18px">movie</span><span>Видео трека</span></div>
+      <div class="video-bottom-bar">
+        <button class="video-secondary-btn" onclick="toggleTrackVideoPlayback()"><span class="material-symbols-rounded" id="videoOverlayPlayIcon">play_arrow</span></button>
+        <button class="video-secondary-btn" onclick="closeTrackVideo()"><span class="material-symbols-rounded">close</span></button>
+      </div>
+    </div>
+  </div>
   <div id="videoTrackControls" style="display:none;padding:12px 14px;background:var(--md-surface-container-high);border-top:1px solid var(--md-outline-variant)">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <button class="player-play-btn" id="videoPlayBtn" onclick="toggleTrackVideoPlayback()"><span class="material-symbols-rounded" id="videoPlayIcon">play_arrow</span></button>
@@ -1366,7 +1538,7 @@ let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null
 let creatorLogs=[];
 let radioStations=[];
 let activeRadioStation=null;
-let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"adaptiveTheme":true,"liquidGlass":false,"smartPreload":false,"aggressiveBeat":true,"radioAutoRegion":false,"cinematicVideo":true,"extraTransitions":true,"ambientGradient":false,"queueMemory":true}');
+let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"liquidGlass":false}');
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
 let uploadExplicitManual=false,editExplicitManual=false,editExplicitLockedByAI=false;
@@ -2697,7 +2869,7 @@ function loadAndPlay(track){
   document.getElementById('playerArtist').textContent=track.artistName||'Неизвестен';
   document.getElementById('playerExplicit').style.display=track.explicit?'inline-flex':'none';
   document.getElementById('playerThumb').innerHTML=track.cover?'<img src="'+track.cover+'" alt="">':'<span class="material-symbols-rounded">music_note</span>';
-  document.getElementById('fsCover').innerHTML=track.cover?'<img src="'+track.cover+'" alt="">':'<span class="material-symbols-rounded">music_note</span>';
+  updateFullscreenMediaSurface(track);
   document.getElementById('fsTitle').innerHTML=esc(track.title||'')+(track.explicit?' <span class="explicit-badge">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?' <span class="badge" style="margin-left:6px;vertical-align:middle">©?</span>':'');
   document.getElementById('fsArtist').textContent=track.artistName||'Неизвестен';
   const fsAuthorEl=document.getElementById('fsMusicAuthor');
@@ -3332,6 +3504,25 @@ function applyFxPreset(name){
 function openFullscreenPlayer(){if(!currentTrackId)return;document.getElementById('fsPlayer').classList.add('open');updateFsLike();syncFxUi();if(isPlaying)document.getElementById('fsCover').classList.add('playing')}
 function closeFullscreenPlayer(){document.getElementById('fsPlayer').classList.remove('open')}
 function updateFsLike(){const btn=document.getElementById('fsLikeBtn');if(!btn)return;const liked=currentTrackId&&favorites[currentTrackId];btn.classList.toggle('active',!!liked);btn.querySelector('.material-symbols-rounded').classList.toggle('filled',!!liked)}
+function updateFullscreenMediaSurface(track){
+  const fs=document.getElementById('fsCover');
+  if(!fs||!track) return;
+  const hasVideo=!!(labsSettings.videoInsteadOfCover && (track.videoUrl||track.videoData||track.videoStorageMode==='chunks'||Number(track.videoChunkCount||0)>0));
+  if(hasVideo){
+    const src=normalizeVideoUrl(track.videoUrl||'');
+    if(/youtube\.com\/embed\//i.test(src)){
+      fs.innerHTML='<iframe src="'+src+'" style="width:100%;height:100%;border:0;display:block;background:black" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+    }else if(track.videoData){
+      fs.innerHTML='<video autoplay muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;background:black" src="'+track.videoData+'"></video>';
+    }else if(src){
+      fs.innerHTML='<video autoplay muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;background:black" src="'+src+'"></video>';
+    }else{
+      fs.innerHTML=track.cover?'<img src="'+track.cover+'" alt="">':'<span class="material-symbols-rounded">music_note</span>';
+    }
+  }else{
+    fs.innerHTML=track.cover?'<img src="'+track.cover+'" alt="">':'<span class="material-symbols-rounded">music_note</span>';
+  }
+}
 function fsGoToArtist(){if(!currentTrackId||!allTracks[currentTrackId])return;closeFullscreenPlayer();viewArtist(allTracks[currentTrackId].artistId)}
 function shareTrack(){if(currentTrackId)shareTrackById(currentTrackId)}
 function toggleLyrics(){
@@ -3468,7 +3659,33 @@ function startWave(){
 function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
 
 /* ===== REAL RADIO ===== */
-const RADIO_API_BASE='https://de1.api.radio-browser.info/json';
+const RADIO_API_SERVERS=[
+  'https://de1.api.radio-browser.info/json',
+  'https://nl1.api.radio-browser.info/json',
+  'https://fr1.api.radio-browser.info/json'
+];
+let radioApiServerIndex=0;
+function getRadioApiBase(){return RADIO_API_SERVERS[radioApiServerIndex]||RADIO_API_SERVERS[0]}
+async function radioFetchJson(path){
+  let lastErr=null;
+  for(let i=0;i<RADIO_API_SERVERS.length;i++){
+    const idx=(radioApiServerIndex+i)%RADIO_API_SERVERS.length;
+    const base=RADIO_API_SERVERS[idx];
+    try{
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),12000);
+      const res=await fetch(base+path,{headers:{'Accept':'application/json'},signal:controller.signal});
+      clearTimeout(timeout);
+      if(!res.ok) throw new Error('radio-http-'+res.status);
+      const data=await res.json();
+      radioApiServerIndex=idx;
+      return data;
+    }catch(e){
+      lastErr=e;
+    }
+  }
+  throw lastErr||new Error('radio-unavailable');
+}
 async function loadRealRadio(){
   const country=(document.getElementById('radioCountry')?.value||'RU').toUpperCase();
   const tag=(document.getElementById('radioTag')?.value||'').trim();
@@ -3479,13 +3696,14 @@ async function loadRealRadio(){
   grid.innerHTML='<div class="loading-spinner"></div>';
   pushCreatorLog('info','RADIO load: country='+country+', tag='+(tag||'—'));
   try{
-    let url=RADIO_API_BASE+'/stations/search?hidebroken=true&limit=24&order=votes&reverse=true&countrycode='+encodeURIComponent(country);
-    if(tag) url+='&tag='+encodeURIComponent(tag);
-    const res=await fetch(url,{headers:{'Accept':'application/json'}});
-    if(!res.ok) throw new Error('radio-http-'+res.status);
-    const data=await res.json();
-    radioStations=(Array.isArray(data)?data:[]).filter(s=>s.url_resolved||s.url).slice(0,24);
-    status.textContent=radioStations.length?'Найдено станций: '+radioStations.length:'Станции не найдены. Попробуй другую страну или жанр.';
+    let path='/stations/search?hidebroken=true&limit=36&order=votes&reverse=true&countrycode='+encodeURIComponent(country);
+    if(tag) path+='&tag='+encodeURIComponent(tag);
+    const data=await radioFetchJson(path);
+    radioStations=(Array.isArray(data)?data:[])
+      .filter(s=>(s.url_resolved||s.url) && (s.lastcheckok===1 || s.lastcheckok===true || s.lastcheckok===undefined))
+      .sort((a,b)=>(Number(b.votes||0)+Number(b.clickcount||0))-(Number(a.votes||0)+Number(a.clickcount||0)))
+      .slice(0,24);
+    status.textContent=radioStations.length?'Выбери станцию ниже: найдено '+radioStations.length:'Станции не найдены. Попробуй другую страну или жанр.';
     renderRadioGrid();
   }catch(e){
     status.textContent='Не удалось загрузить радио.';
@@ -3499,7 +3717,8 @@ function renderRadioGrid(){
   grid.innerHTML=radioStations.length?radioStations.map((s,i)=>{
     const logo=s.favicon?'<img src="'+s.favicon+'" alt="" loading="lazy" onerror="this.remove()">':'<span class="material-symbols-rounded" style="font-size:28px;color:var(--md-outline)">radio</span>';
     const tags=String(s.tags||'').split(',').map(v=>v.trim()).filter(Boolean).slice(0,3).map(t=>'<span class="radio-tag">'+esc(t)+'</span>').join('');
-    return '<div class="radio-card" onclick="playRadioStation('+i+')"><div class="radio-card-top"><div class="radio-logo">'+logo+'</div><div style="min-width:0"><div class="radio-name">'+esc(s.name||'Радио')+'</div><div class="radio-sub">'+esc((s.country||'')+' • '+(s.language||'')).replace(/^ • | • $/g,'')+'</div></div></div><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="radio-live-badge"><span class="material-symbols-rounded" style="font-size:14px">sensors</span> LIVE</span><span class="badge">❤ '+Math.round(Number(s.votes||0))+'</span></div><div class="radio-tags">'+tags+'</div></div>';
+    const bitrate=Number(s.bitrate||0)>0?('<span class="badge">'+Math.round(Number(s.bitrate||0))+' kbps</span>'):'';
+    return '<div class="radio-card"><div class="radio-card-top"><div class="radio-logo">'+logo+'</div><div style="min-width:0"><div class="radio-name">'+esc(s.name||'Радио')+'</div><div class="radio-sub">'+esc((s.country||'')+' • '+(s.language||'')).replace(/^ • | • $/g,'')+'</div></div></div><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><span class="radio-live-badge"><span class="material-symbols-rounded" style="font-size:14px">sensors</span> LIVE</span><div style="display:flex;gap:6px;align-items:center">'+bitrate+'<span class="badge">❤ '+Math.round(Number(s.votes||0))+'</span></div></div><div class="radio-tags">'+tags+'</div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn-primary" onclick="event.stopPropagation();playRadioStation('+i+')"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>'+(s.homepage?'<a class="btn-outlined" href="'+esc(s.homepage)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><span class="material-symbols-rounded">public</span> Сайт</a>':'')+'</div></div>';
   }).join(''):'<div class="empty-state"><span class="material-symbols-rounded">radio</span><h3>Нет станций</h3></div>';
 }
 function playRadioStation(index){
@@ -3519,12 +3738,23 @@ function playRadioStation(index){
   document.getElementById('totalTime').textContent='LIVE';
   document.getElementById('fsTotalTime').textContent='LIVE';
   audio.src=s.url_resolved||s.url||'';
-  audio.play().then(()=>{isPlaying=true;updatePlayButtons();pushCreatorLog('info','RADIO play: '+(s.name||'station'));}).catch(()=>showSnackbar('Не удалось воспроизвести радио'));
-  try{fetch(RADIO_API_BASE+'/url/'+encodeURIComponent(s.stationuuid||''),{method:'GET'}).catch(()=>{})}catch(e){}
+  audio.load();
+  audio.play().then(()=>{
+    isPlaying=true;
+    updatePlayButton();
+    pushCreatorLog('info','RADIO play: '+(s.name||'station'));
+    showSnackbar('Играет: '+(s.name||'Радио'));
+  }).catch((e)=>{
+    pushCreatorLog('warn','RADIO play fail: '+(e?.message||e));
+    showSnackbar('Не удалось воспроизвести эту станцию. Выбери другую.');
+  });
+  try{fetch(getRadioApiBase()+'/url/'+encodeURIComponent(s.stationuuid||''),{method:'GET'}).catch(()=>{})}catch(e){}
 }
 function playRecommendedRadio(){
   if(!radioStations.length){loadRealRadio();return}
-  playRadioStation(0);
+  const best=[...radioStations].sort((a,b)=>(Number(b.votes||0)+Number(b.clickcount||0))-(Number(a.votes||0)+Number(a.clickcount||0)))[0];
+  const idx=radioStations.indexOf(best);
+  playRadioStation(Math.max(0,idx));
 }
 
 /* ===== UPLOAD ===== */
@@ -3585,7 +3815,9 @@ let currentTrackVideoElement=null;
 function updateTrackVideoUi(){
   const v=currentTrackVideoElement;
   if(!v)return;
-  document.getElementById('videoPlayIcon').textContent=v.paused?'play_arrow':'pause';
+  const playIcon=v.paused?'play_arrow':'pause';
+  document.getElementById('videoPlayIcon').textContent=playIcon;
+  const overlayIcon=document.getElementById('videoOverlayPlayIcon'); if(overlayIcon) overlayIcon.textContent=playIcon;
   document.getElementById('videoMuteIcon').textContent=v.muted||v.volume===0?'volume_off':'volume_up';
   document.getElementById('videoCurrentTime').textContent=formatTime(v.currentTime||0);
   document.getElementById('videoTotalTime').textContent=formatTime(v.duration||0);
@@ -3634,8 +3866,12 @@ async function openTrackVideo(tid){
   const body=document.getElementById('videoTrackBody');
   const title=document.getElementById('videoTrackTitle');
   const controls=document.getElementById('videoTrackControls');
+  const topOverlay=document.getElementById('videoTrackOverlayTop');
+  const metaInline=document.getElementById('videoTrackMetaInline');
   if(title) title.textContent='Видео: '+(t.title||'Трек');
-  body.innerHTML='<div class="loading-spinner"></div>';
+  if(metaInline) metaInline.innerHTML='<span class="material-symbols-rounded" style="font-size:18px">movie</span><span>'+esc(t.title||'Видео трека')+' • '+esc(t.artistName||'MusicPlatforme')+'</span>';
+  if(topOverlay) topOverlay.style.display='flex';
+  body.innerHTML=(topOverlay?topOverlay.outerHTML:'')+'<div class="loading-spinner"></div>';
   controls.style.display='none';
   const url=normalizeVideoUrl(t.videoUrl||'');
   try{
@@ -3902,11 +4138,11 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
 
 /* ===== THEME ===== */
 function toggleTheme(){
-  const mode=localStorage.getItem('mp_theme_mode')||'light';
-  if(mode==='device'){ localStorage.setItem('mp_theme_mode','dark'); }
-  else if(mode==='dark'){ localStorage.setItem('mp_theme_mode','light'); }
-  else { localStorage.setItem('mp_theme_mode','dark'); }
+  const mode=localStorage.getItem('mp_theme_mode')||'device';
+  const next=mode==='device'?'dark':mode==='dark'?'light':'device';
+  localStorage.setItem('mp_theme_mode',next);
   applyThemePreference();
+  showSnackbar(next==='device'?'Тема: как на устройстве':(next==='dark'?'Тема: тёмная':'Тема: светлая'));
 }
 function cycleThemeMode(){
   const mode=localStorage.getItem('mp_theme_mode')||'light';
@@ -3931,36 +4167,28 @@ function showSnackbar(msg){const s=document.getElementById('snackbar');s.textCon
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function saveLabsSettings(){localStorage.setItem('mp_labs_settings',JSON.stringify(labsSettings));applyLabsSettings()}
 function applyLabsSettings(){
-  document.body.toggleAttribute('data-ui-style', !!labsSettings.liquidGlass);
   if(labsSettings.liquidGlass) document.body.setAttribute('data-ui-style','liquid-glass');
   else document.body.removeAttribute('data-ui-style');
   applyThemePreference();
+  if(currentTrackId&&allTracks[currentTrackId]) updateFullscreenMediaSurface(allTracks[currentTrackId]);
 }
 function toggleLabsFlag(key){labsSettings[key]=!labsSettings[key];saveLabsSettings();renderLabsModal()}
 function setAdaptiveThemeMode(mode){localStorage.setItem('mp_theme_mode',mode);applyThemePreference();openSettings()}
 function applyThemePreference(){
-  const mode=localStorage.getItem('mp_theme_mode')||(labsSettings.adaptiveTheme?'device':'light');
+  const mode=localStorage.getItem('mp_theme_mode')||'device';
   const prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
   let finalTheme='light';
   if(mode==='dark') finalTheme='dark';
   else if(mode==='device') finalTheme=prefersDark?'dark':'light';
-  if(finalTheme==='dark'){document.body.setAttribute('data-theme','dark');document.getElementById('themeIcon').textContent='light_mode'}
-  else{document.body.removeAttribute('data-theme');document.getElementById('themeIcon').textContent='dark_mode'}
+  if(finalTheme==='dark'){document.body.setAttribute('data-theme','dark');document.getElementById('themeIcon').textContent='contrast'}
+  else{document.body.removeAttribute('data-theme');document.getElementById('themeIcon').textContent='contrast'}
 }
 function renderLabsModal(){
   const grid=document.getElementById('labsGrid');
   if(!grid) return;
   const items=[
-    ['videoInsteadOfCover','smart_display','Видео вместо обложки','В полноэкранном плеере вместо статичной обложки показывать видео трека, если оно есть.'],
-    ['liquidGlass','blur_on','Apple Liquid Glass','Прозрачный стеклянный стиль поверх текущего интерфейса, без смены структуры.'],
-    ['adaptiveTheme','contrast','Адаптивная тема','Подстраивать светлую/тёмную тему под настройки устройства.'],
-    ['smartPreload','download','Умный прогрев потока','Экспериментальная подзагрузка следующего трека.'],
-    ['aggressiveBeat','graphic_eq','Сильнее под бит','Более заметная реакция обложки на низкие частоты.'],
-    ['radioAutoRegion','travel_explore','Авто-регион радио','Пробовать регион по браузеру/геолокации при открытии радио.'],
-    ['cinematicVideo','movie','Кино-режим видео','Более насыщенный fullscreen-видеопросмотр с оверлеями.'],
-    ['extraTransitions','animation','Мягкие переходы','Дополнительные анимации мелких состояний.'],
-    ['ambientGradient','palette','Ambient glow','Лёгкий фоновый градиент вокруг плеера от обложки.'],
-    ['queueMemory','queue_music','Умная очередь','Сохранять порядок и контекст очереди в течение сессии.']
+    ['videoInsteadOfCover','smart_display','Видео вместо обложки','Если у трека есть видео, в полноэкранном плеере вместо статичной обложки будет показываться само видео. Экспериментально.'],
+    ['liquidGlass','blur_on','Apple Liquid Glass','Стеклянный стиль с сильным blur, layered highlights, рефлексами и аккуратной контрастностью поверх текущего интерфейса.']
   ];
   grid.innerHTML=items.map(([key,icon,title,sub])=>'<div class="labs-card"><div class="labs-card-title"><span class="material-symbols-rounded">'+icon+'</span>'+title+'</div><div class="labs-card-sub">'+sub+'</div><div class="effect-row" style="margin:0"><div class="effect-meta"><div class="effect-sub">Состояние</div></div><div class="toggle '+(labsSettings[key]?'on':'')+'" onclick="toggleLabsFlag(\''+key+'\')"></div></div></div>').join('');
 }
