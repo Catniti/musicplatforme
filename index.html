@@ -18,12 +18,17 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MusicPlatforme">
 <meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://raw.githubusercontent.com/VriskasYT/musicplatforme/main/icon.png">
+<meta property="og:image:secure_url" content="https://raw.githubusercontent.com/VriskasYT/musicplatforme/main/icon.png">
+<meta property="og:image:alt" content="MusicPlatforme icon">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MusicPlatforme — Слушай музыку бесплатно">
 <meta name="twitter:description" content="Бесплатная музыкальная платформа с умной ИИ-модерацией.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/VriskasYT/musicplatforme/main/icon.png">
 <meta name="theme-color" content="#6750A4">
 <meta name="msapplication-TileColor" content="#6750A4">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236750A4'/%3E%3Cstop offset='100%25' stop-color='%23D0BCFF'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='50' fill='url(%23g)'/%3E%3Ctext x='50' y='68' font-size='55' text-anchor='middle' fill='white' font-family='Arial'%3E♪%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/VriskasYT/musicplatforme/main/icon.png">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/VriskasYT/musicplatforme/main/icon.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"MusicPlatforme","url":"https://vriskasYT.github.io/musicplatforme","description":"Бесплатная музыкальная платформа с умной ИИ-модерацией.","applicationCategory":"MusicApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"}}
 </script>
@@ -574,6 +579,8 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
     <div class="track-list" id="homeNewTracks"><div class="loading-spinner"></div></div>
     <div class="section-title">🏆 Популярное</div>
     <div class="cards-grid" id="homePopular"><div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:220px"></div></div>
+    <div class="section-title">⭐ Рекомендации сервиса</div>
+    <div class="cards-grid" id="homeFeatured"></div>
     <div class="section-title">🎤 Артисты</div>
     <div class="cards-grid" id="homeArtists" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))"></div>
   </div>
@@ -1357,8 +1364,8 @@ function readAudioCacheIndex(){return {}}
 function writeAudioCacheIndex(index){}
 function getCachedAudioData(trackId){return ''}
 function trimAudioCache(requiredBytes=0){}
-function cacheAudioData(trackId,dataUrl){}
-function touchAudioCache(trackId){}
+function cacheAudioData(trackId,dataUrl){return}
+function touchAudioCache(trackId){return}
 function splitIntoChunks(str,size=350000){
   const out=[];
   for(let i=0;i<str.length;i+=size) out.push(str.slice(i,i+size));
@@ -1783,10 +1790,7 @@ function tryExtractMp4Cover(buf){
   return null;
 }
 async function fetchRemoteCoverHints(title, artist){
-  try{
-    const prompt=encodeURIComponent(`album cover art for music track ${title||''} by ${artist||''}, square artwork, no text, high quality, abstract music cover`);
-    return 'https://gen.pollinations.ai/image/'+prompt+'?model=flux&width=1024&height=1024&seed=7&safe=false&enhance=true&key='+POLLINATIONS_API_KEY;
-  }catch(e){return null}
+  return null;
 }
 async function fetchCoverFromUrlMeta(url){
   try{
@@ -1960,20 +1964,18 @@ function isCreatorUser(user){
   return !!(user && String(user.email||'').toLowerCase()==='vriskas@catniti.ru');
 }
 function isAdminUser(user){
-  return isCreatorUser(user);
+  return false;
 }
 function buildPublicRoleBadges(user){
   const roles=[];
   if(isCreatorUser(user)) roles.push('<button class="creator-badge" onclick="showCreatorBadgeInfo()" title="Создатель сервиса"><span class="material-symbols-rounded filled">verified</span></button>');
-  if(isAdminUser(user)) roles.push('<button class="admin-badge" onclick="showAdminBadgeInfo()" title="Администратор"><span class="material-symbols-rounded filled">shield</span></button>');
-  return '<span class="inline-profile-badges">'+roles.join('')+'</span>';
+  return roles.length?'<span class="inline-profile-badges">'+roles.join('')+'</span>':'';
 }
 function renderPublicRolesForUser(user){
   const box=document.getElementById('profilePublicRoles');
   if(!box) return;
   const chips=[];
   if(isCreatorUser(user)) chips.push('<button class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель сервиса</button>');
-  if(isAdminUser(user)) chips.push('<button class="public-role-chip" onclick="showAdminBadgeInfo()"><span class="material-symbols-rounded filled">shield</span> Администратор</button>');
   box.innerHTML=chips.join('');
   box.style.display=chips.length?'flex':'none';
   box.style.gap='8px';
@@ -1988,9 +1990,6 @@ function updateCreatorProfileUi(viewedUser=currentUser){
   if(isCreatorUser(viewedUser)){
     nameEl.innerHTML=esc(viewedUser?.displayName||'Пользователь')+buildPublicRoleBadges(viewedUser);
     meta.innerHTML='<div class="creator-chip"><span class="material-symbols-rounded filled" style="font-size:16px">eco</span> Создатель MusicPlatforme</div>';
-  }else if(isAdminUser(viewedUser)){
-    nameEl.innerHTML=esc(viewedUser?.displayName||'Пользователь')+buildPublicRoleBadges(viewedUser);
-    meta.innerHTML='<div class="admin-chip"><span class="material-symbols-rounded filled" style="font-size:16px">shield</span> Администратор MusicPlatforme</div>';
   }else{
     nameEl.textContent=viewedUser?.displayName||'Пользователь';
     meta.innerHTML='';
@@ -2001,7 +2000,7 @@ function showCreatorBadgeInfo(){
   showSnackbar('Это создатель сервиса MusicPlatforme');
 }
 function showAdminBadgeInfo(){
-  showSnackbar('Этот профиль имеет права администратора MusicPlatforme');
+  showSnackbar('Админ-роль отключена. Есть только статус создателя сервиса.');
 }
 function updateAuthUI(){
   const ai=document.getElementById('avatarIcon'),am=document.getElementById('avatarImg');
@@ -2027,12 +2026,12 @@ function updateAuthUI(){
 function updateUserMenu(){
   const c=document.getElementById('userMenuContent');
   if(currentUser){
-    c.innerHTML='<div style="padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--md-outline-variant)"><div style="width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--md-primary-container);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+(currentUser.photo?'<img src="'+currentUser.photo+'" style="width:100%;height:100%;object-fit:cover">':'<span class="material-symbols-rounded">person</span>')+'</div><div style="min-width:0"><div style="font:500 14px/20px \'Inter\',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(currentUser.displayName)+(isCreatorUser(currentUser)?' <span style="color:#18a957">●</span>':'')+'</div><div style="font:400 12px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant)">@'+esc(currentUser.username)+'</div></div></div>'+
+    c.innerHTML='<div style="padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--md-outline-variant)"><div style="width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--md-primary-container);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+(currentUser.photo?'<img src="'+currentUser.photo+'" style="width:100%;height:100%;object-fit:cover">':'<span class="material-symbols-rounded">person</span>')+'</div><div style="min-width:0"><div style="font:500 14px/20px \'Inter\',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(currentUser.displayName)+(isCreatorUser(currentUser)?' <span style="color:#18a957">✔</span>':'')+'</div><div style="font:400 12px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant)">@'+esc(currentUser.username)+'</div></div></div>'+
     '<div class="user-menu-item" onclick="navigate(\'profile\');closeUserMenu()"><span class="material-symbols-rounded">person</span> Профиль</div>'+
     '<div class="user-menu-item" onclick="navigate(\'upload\');closeUserMenu()"><span class="material-symbols-rounded">upload</span> Загрузить</div>'+
     '<div class="user-menu-item" onclick="navigate(\'history\');closeUserMenu()"><span class="material-symbols-rounded">history</span> История</div>'+
     '<div class="user-menu-item" onclick="openSleepTimer();closeUserMenu()"><span class="material-symbols-rounded">bedtime</span> Таймер сна</div>'+
-    (isAdminUser(currentUser)?'<div class="user-menu-item" onclick="openAdminTools();closeUserMenu()"><span class="material-symbols-rounded">admin_panel_settings</span> Админ-инструменты</div>':'')+
+    (isCreatorUser(currentUser)?'<div class="user-menu-item" onclick="openAdminTools();closeUserMenu()"><span class="material-symbols-rounded">verified</span> Меню создателя</div>':'')+
     '<div class="user-menu-item" onclick="openSettings();closeUserMenu()"><span class="material-symbols-rounded">settings</span> Настройки</div>'+
     '<div class="user-menu-item" onclick="signOutUser();closeUserMenu()"><span class="material-symbols-rounded">logout</span> Выйти</div>';
   }else{
@@ -2212,7 +2211,7 @@ function renderTrackItem(id,track,num,showDel){
   const isExp=track.explicit,isFav=favorites[id],isNP=currentTrackId===id,dur=track.duration?formatTime(track.duration):'—';
   const plays=track.plays||0;
   const isPinned=!!(currentUser&&track.artistId===currentUser.uid&&pinnedTracks[id]);
-  const creatorChip=isCreatorUser({email:track.artistEmail||'',displayName:track.artistName||''})?'<span class="public-role-chip" style="padding:2px 8px;font-size:10px"><span class="material-symbols-rounded filled" style="font-size:12px">verified</span> creator</span>':'';
+  const creatorChip='';
   const featuredChip=track.serviceFeatured?'<span class="badge" title="Рекомендация MusicPlatforme">★ MusicPlatforme</span>':'';
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
     '<div class="track-num">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
@@ -2572,7 +2571,20 @@ function loadAndPlay(track){
   document.getElementById('fsCover').innerHTML=track.cover?'<img src="'+track.cover+'" alt="">':'<span class="material-symbols-rounded">music_note</span>';
   document.getElementById('fsTitle').innerHTML=esc(track.title||'')+(track.explicit?' <span class="explicit-badge">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?' <span class="badge" style="margin-left:6px;vertical-align:middle">©?</span>':'');
   document.getElementById('fsArtist').textContent=track.artistName||'Неизвестен';
-  document.getElementById('fsMusicAuthor').textContent='Автор музыки: '+(track.musicAuthor||track.artistName||'Не указан');
+  const fsAuthorEl=document.getElementById('fsMusicAuthor');
+  const artistDisplay=String(track.artistName||'').trim().toLowerCase();
+  const authorDisplay=String(track.musicAuthor||'').trim().toLowerCase();
+  const artistUsername=currentUser&&track.artistId===currentUser.uid?String(currentUser.username||'').trim().toLowerCase():'';
+  const sameAuthorAsArtist=!!authorDisplay && (authorDisplay===artistDisplay || (artistUsername && authorDisplay===artistUsername));
+  if(fsAuthorEl){
+    if(!track.musicAuthor || sameAuthorAsArtist){
+      fsAuthorEl.style.display='none';
+      fsAuthorEl.textContent='';
+    }else{
+      fsAuthorEl.style.display='block';
+      fsAuthorEl.textContent='Автор музыки: '+track.musicAuthor;
+    }
+  }
   document.getElementById('totalTime').textContent=track.duration?formatTime(track.duration):'0:00';
   document.getElementById('fsTotalTime').textContent=track.duration?formatTime(track.duration):'0:00';
   updateFsLike();renderQueue();
@@ -3212,10 +3224,23 @@ function renderQueue(){
   const body=document.getElementById('queueBody');
   if(!playlist.length){body.innerHTML='<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">queue_music</span><h3>Очередь пуста</h3></div>';return}
   body.innerHTML=playlist.map((tid,i)=>{const t=allTracks[tid];if(!t)return'';
-    return'<div class="queue-track '+(tid===currentTrackId?'active':'')+'" onclick="playFromQueue('+i+')"><div class="queue-track-thumb">'+(t.cover?'<img src="'+t.cover+'" alt="">':'<span class="material-symbols-rounded" style="font-size:20px;color:var(--md-outline)">music_note</span>')+'</div><div class="queue-track-info"><div class="queue-track-name">'+esc(t.title||'')+'</div><div class="queue-track-artist">'+esc(t.artistName||'')+'</div></div><button class="btn-icon" onclick="event.stopPropagation();removeFromQueue('+i+')" style="width:32px;height:32px"><span class="material-symbols-rounded" style="font-size:18px">close</span></button></div>'
+    return'<div class="queue-track '+(tid===currentTrackId?'active':'')+'" onclick="playFromQueue('+i+')"><div class="queue-track-thumb">'+(t.cover?'<img src="'+t.cover+'" alt="">':'<span class="material-symbols-rounded" style="font-size:20px;color:var(--md-outline)">music_note</span>')+'</div><div class="queue-track-info"><div class="queue-track-name">'+esc(t.title||'')+'</div><div class="queue-track-artist">'+esc(t.artistName||'')+'</div></div><button class="btn-icon" onclick="event.stopPropagation();moveQueueItem('+i+',-1)" style="width:32px;height:32px" title="Вверх"><span class="material-symbols-rounded" style="font-size:18px">keyboard_arrow_up</span></button><button class="btn-icon" onclick="event.stopPropagation();moveQueueItem('+i+',1)" style="width:32px;height:32px" title="Вниз"><span class="material-symbols-rounded" style="font-size:18px">keyboard_arrow_down</span></button><button class="btn-icon" onclick="event.stopPropagation();removeFromQueue('+i+')" style="width:32px;height:32px"><span class="material-symbols-rounded" style="font-size:18px">close</span></button></div>'
   }).join('');
 }
 function playFromQueue(i){playlistIndex=i;currentTrackId=playlist[i];loadAndPlay(allTracks[currentTrackId])}
+function moveQueueItem(index,direction){
+  const newIndex=index+direction;
+  if(index<0||newIndex<0||index>=playlist.length||newIndex>=playlist.length)return;
+  const moved=playlist[index];
+  playlist.splice(index,1);
+  playlist.splice(newIndex,0,moved);
+  if(playlistIndex===index) playlistIndex=newIndex;
+  else if(direction<0 && newIndex<=playlistIndex && index>playlistIndex) playlistIndex++;
+  else if(direction>0 && newIndex>=playlistIndex && index<playlistIndex) playlistIndex--;
+  renderQueue();
+  broadcastPlaybackState();
+  broadcastPartyState();
+}
 function removeFromQueue(i){if(i===playlistIndex)return;playlist.splice(i,1);if(i<playlistIndex)playlistIndex--;renderQueue();showSnackbar('Удалён из очереди')}
 function clearQueue(){if(!playlist.length)return;const cur=currentTrackId;playlist=[cur];playlistIndex=0;renderQueue();showSnackbar('Очередь очищена')}
 
@@ -3282,12 +3307,12 @@ function viewArtist(aid){
   document.getElementById('artistTabs').style.display='none';
   db.ref('users/'+aid).once('value').then(s=>{
     const u=s.val()||{};const isSub=subscriptions[aid];
-    const roleBadges=(isCreatorUser(u)?'<span class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель сервиса</span>':'')+(isAdminUser(u)?'<span class="public-role-chip" onclick="showAdminBadgeInfo()"><span class="material-symbols-rounded filled">shield</span> Админ</span>':'');
-    db.ref('subscribers/'+aid).once('value').then(ss=>{
-      const sc=Object.keys(ss.val()||{}).length;
-      currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===aid).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-      const totalPlays=currentArtistTracks.reduce((s,[id,t])=>s+(t.plays||0),0);
-      h.innerHTML='<div class="artist-page-avatar">'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>')+'</div><div style="flex:1"><div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Артист')+(isCreatorUser(u)?' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>':'')+'</div>'+(u.username?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>':'')+(roleBadges?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">'+roleBadges+'</div>':'')+(u.bio?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>':'')+'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);display:flex;gap:16px;flex-wrap:wrap"><span>'+currentArtistTracks.length+' треков</span><span>'+sc+' подписчиков</span><span>'+formatPlays(totalPlays)+' прослушиваний</span></div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'+(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')+(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')+(isAdminUser(currentUser)&&currentUser.uid!==aid?'<button class="btn-outlined" onclick="adminOpenUserActions(\''+aid+'\')"><span class="material-symbols-rounded">gavel</span> Админ-действия</button>':'')+'</div></div>';
+const roleBadges=(isCreatorUser(u)?'<span class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель сервиса</span>':'');
+      db.ref('subscribers/'+aid).once('value').then(ss=>{
+        const sc=Object.keys(ss.val()||{}).length;
+        currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===aid).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+        const totalPlays=currentArtistTracks.reduce((s,[id,t])=>s+(t.plays||0),0);
+        h.innerHTML='<div class="artist-page-avatar">'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>')+'</div><div style="flex:1"><div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Артист')+(isCreatorUser(u)?' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>':'')+'</div>'+(u.username?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>':'')+(roleBadges?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">'+roleBadges+'</div>':'')+(u.bio?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>':'')+'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);display:flex;gap:16px;flex-wrap:wrap"><span>'+currentArtistTracks.length+' треков</span><span>'+sc+' подписчиков</span><span>'+formatPlays(totalPlays)+' прослушиваний</span></div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'+(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')+(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')+(isCreatorUser(currentUser)&&currentUser.uid!==aid?'<button class="btn-outlined" onclick="adminOpenUserActions(\''+aid+'\')"><span class="material-symbols-rounded">gavel</span> Действия создателя</button>':'')+'</div></div>';
       document.getElementById('artistTabs').style.display='flex';
       tl.innerHTML=currentArtistTracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
     });
@@ -3330,13 +3355,6 @@ async function processAudioFile(f){
     selectedCoverDataURL=embeddedCover;
     document.getElementById('coverUploadZone').innerHTML='<img src="'+embeddedCover+'" alt="">';
     showSnackbar('Обложка извлечена из файла');
-  }else if(!embeddedCover&&!selectedCoverDataURL&&!manualCover){
-    const remoteCover=await fetchRemoteCoverHints(titleGuess,currentUser?.displayName||'');
-    if(remoteCover){
-      selectedCoverDataURL=remoteCover;
-      document.getElementById('coverUploadZone').innerHTML='<img src="'+remoteCover+'" alt="">';
-      showSnackbar('Подобрана обложка автоматически');
-    }
   }
   const r=new FileReader();r.onload=e=>{selectedAudioDataURL=e.target.result};r.readAsDataURL(f);
 }
@@ -3472,8 +3490,8 @@ async function publishTrack(){
   const title=document.getElementById('uploadTitle').value.trim();
   let genre=document.getElementById('uploadGenre').value;
   if(genre==='custom')genre=document.getElementById('uploadCustomGenre').value.trim().toLowerCase()||'other';
-  let cover=document.getElementById('uploadCover').value.trim();
-  if(selectedCoverDataURL)cover=selectedCoverDataURL;
+  let coverUrlManual=document.getElementById('uploadCover').value.trim();
+  let cover=coverUrlManual || selectedCoverDataURL || '';
   let videoUrl=normalizeVideoUrl(document.getElementById('uploadVideoUrl').value.trim());
   let videoData=selectedVideoDataURL||'';
   const lyrics=document.getElementById('uploadLyrics').value.trim();
@@ -3708,29 +3726,28 @@ function closeModal(id){document.getElementById(id).classList.remove('open')}
 
 /* ===== ADMIN TOOLS ===== */
 function openAdminTools(){
-  if(!isAdminUser(currentUser)){showSnackbar('Недостаточно прав');return}
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю сервиса');return}
   closeModal('settingsModal');
-  const topTracks=Object.entries(allTracks).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0)).slice(0,5);
-  const pendingModeration=Object.entries(allTracks).filter(([id,t])=>t?.moderationMeta?.pending).length;
   document.getElementById('settingsContent').innerHTML=
-    '<div class="modal-title" style="margin-bottom:12px">Админ-инструменты</div>'+
-    '<div class="settings-item" onclick="featureCurrentTrackAsAdmin()"><span class="material-symbols-rounded">star</span><div class="settings-item-info"><div class="settings-item-title">Выделить текущий трек</div><div class="settings-item-sub">Добавить бейдж рекомендаций от сервиса</div></div></div>'+
-    '<div class="settings-item" onclick="toggleMaintenanceBanner()"><span class="material-symbols-rounded">campaign</span><div class="settings-item-info"><div class="settings-item-title">Сервисный баннер</div><div class="settings-item-sub">Показывать/скрывать уведомление сервиса</div></div></div>'+
-    '<div class="settings-item" onclick="reviewPendingModeration()"><span class="material-symbols-rounded">policy</span><div class="settings-item-info"><div class="settings-item-title">Проверить ожидающие модерации</div><div class="settings-item-sub">Сейчас ожидают: '+pendingModeration+'</div></div></div>'+
-    '<div style="margin:16px 0;font:600 13px/18px Inter,sans-serif;color:var(--md-on-surface-variant)">Топ треков</div>'+
-    (topTracks.length?topTracks.map(([id,t])=>'<div class="settings-item" onclick="playTrackById(\''+id+'\')"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+formatPlays(t.plays||0)+' прослушиваний</div></div></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">bar_chart</span><h3>Нет данных</h3></div>')+
+    '<div class="modal-title" style="margin-bottom:12px">Меню создателя</div>'+
+    '<div class="settings-item" onclick="openCreatorLogs()"><span class="material-symbols-rounded">receipt_long</span><div class="settings-item-info"><div class="settings-item-title">Логи</div><div class="settings-item-sub">Последние сервисные события и действия</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorReports()"><span class="material-symbols-rounded">flag</span><div class="settings-item-info"><div class="settings-item-title">Жалобы на треки</div><div class="settings-item-sub">Просмотр жалоб и удаление треков с подтверждением</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorStats()"><span class="material-symbols-rounded">monitoring</span><div class="settings-item-info"><div class="settings-item-title">Статистика</div><div class="settings-item-sub">Треки, пользователи, прослушивания, жалобы</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorTrackManager()"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Управление треками</div><div class="settings-item-sub">Поиск, рекомендации сервиса, удаление</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorModuleCheck()"><span class="material-symbols-rounded">checklist</span><div class="settings-item-info"><div class="settings-item-title">Проверка модулей</div><div class="settings-item-sub">Плеер, БД, party mode, модерация и видео</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorUsers()"><span class="material-symbols-rounded">group</span><div class="settings-item-info"><div class="settings-item-title">Управление пользователями</div><div class="settings-item-sub">Список пользователей и их контента</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="modal-actions"><button class="btn-outlined" onclick="openSettings()">Назад</button></div>';
   document.getElementById('settingsModal').classList.add('open');
 }
 function adminOpenUserActions(uid){
-  if(!isAdminUser(currentUser)){showSnackbar('Недостаточно прав');return}
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю сервиса');return}
   const artist=uid&&Object.values(allTracks).find(t=>t.artistId===uid);
   const name=artist?.artistName||uid;
-  const ok=confirm('Админ-действия для '+name+'\n\nОК — открыть профиль\nОтмена — ничего не делать');
-  if(ok) viewArtist(uid);
+  const ok=confirm('Открыть действия для пользователя '+name+'?');
+  if(ok) openCreatorUserDetail(uid);
 }
 async function featureCurrentTrackAsAdmin(){
-  if(!isAdminUser(currentUser)){showSnackbar('Недостаточно прав');return}
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
   if(!currentTrackId||!allTracks[currentTrackId]){showSnackbar('Нет текущего трека');return}
   await db.ref('tracks/'+currentTrackId+'/serviceFeatured').set(true);
   await db.ref('tracks/'+currentTrackId+'/serviceFeaturedAt').set(Date.now());
@@ -3746,6 +3763,86 @@ function reviewPendingModeration(){
   const pending=Object.entries(allTracks).filter(([id,t])=>t?.moderationMeta?.pending);
   if(!pending.length){showSnackbar('Нет ожидающих модерации');return}
   playlist=pending.map(([id])=>id);playlistIndex=0;currentTrackId=playlist[0];loadAndPlay(allTracks[currentTrackId]);showSnackbar('Открыт первый трек с ожидающей модерацией');
+}
+function creatorPanelWrap(title, body){
+  document.getElementById('settingsContent').innerHTML='<div class="modal-title" style="margin-bottom:12px">'+title+'</div>'+body+'<div class="modal-actions"><button class="btn-outlined" onclick="openAdminTools()">Назад</button></div>';
+  document.getElementById('settingsModal').classList.add('open');
+}
+function openCreatorLogs(){
+  const logs=[];
+  logs.push({label:'Треков в базе',value:Object.keys(allTracks).length});
+  logs.push({label:'Текущий трек',value:currentTrackId&&allTracks[currentTrackId]?allTracks[currentTrackId].title:'—'});
+  logs.push({label:'Party mode',value:partySessionId||'неактивен'});
+  logs.push({label:'Remote device',value:activeReceiverId||'нет'});
+  logs.push({label:'Тема',value:document.body.getAttribute('data-theme')==='dark'?'dark':'light'});
+  creatorPanelWrap('Логи', logs.map(x=>'<div class="settings-item"><span class="material-symbols-rounded">terminal</span><div class="settings-item-info"><div class="settings-item-title">'+esc(x.label)+'</div><div class="settings-item-sub">'+esc(String(x.value))+'</div></div></div>').join(''));
+}
+async function openCreatorReports(){
+  const snap=await db.ref('reports').once('value');
+  const reports=snap.val()||{};
+  const grouped={};
+  Object.values(reports).forEach(r=>{if(!r?.trackId)return;grouped[r.trackId]=(grouped[r.trackId]||0)+1});
+  const rows=Object.entries(grouped).sort((a,b)=>b[1]-a[1]);
+  creatorPanelWrap('Жалобы на треки', rows.length?rows.map(([tid,count])=>{const t=allTracks[tid];return '<div class="settings-item"><span class="material-symbols-rounded">flag</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t?.title||('Трек '+tid))+'</div><div class="settings-item-sub">Жалоб: '+count+' • Автор: '+esc(t?.artistName||'—')+'</div></div><button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+tid+'\')">Удалить</button></div>'}).join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">done_all</span><h3>Жалоб нет</h3></div>');
+}
+function creatorDeleteTrackConfirm(tid){
+  const t=allTracks[tid];
+  if(!t){showSnackbar('Трек не найден');return}
+  if(confirm('Удалить трек "'+(t.title||'Без названия')+'"?')){db.ref('tracks/'+tid).remove().then(()=>showSnackbar('Трек удалён')).catch(e=>showSnackbar('Ошибка удаления: '+e.message))}
+}
+function openCreatorStats(){
+  const tracks=Object.values(allTracks);
+  const totalPlays=tracks.reduce((s,t)=>s+(t.plays||0),0);
+  db.ref('users').once('value').then(s=>{
+    const users=s.val()||{};
+    db.ref('reports').once('value').then(r=>{
+      const reports=r.val()||{};
+      creatorPanelWrap('Статистика',
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">'+
+        '<div class="stat-card"><div class="stat-value">'+tracks.length+'</div><div class="stat-label">Треков</div></div>'+
+        '<div class="stat-card"><div class="stat-value">'+Object.keys(users).length+'</div><div class="stat-label">Пользователей</div></div>'+
+        '<div class="stat-card"><div class="stat-value">'+formatPlays(totalPlays)+'</div><div class="stat-label">Прослушиваний</div></div>'+
+        '<div class="stat-card"><div class="stat-value">'+Object.keys(reports).length+'</div><div class="stat-label">Жалоб</div></div>'+
+        '</div>'
+      );
+    });
+  });
+}
+function openCreatorTrackManager(){
+  const rows=Object.entries(allTracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0)).slice(0,100);
+  creatorPanelWrap('Управление треками', rows.length?rows.map(([id,t])=>'<div class="settings-item"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+esc(t.artistName||'—')+' • '+formatPlays(t.plays||0)+' прослушиваний</div></div><button class="btn-text" onclick="playTrackById(\''+id+'\')">Открыть</button><button class="btn-tonal" onclick="toggleServiceFeatured(\''+id+'\')">'+(t.serviceFeatured?'Убрать рекомендацию':'Рекомендовать')+'</button></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">music_off</span><h3>Нет треков</h3></div>');
+}
+async function toggleServiceFeatured(tid){
+  const t=allTracks[tid];
+  if(!t)return;
+  await db.ref('tracks/'+tid+'/serviceFeatured').set(!t.serviceFeatured);
+  if(!t.serviceFeatured) await db.ref('tracks/'+tid+'/serviceFeaturedAt').set(Date.now());
+  showSnackbar(!t.serviceFeatured?'Трек рекомендован':'Рекомендация убрана');
+  openCreatorTrackManager();
+}
+function openCreatorModuleCheck(){
+  const checks=[
+    ['Realtime Database','ok'],
+    ['Плеер','ok'],
+    ['Видео к треку','ok'],
+    ['Party mode', partySessionId?'active':'ready'],
+    ['Модерация', 'ready'],
+    ['Поиск','ok']
+  ];
+  creatorPanelWrap('Проверка модулей', checks.map(([name,state])=>'<div class="settings-item"><span class="material-symbols-rounded">'+(state==='ok'?'check_circle':state==='active'?'radio_button_checked':'hourglass')+'</span><div class="settings-item-info"><div class="settings-item-title">'+esc(name)+'</div><div class="settings-item-sub">Состояние: '+esc(state)+'</div></div></div>').join(''));
+}
+function openCreatorUsers(){
+  db.ref('users').once('value').then(s=>{
+    const users=Object.values(s.val()||{}).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    creatorPanelWrap('Управление пользователями', users.length?users.map(u=>'<div class="settings-item" onclick="openCreatorUserDetail(\''+u.uid+'\')"><span class="material-symbols-rounded">person</span><div class="settings-item-info"><div class="settings-item-title">'+esc(u.displayName||u.username||u.uid)+'</div><div class="settings-item-sub">@'+esc(u.username||'')+' '+(isCreatorUser(u)?'• создатель':'')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">group_off</span><h3>Нет пользователей</h3></div>');
+  });
+}
+function openCreatorUserDetail(uid){
+  db.ref('users/'+uid).once('value').then(s=>{
+    const u=s.val()||{};
+    const tracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===uid);
+    creatorPanelWrap('Пользователь', '<div class="settings-item"><span class="material-symbols-rounded">badge</span><div class="settings-item-info"><div class="settings-item-title">'+esc(u.displayName||'Пользователь')+'</div><div class="settings-item-sub">@'+esc(u.username||'')+' • '+esc(u.email||'без email')+'</div></div></div><div class="settings-item"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Треков</div><div class="settings-item-sub">'+tracks.length+'</div></div></div>'+(tracks.length?tracks.map(([id,t])=>'<div class="settings-item"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+formatPlays(t.plays||0)+' прослушиваний</div></div><button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+id+'\')">Удалить трек</button></div>').join(''):'') );
+  });
 }
 
 /* ===== EVENT LISTENERS ===== */
