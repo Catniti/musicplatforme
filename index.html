@@ -473,30 +473,22 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .labs-card-title{display:flex;align-items:center;gap:10px;font:700 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:8px}
 .labs-card-sub{font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:12px}
 body[data-ui-style="liquid-glass"]{
-  --glass-bg:linear-gradient(180deg,rgba(58,60,76,.78),rgba(31,33,47,.64));
-  --glass-bg-strong:linear-gradient(180deg,rgba(68,71,90,.84),rgba(33,35,49,.72));
-  --glass-bg-soft:linear-gradient(180deg,rgba(55,57,72,.58),rgba(28,30,43,.48));
-  --glass-border:rgba(255,255,255,.16);
-  --glass-edge:rgba(255,255,255,.18);
-  --glass-outline:rgba(255,255,255,.08);
-  --glass-shadow:0 14px 38px rgba(0,0,0,.22),0 3px 10px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.09);
-  --glass-inner-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(255,255,255,.04);
-  --glass-glow:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.015) 46%),radial-gradient(120% 90% at 12% 0%,rgba(255,255,255,.12),transparent 34%);
-  --glass-refraction:radial-gradient(70% 42% at 50% 100%,rgba(180,160,255,.08),transparent 54%),radial-gradient(46% 22% at 18% 0%,rgba(255,255,255,.08),transparent 38%);
-  --glass-tint:rgba(31,33,47,.22);
+  --profile-glass-bg:linear-gradient(180deg,rgba(72,75,95,.88),rgba(34,36,50,.78));
+  --profile-glass-bg-soft:linear-gradient(180deg,rgba(64,67,87,.82),rgba(31,33,46,.72));
+  --profile-glass-border:rgba(255,255,255,.14);
+  --profile-glass-divider:rgba(255,255,255,.10);
+  --profile-glass-shadow:0 18px 44px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.12);
+  --profile-glass-highlight:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 38%,transparent 60%);
+  --profile-glass-hover:rgba(255,255,255,.05);
 }
 body[data-ui-style="liquid-glass"][data-theme="dark"]{
-  --glass-bg:linear-gradient(180deg,rgba(58,60,76,.82),rgba(25,27,39,.70));
-  --glass-bg-strong:linear-gradient(180deg,rgba(70,73,94,.88),rgba(28,30,43,.76));
-  --glass-bg-soft:linear-gradient(180deg,rgba(52,55,69,.62),rgba(25,27,39,.52));
-  --glass-border:rgba(255,255,255,.14);
-  --glass-edge:rgba(255,255,255,.16);
-  --glass-outline:rgba(255,255,255,.07);
-  --glass-shadow:0 16px 42px rgba(0,0,0,.34),0 4px 12px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.08);
-  --glass-inner-shadow:inset 0 1px 0 rgba(255,255,255,.09), inset 0 -1px 0 rgba(255,255,255,.035);
-  --glass-glow:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.012) 44%),radial-gradient(120% 90% at 12% 0%,rgba(255,255,255,.10),transparent 34%);
-  --glass-refraction:radial-gradient(70% 42% at 50% 100%,rgba(180,160,255,.06),transparent 54%),radial-gradient(46% 22% at 18% 0%,rgba(255,255,255,.06),transparent 38%);
-  --glass-tint:rgba(23,25,36,.26);
+  --profile-glass-bg:linear-gradient(180deg,rgba(72,75,95,.90),rgba(29,31,44,.82));
+  --profile-glass-bg-soft:linear-gradient(180deg,rgba(62,65,84,.84),rgba(26,28,40,.76));
+  --profile-glass-border:rgba(255,255,255,.14);
+  --profile-glass-divider:rgba(255,255,255,.10);
+  --profile-glass-shadow:0 18px 44px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.11);
+  --profile-glass-highlight:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.025) 36%,transparent 58%);
+  --profile-glass-hover:rgba(255,255,255,.055);
 }
 body[data-ui-style="liquid-glass"] .sidebar,
 body[data-ui-style="liquid-glass"] .top-bar,
@@ -504,7 +496,6 @@ body[data-ui-style="liquid-glass"] .player-bar,
 body[data-ui-style="liquid-glass"] .bottom-nav,
 body[data-ui-style="liquid-glass"] .modal,
 body[data-ui-style="liquid-glass"] .queue-panel,
-body[data-ui-style="liquid-glass"] .user-menu,
 body[data-ui-style="liquid-glass"] .track-context-menu,
 body[data-ui-style="liquid-glass"] .md-card,
 body[data-ui-style="liquid-glass"] .effect-card,
@@ -523,63 +514,38 @@ body[data-ui-style="liquid-glass"] .track-item,
 body[data-ui-style="liquid-glass"] .auth-form,
 body[data-ui-style="liquid-glass"] .creator-console,
 body[data-ui-style="liquid-glass"] .tab-bar,
-body[data-ui-style="liquid-glass"] .search-bar input,
+body[data-ui-style="liquid-glass"] .search-bar,
 body[data-ui-style="liquid-glass"] .chip,
 body[data-ui-style="liquid-glass"] .btn-tonal,
 body[data-ui-style="liquid-glass"] .btn-outlined,
 body[data-ui-style="liquid-glass"] .btn-icon,
 body[data-ui-style="liquid-glass"] .bottom-nav .nav-tab.active .nav-tab-indicator{
-  background:linear-gradient(180deg,var(--glass-tint),transparent),var(--glass-bg)!important;
-  backdrop-filter:blur(18px) saturate(1.08);
-  -webkit-backdrop-filter:blur(18px) saturate(1.08);
-  border:1px solid var(--glass-border)!important;
-  box-shadow:var(--glass-shadow)!important;
+  position:relative;
+  overflow:hidden;
+  background:var(--profile-glass-bg-soft)!important;
+  border:1px solid var(--profile-glass-border)!important;
+  box-shadow:var(--profile-glass-shadow)!important;
+  backdrop-filter:blur(18px) saturate(1.06);
+  -webkit-backdrop-filter:blur(18px) saturate(1.06);
 }
 body[data-ui-style="liquid-glass"] .top-bar,
 body[data-ui-style="liquid-glass"] .player-bar,
 body[data-ui-style="liquid-glass"] .bottom-nav,
 body[data-ui-style="liquid-glass"] .sidebar,
 body[data-ui-style="liquid-glass"] .modal,
-body[data-ui-style="liquid-glass"] .user-menu,
-body[data-ui-style="liquid-glass"] .track-context-menu,
 body[data-ui-style="liquid-glass"] .queue-panel,
+body[data-ui-style="liquid-glass"] .track-context-menu,
+body[data-ui-style="liquid-glass"] .user-menu,
 body[data-ui-style="liquid-glass"] .tab-bar{
-  background:linear-gradient(180deg,var(--glass-tint),transparent),var(--glass-bg-strong)!important;
+  background:var(--profile-glass-bg)!important;
+  border-radius:28px;
 }
-body[data-ui-style="liquid-glass"] .bottom-nav{
-  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 40%),linear-gradient(180deg,var(--glass-tint),transparent),var(--glass-bg-strong)!important;
-}
-body[data-ui-style="liquid-glass"] .player-bar{
-  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 40%),linear-gradient(180deg,var(--glass-tint),transparent),var(--glass-bg-strong)!important;
-}
-body[data-ui-style="liquid-glass"] .top-bar{
-  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0) 40%),linear-gradient(180deg,var(--glass-tint),transparent),var(--glass-bg-strong)!important;
-}
-body[data-ui-style="liquid-glass"] .settings-item,
-body[data-ui-style="liquid-glass"] .track-item,
-body[data-ui-style="liquid-glass"] .radio-card,
-body[data-ui-style="liquid-glass"] .labs-card,
-body[data-ui-style="liquid-glass"] .md-card,
-body[data-ui-style="liquid-glass"] .effect-card,
-body[data-ui-style="liquid-glass"] .stat-card,
-body[data-ui-style="liquid-glass"] .device-item,
-body[data-ui-style="liquid-glass"] .profile-pinned-wrap,
-body[data-ui-style="liquid-glass"] .hero-banner,
-body[data-ui-style="liquid-glass"] .upload-zone,
-body[data-ui-style="liquid-glass"] .import-box,
-body[data-ui-style="liquid-glass"] .cover-upload-zone,
-body[data-ui-style="liquid-glass"] .lyrics-container{
-  position:relative;
-  overflow:hidden;
-  background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,0) 42%),linear-gradient(180deg,var(--glass-tint),transparent),var(--glass-bg-soft)!important;
-}
-body[data-ui-style="liquid-glass"] .sidebar::before,
 body[data-ui-style="liquid-glass"] .top-bar::before,
 body[data-ui-style="liquid-glass"] .player-bar::before,
 body[data-ui-style="liquid-glass"] .bottom-nav::before,
+body[data-ui-style="liquid-glass"] .sidebar::before,
 body[data-ui-style="liquid-glass"] .modal::before,
 body[data-ui-style="liquid-glass"] .queue-panel::before,
-body[data-ui-style="liquid-glass"] .user-menu::before,
 body[data-ui-style="liquid-glass"] .track-context-menu::before,
 body[data-ui-style="liquid-glass"] .md-card::before,
 body[data-ui-style="liquid-glass"] .effect-card::before,
@@ -605,16 +571,15 @@ body[data-ui-style="liquid-glass"] .btn-icon::before{
   content:'';
   position:absolute;
   inset:0;
-  background:var(--glass-glow),var(--glass-refraction);
+  background:var(--profile-glass-highlight);
   pointer-events:none;
 }
-body[data-ui-style="liquid-glass"] .sidebar::after,
 body[data-ui-style="liquid-glass"] .top-bar::after,
 body[data-ui-style="liquid-glass"] .player-bar::after,
 body[data-ui-style="liquid-glass"] .bottom-nav::after,
+body[data-ui-style="liquid-glass"] .sidebar::after,
 body[data-ui-style="liquid-glass"] .modal::after,
 body[data-ui-style="liquid-glass"] .queue-panel::after,
-body[data-ui-style="liquid-glass"] .user-menu::after,
 body[data-ui-style="liquid-glass"] .track-context-menu::after,
 body[data-ui-style="liquid-glass"] .md-card::after,
 body[data-ui-style="liquid-glass"] .effect-card::after,
@@ -641,28 +606,9 @@ body[data-ui-style="liquid-glass"] .btn-icon::after{
   position:absolute;
   inset:0;
   border-radius:inherit;
-  box-shadow:var(--glass-inner-shadow),0 0 0 1px var(--glass-edge) inset;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 1px rgba(255,255,255,.05) inset;
   pointer-events:none;
-  opacity:.92;
 }
-body[data-ui-style="liquid-glass"] .md-input,
-body[data-ui-style="liquid-glass"] select.md-input,
-body[data-ui-style="liquid-glass"] textarea.md-input{
-  background:linear-gradient(180deg,rgba(72,75,94,.76),rgba(34,36,50,.62))!important;
-  border:1px solid rgba(255,255,255,.14)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 8px 18px rgba(0,0,0,.10);
-}
-body[data-ui-style="liquid-glass"][data-theme="dark"] .md-input,
-body[data-ui-style="liquid-glass"][data-theme="dark"] select.md-input,
-body[data-ui-style="liquid-glass"] textarea.md-input{
-  background:linear-gradient(180deg,rgba(72,75,94,.82),rgba(30,32,46,.68))!important;
-  border:1px solid rgba(255,255,255,.12)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 18px rgba(0,0,0,.16);
-}
-body[data-ui-style="liquid-glass"] .top-bar,
-body[data-ui-style="liquid-glass"] .player-bar,
-body[data-ui-style="liquid-glass"] .bottom-nav,
-body[data-ui-style="liquid-glass"] .sidebar{border-color:var(--glass-outline)!important}
 body[data-ui-style="liquid-glass"] .settings-item:hover,
 body[data-ui-style="liquid-glass"] .md-card:hover,
 body[data-ui-style="liquid-glass"] .labs-card:hover,
@@ -671,60 +617,48 @@ body[data-ui-style="liquid-glass"] .track-item:hover,
 body[data-ui-style="liquid-glass"] .btn-tonal:hover,
 body[data-ui-style="liquid-glass"] .btn-outlined:hover,
 body[data-ui-style="liquid-glass"] .btn-icon:hover,
-body[data-ui-style="liquid-glass"] .chip:hover{filter:brightness(1.02);transform:translateY(-1px)}
-body[data-ui-style="liquid-glass"] .hero-banner::before,
-body[data-ui-style="liquid-glass"] .hero-banner::after{opacity:.10}
-body[data-ui-style="liquid-glass"] .btn-primary{box-shadow:0 10px 22px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.14)}
-body[data-ui-style="liquid-glass"] .search-bar{position:relative;border-radius:999px;overflow:hidden}
-body[data-ui-style="liquid-glass"] .search-bar input{background:transparent!important;position:relative;z-index:1}
-body[data-ui-style="liquid-glass"] .nav-item.active,
-body[data-ui-style="liquid-glass"] .tab-item.active,
-body[data-ui-style="liquid-glass"] .chip.active{background:linear-gradient(180deg,rgba(92,95,118,.85),rgba(40,42,58,.72))!important;color:#fff!important;border-color:rgba(255,255,255,.14)!important}
-body[data-ui-style="liquid-glass"] .modal,
-body[data-ui-style="liquid-glass"] .user-menu,
-body[data-ui-style="liquid-glass"] .track-context-menu{border-radius:28px}
-body[data-ui-style="liquid-glass"] .top-bar,
-body[data-ui-style="liquid-glass"] .player-bar,
-body[data-ui-style="liquid-glass"] .bottom-nav{backdrop-filter:blur(18px) saturate(1.08);-webkit-backdrop-filter:blur(18px) saturate(1.08)}
-body[data-ui-style="liquid-glass"] .player-bar::before,
-body[data-ui-style="liquid-glass"] .bottom-nav::before,
-body[data-ui-style="liquid-glass"] .top-bar::before,
-body[data-ui-style="liquid-glass"] .user-menu::before{
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.018) 42%),
-    radial-gradient(100% 50% at 10% 0%,rgba(255,255,255,.12),transparent 36%),
-    var(--glass-refraction);
+body[data-ui-style="liquid-glass"] .chip:hover,
+body[data-ui-style="liquid-glass"] .user-menu-item:hover{background:var(--profile-glass-hover)!important}
+body[data-ui-style="liquid-glass"] .md-input,
+body[data-ui-style="liquid-glass"] select.md-input,
+body[data-ui-style="liquid-glass"] textarea.md-input,
+body[data-ui-style="liquid-glass"] .search-bar input{
+  background:transparent!important;
+  border:1px solid var(--profile-glass-border)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
 }
-body[data-ui-style="liquid-glass"] .player-bar::after,
-body[data-ui-style="liquid-glass"] .bottom-nav::after,
-body[data-ui-style="liquid-glass"] .top-bar::after,
-body[data-ui-style="liquid-glass"] .user-menu::after{
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.16),
-    inset 0 -1px 0 rgba(255,255,255,.04),
-    0 0 0 1px rgba(255,255,255,.08);
+body[data-ui-style="liquid-glass"] .user-menu,
+body[data-ui-style="liquid-glass"] .track-context-menu,
+body[data-ui-style="liquid-glass"] .modal{
+  background:var(--profile-glass-bg)!important;
+  border:1px solid var(--profile-glass-border)!important;
+  box-shadow:var(--profile-glass-shadow)!important;
 }
 body[data-ui-style="liquid-glass"] .player-thumb,
 body[data-ui-style="liquid-glass"] .user-avatar,
 body[data-ui-style="liquid-glass"] .video-secondary-btn{
-  background:linear-gradient(180deg,rgba(88,91,110,.78),rgba(44,46,60,.64));
-  border:1px solid rgba(255,255,255,.14);
-  box-shadow:0 8px 20px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.12);
+  background:var(--profile-glass-bg-soft)!important;
+  border:1px solid var(--profile-glass-border)!important;
+  box-shadow:0 8px 20px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.10)!important;
 }
-body[data-ui-style="liquid-glass"][data-theme="dark"] .player-thumb,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .user-avatar,
-body[data-ui-style="liquid-glass"][data-theme="dark"] .video-secondary-btn{
-  background:linear-gradient(180deg,rgba(88,91,110,.78),rgba(44,46,60,.64));
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 8px 20px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.10);
+body[data-ui-style="liquid-glass"] .nav-item.active,
+body[data-ui-style="liquid-glass"] .tab-item.active,
+body[data-ui-style="liquid-glass"] .chip.active,
+body[data-ui-style="liquid-glass"] .bottom-nav .nav-tab.active .nav-tab-indicator{
+  background:linear-gradient(180deg,rgba(108,112,138,.92),rgba(54,57,76,.82))!important;
+  color:#fff!important;
 }
-body[data-ui-style="liquid-glass"] .creator-console{background:linear-gradient(180deg,rgba(12,19,18,.84),rgba(8,13,12,.72))!important}
+body[data-ui-style="liquid-glass"] .creator-console{background:linear-gradient(180deg,rgba(20,26,24,.88),rgba(10,14,13,.80))!important}
 @media(max-width:640px){
   body[data-ui-style="liquid-glass"] .top-bar,
   body[data-ui-style="liquid-glass"] .player-bar,
   body[data-ui-style="liquid-glass"] .bottom-nav,
   body[data-ui-style="liquid-glass"] .modal,
-  body[data-ui-style="liquid-glass"] .sidebar{backdrop-filter:blur(16px) saturate(1.06);-webkit-backdrop-filter:blur(16px) saturate(1.06)}
+  body[data-ui-style="liquid-glass"] .sidebar,
+  body[data-ui-style="liquid-glass"] .user-menu{
+    backdrop-filter:blur(16px) saturate(1.04);
+    -webkit-backdrop-filter:blur(16px) saturate(1.04);
+  }
 }
 
 /* ===== RADIO ===== */
