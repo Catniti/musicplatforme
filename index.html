@@ -466,6 +466,96 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .effect-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 .effect-note{font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:6px}
 
+/* ===== LABS / LIQUID GLASS ===== */
+.labs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.labs-card{padding:14px;border-radius:22px;background:var(--md-surface-container-low);border:1px solid var(--md-outline-variant);transition:all .25s cubic-bezier(.2,0,0,1)}
+.labs-card:hover{transform:translateY(-2px);box-shadow:var(--md-elevation-1)}
+.labs-card-title{display:flex;align-items:center;gap:10px;font:700 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:8px}
+.labs-card-sub{font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:12px}
+body[data-ui-style="liquid-glass"] .sidebar,
+body[data-ui-style="liquid-glass"] .top-bar,
+body[data-ui-style="liquid-glass"] .player-bar,
+body[data-ui-style="liquid-glass"] .bottom-nav,
+body[data-ui-style="liquid-glass"] .modal,
+body[data-ui-style="liquid-glass"] .queue-panel,
+body[data-ui-style="liquid-glass"] .user-menu,
+body[data-ui-style="liquid-glass"] .track-context-menu,
+body[data-ui-style="liquid-glass"] .md-card,
+body[data-ui-style="liquid-glass"] .effect-card,
+body[data-ui-style="liquid-glass"] .stat-card,
+body[data-ui-style="liquid-glass"] .profile-pinned-wrap,
+body[data-ui-style="liquid-glass"] .upload-zone,
+body[data-ui-style="liquid-glass"] .settings-item,
+body[data-ui-style="liquid-glass"] .import-box,
+body[data-ui-style="liquid-glass"] .labs-card,
+body[data-ui-style="liquid-glass"] .hero-banner{
+  background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.10));
+  backdrop-filter:blur(22px) saturate(1.25);
+  -webkit-backdrop-filter:blur(22px) saturate(1.25);
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow:0 10px 34px rgba(31,38,135,.14), inset 0 1px 0 rgba(255,255,255,.20);
+}
+body[data-ui-style="liquid-glass"][data-theme="dark"] .sidebar,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .top-bar,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .player-bar,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .bottom-nav,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .modal,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .queue-panel,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .user-menu,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .track-context-menu,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .md-card,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .effect-card,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .stat-card,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .profile-pinned-wrap,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .upload-zone,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .settings-item,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .import-box,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .labs-card,
+body[data-ui-style="liquid-glass"][data-theme="dark"] .hero-banner{
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.06));
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 10px 34px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.08);
+}
+body[data-ui-style="liquid-glass"] .settings-item:hover,
+body[data-ui-style="liquid-glass"] .md-card:hover,
+body[data-ui-style="liquid-glass"] .labs-card:hover{filter:brightness(1.02)}
+
+/* ===== RADIO ===== */
+.radio-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.radio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.radio-card{padding:14px;border-radius:22px;background:var(--md-surface-container-low);border:1px solid var(--md-outline-variant);cursor:pointer;transition:all .25s cubic-bezier(.2,0,0,1);position:relative;overflow:hidden}
+.radio-card:hover{transform:translateY(-3px);box-shadow:var(--md-elevation-2)}
+.radio-card-top{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.radio-logo{width:56px;height:56px;border-radius:16px;background:var(--md-surface-container-high);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.radio-logo img{width:100%;height:100%;object-fit:cover}
+.radio-name{font:700 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)}
+.radio-sub{font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant)}
+.radio-live-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(244,67,54,.12);color:#d32f2f;font:700 11px/14px 'Inter',sans-serif}
+.radio-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.radio-tag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:var(--md-secondary-container);color:var(--md-on-secondary-container);font:600 11px/14px 'Inter',sans-serif}
+
+/* ===== CREATOR CONSOLE ===== */
+.creator-console{height:min(58vh,520px);overflow:auto;background:#08110d;color:#c6ffd9;border-radius:20px;border:1px solid rgba(72,255,140,.18);padding:14px;font:500 12px/18px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.creator-console-line{display:flex;gap:10px;align-items:flex-start;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.creator-console-line:last-child{border-bottom:none}
+.creator-console-time{color:#7bd89b;opacity:.92;min-width:72px}
+.creator-console-level{min-width:54px;font-weight:800}
+.creator-console-level.info{color:#7fd3ff}
+.creator-console-level.warn{color:#ffd86b}
+.creator-console-level.error{color:#ff8a80}
+.creator-console-msg{color:#eafff2;white-space:pre-wrap;word-break:break-word;flex:1}
+
+/* ===== VIDEO EXPERIENCE ===== */
+.video-shell{position:relative;width:100%;background:radial-gradient(circle at top,#1f2330 0%,#0f1117 55%,#000 100%)}
+.video-overlay-top{position:absolute;left:0;right:0;top:0;padding:16px;background:linear-gradient(180deg,rgba(0,0,0,.55),transparent);display:flex;align-items:center;justify-content:space-between;pointer-events:none;z-index:2}
+.video-overlay-top > *{pointer-events:auto}
+.video-cinematic-info{display:flex;align-items:center;gap:8px;color:white;font:600 13px/18px 'Inter',sans-serif}
+.video-bottom-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.video-secondary-btn{width:40px;height:40px;border:none;border-radius:50%;background:rgba(255,255,255,.14);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:white;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s,background .2s}
+.video-secondary-btn:hover{transform:scale(1.06);background:rgba(255,255,255,.18)}
+.video-progress-wrap{display:flex;align-items:center;gap:10px;width:100%}
+.video-progress-wrap .progress-track{height:5px}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:1024px){
   .sidebar{transform:translateX(-100%)}
@@ -535,6 +625,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
     <a class="nav-item active" data-page="home" onclick="navigate('home')"><span class="material-symbols-rounded">home</span> Главная</a>
     <a class="nav-item" data-page="explore" onclick="navigate('explore')"><span class="material-symbols-rounded">explore</span> Обзор</a>
     <a class="nav-item" data-page="wave" onclick="navigate('wave')"><span class="material-symbols-rounded">waves</span> Моя волна</a>
+    <a class="nav-item" data-page="radio" onclick="navigate('radio')"><span class="material-symbols-rounded">radio</span> Радио</a>
     <a class="nav-item" data-page="charts" onclick="navigate('charts')"><span class="material-symbols-rounded">trending_up</span> Чарты</a>
     <a class="nav-item" data-page="new-releases" onclick="navigate('new-releases')"><span class="material-symbols-rounded">new_releases</span> Новинки</a>
     <div class="nav-divider"></div>
@@ -602,6 +693,30 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
       <button class="btn-primary" onclick="startWave()" id="waveBtn"><span class="material-symbols-rounded">play_arrow</span> Запустить волну</button>
     </div>
     <div class="track-list" id="waveTracks" style="margin-top:24px"></div>
+  </div>
+
+  <!-- RADIO -->
+  <div class="page" id="page-radio">
+    <div class="section-title">📻 Реальное радио</div>
+    <div class="section-sub">Онлайн-радиостанции через открытый Radio Browser API. Можно выбрать страну, язык и жанр, чтобы не попасть, например, на турецкое радио, если ты в Питере.</div>
+    <div class="radio-toolbar">
+      <select class="md-input" id="radioCountry" style="max-width:220px;padding:12px 14px;border-radius:16px;margin:0">
+        <option value="RU">Россия</option>
+        <option value="UA">Украина</option>
+        <option value="BY">Беларусь</option>
+        <option value="KZ">Казахстан</option>
+        <option value="DE">Германия</option>
+        <option value="GB">Великобритания</option>
+        <option value="US">США</option>
+        <option value="TR">Турция</option>
+        <option value="FR">Франция</option>
+      </select>
+      <input class="md-input" id="radioTag" placeholder="Жанр или тег: pop, rock, chillout, news..." style="max-width:260px;padding:12px 14px;border-radius:16px;margin:0">
+      <button class="btn-primary" onclick="loadRealRadio()"><span class="material-symbols-rounded">radio</span> Загрузить станции</button>
+      <button class="btn-tonal" onclick="playRecommendedRadio()"><span class="material-symbols-rounded">bolt</span> Рекомендуемое</button>
+    </div>
+    <div id="radioStatus" class="section-sub" style="margin-bottom:12px">Выбери страну и нажми «Загрузить станции».</div>
+    <div class="radio-grid" id="radioGrid"></div>
   </div>
 
   <!-- CHARTS -->
@@ -1160,6 +1275,16 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
   </div>
 </div></div>
 
+<div class="modal-overlay" id="labsModal"><div class="modal" style="max-width:900px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <button class="btn-icon" onclick="closeModal('labsModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0">Labs-фичи</div>
+  </div>
+  <div class="section-sub" style="margin-bottom:16px">Экспериментальные функции. Они могут работать нестабильно — на то они и Labs.</div>
+  <div class="labs-grid" id="labsGrid"></div>
+  <div class="modal-actions" style="margin-top:16px"><button class="btn-primary" onclick="closeModal('labsModal')">Готово</button></div>
+</div></div>
+
 <div class="modal-overlay" id="audioEffectsModal"><div class="modal" style="max-width:760px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
     <button class="btn-icon" onclick="closeModal('audioEffectsModal')"><span class="material-symbols-rounded">arrow_back</span></button>
@@ -1238,6 +1363,10 @@ let favorites={},subscriptions={},userPlaylists={},pinnedTracks={},deleteTrackId
 let selectedAudioFile=null,selectedAudioDataURL=null,playerVisible=false;
 let selectedCoverDataURL=null,selectedVideoDataURL=null,selectedVideoFile=null,reportTrackId=null,contextTrackId=null;
 let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null,editTrackVideoData='';
+let creatorLogs=[];
+let radioStations=[];
+let activeRadioStation=null;
+let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"adaptiveTheme":true,"liquidGlass":false,"smartPreload":false,"aggressiveBeat":true,"radioAutoRegion":false,"cinematicVideo":true,"extraTransitions":true,"ambientGradient":false,"queueMemory":true}');
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
 let uploadExplicitManual=false,editExplicitManual=false,editExplicitLockedByAI=false;
@@ -1974,12 +2103,8 @@ function buildPublicRoleBadges(user){
 function renderPublicRolesForUser(user){
   const box=document.getElementById('profilePublicRoles');
   if(!box) return;
-  const chips=[];
-  if(isCreatorUser(user)) chips.push('<button class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель сервиса</button>');
-  box.innerHTML=chips.join('');
-  box.style.display=chips.length?'flex':'none';
-  box.style.gap='8px';
-  box.style.flexWrap='wrap';
+  box.innerHTML='';
+  box.style.display='none';
 }
 function updateCreatorProfileUi(viewedUser=currentUser){
   const content=document.getElementById('profileContent');
@@ -2056,15 +2181,19 @@ function openSettings(){
   if(!currentUser){showSnackbar('Войдите в аккаунт');return}
   db.ref('users/'+currentUser.uid).once('value').then(s=>{
     const u=s.val()||{},hasTg=!!u.telegramId,hasEmail=!!u.email&&!!u.passwordHash;
+    const themeMode=localStorage.getItem('mp_theme_mode')||(labsSettings.adaptiveTheme?'device':'light');
+    const themeLabel=themeMode==='device'?'Как на устройстве':(document.body.getAttribute('data-theme')==='dark'?'Тёмная':'Светлая');
     document.getElementById('settingsContent').innerHTML=
       '<div class="settings-item" onclick="openEditProfile()"><span class="material-symbols-rounded">edit</span><div class="settings-item-info"><div class="settings-item-title">Редактировать профиль</div><div class="settings-item-sub">Имя, аватар, био</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div class="settings-item" onclick="'+(hasEmail?'showSnackbar(\'Email уже привязан\')':'openLinkEmail()')+'" ><span class="material-symbols-rounded">mail</span><div class="settings-item-info"><div class="settings-item-title">Email и пароль</div><div class="settings-item-sub">'+(hasEmail?(u.email||'Привязан'):'Не привязан')+'</div></div>'+(hasEmail?'<span class="material-symbols-rounded" style="color:var(--md-primary)">check_circle</span>':'<span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span>')+'</div>'+
       '<div class="settings-item" onclick="'+(hasTg?'showSnackbar(\'Telegram уже привязан\')':'openLinkTelegram()')+'" ><span class="material-symbols-rounded">send</span><div class="settings-item-info"><div class="settings-item-title">Telegram</div><div class="settings-item-sub">'+(hasTg?('@'+(u.telegramUsername||'Привязан')):'Не привязан')+'</div></div>'+(hasTg?'<span class="material-symbols-rounded" style="color:var(--md-primary)">check_circle</span>':'<span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span>')+'</div>'+
       '<div style="margin:16px 0;height:1px;background:var(--md-outline-variant)"></div>'+
-      '<div class="settings-item" onclick="toggleTheme();openSettings()"><span class="material-symbols-rounded">'+((document.body.getAttribute('data-theme')==='dark')?'light_mode':'dark_mode')+'</span><div class="settings-item-info"><div class="settings-item-title">Тема</div><div class="settings-item-sub">'+((document.body.getAttribute('data-theme')==='dark')?'Тёмная':'Светлая')+'</div></div></div>'+
+      '<div class="settings-item" onclick="cycleThemeMode()"><span class="material-symbols-rounded">contrast</span><div class="settings-item-info"><div class="settings-item-title">Тема</div><div class="settings-item-sub">'+themeLabel+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">sync</span></div>'+
+      '<div class="settings-item" onclick="openLabsModal()"><span class="material-symbols-rounded">experiment</span><div class="settings-item-info"><div class="settings-item-title">Labs-фичи</div><div class="settings-item-sub">Экспериментальные функции и стили</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div class="settings-item" onclick="openSleepTimer()"><span class="material-symbols-rounded">bedtime</span><div class="settings-item-info"><div class="settings-item-title">Таймер сна</div><div class="settings-item-sub">'+(sleepTimerId?'Активен':'Не установлен')+'</div></div></div>'+
       '<div class="settings-item" onclick="openPartyMode()"><span class="material-symbols-rounded">celebration</span><div class="settings-item-info"><div class="settings-item-title">Режим вечеринки</div><div class="settings-item-sub">Синхронное воспроизведение до 8 устройств рядом</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
-      (isAdminUser(currentUser)?'<div class="settings-item" onclick="openAdminTools()"><span class="material-symbols-rounded">admin_panel_settings</span><div class="settings-item-info"><div class="settings-item-title">Админ-инструменты</div><div class="settings-item-sub">Выделение, модерация и сервисные действия</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
+      '<div class="settings-item" onclick="navigate(\'radio\');closeModal(\'settingsModal\')"><span class="material-symbols-rounded">radio</span><div class="settings-item-info"><div class="settings-item-title">Радио</div><div class="settings-item-sub">Открыть реальные онлайн-радиостанции</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+      (isCreatorUser(currentUser)?'<div class="settings-item" onclick="openAdminTools()"><span class="material-symbols-rounded">verified</span><div class="settings-item-info"><div class="settings-item-title">Меню создателя</div><div class="settings-item-sub">Логи, жалобы, статистика и сервисные инструменты</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
       '<div style="margin:16px 0;height:1px;background:var(--md-outline-variant)"></div>'+
       '<div class="settings-item" onclick="signOutUser();closeModal(\'settingsModal\')"><span class="material-symbols-rounded" style="color:var(--md-error)">logout</span><div class="settings-item-info"><div class="settings-item-title" style="color:var(--md-error)">Выйти из аккаунта</div></div></div>';
     document.getElementById('settingsModal').classList.add('open');
@@ -3338,6 +3467,66 @@ function startWave(){
 }
 function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
 
+/* ===== REAL RADIO ===== */
+const RADIO_API_BASE='https://de1.api.radio-browser.info/json';
+async function loadRealRadio(){
+  const country=(document.getElementById('radioCountry')?.value||'RU').toUpperCase();
+  const tag=(document.getElementById('radioTag')?.value||'').trim();
+  const status=document.getElementById('radioStatus');
+  const grid=document.getElementById('radioGrid');
+  if(!grid||!status) return;
+  status.textContent='Загружаем реальные станции...';
+  grid.innerHTML='<div class="loading-spinner"></div>';
+  pushCreatorLog('info','RADIO load: country='+country+', tag='+(tag||'—'));
+  try{
+    let url=RADIO_API_BASE+'/stations/search?hidebroken=true&limit=24&order=votes&reverse=true&countrycode='+encodeURIComponent(country);
+    if(tag) url+='&tag='+encodeURIComponent(tag);
+    const res=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!res.ok) throw new Error('radio-http-'+res.status);
+    const data=await res.json();
+    radioStations=(Array.isArray(data)?data:[]).filter(s=>s.url_resolved||s.url).slice(0,24);
+    status.textContent=radioStations.length?'Найдено станций: '+radioStations.length:'Станции не найдены. Попробуй другую страну или жанр.';
+    renderRadioGrid();
+  }catch(e){
+    status.textContent='Не удалось загрузить радио.';
+    grid.innerHTML='<div class="empty-state"><span class="material-symbols-rounded">radio</span><h3>Радио недоступно</h3><p>Попробуйте позже или смените страну.</p></div>';
+    pushCreatorLog('error','RADIO fail: '+(e?.message||e));
+  }
+}
+function renderRadioGrid(){
+  const grid=document.getElementById('radioGrid');
+  if(!grid) return;
+  grid.innerHTML=radioStations.length?radioStations.map((s,i)=>{
+    const logo=s.favicon?'<img src="'+s.favicon+'" alt="" loading="lazy" onerror="this.remove()">':'<span class="material-symbols-rounded" style="font-size:28px;color:var(--md-outline)">radio</span>';
+    const tags=String(s.tags||'').split(',').map(v=>v.trim()).filter(Boolean).slice(0,3).map(t=>'<span class="radio-tag">'+esc(t)+'</span>').join('');
+    return '<div class="radio-card" onclick="playRadioStation('+i+')"><div class="radio-card-top"><div class="radio-logo">'+logo+'</div><div style="min-width:0"><div class="radio-name">'+esc(s.name||'Радио')+'</div><div class="radio-sub">'+esc((s.country||'')+' • '+(s.language||'')).replace(/^ • | • $/g,'')+'</div></div></div><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="radio-live-badge"><span class="material-symbols-rounded" style="font-size:14px">sensors</span> LIVE</span><span class="badge">❤ '+Math.round(Number(s.votes||0))+'</span></div><div class="radio-tags">'+tags+'</div></div>';
+  }).join(''):'<div class="empty-state"><span class="material-symbols-rounded">radio</span><h3>Нет станций</h3></div>';
+}
+function playRadioStation(index){
+  const s=radioStations[index];
+  if(!s) return;
+  activeRadioStation=s;
+  currentTrackId='radio:'+String(s.stationuuid||index);
+  showPlayer();
+  document.getElementById('playerSong').textContent=s.name||'Радио';
+  document.getElementById('playerArtist').textContent=(s.country||'')+(s.language?' • '+s.language:'');
+  document.getElementById('playerExplicit').style.display='none';
+  document.getElementById('playerThumb').innerHTML=s.favicon?'<img src="'+s.favicon+'" alt="">':'<span class="material-symbols-rounded">radio</span>';
+  document.getElementById('fsCover').innerHTML=s.favicon?'<img src="'+s.favicon+'" alt="">':'<span class="material-symbols-rounded">radio</span>';
+  document.getElementById('fsTitle').textContent=s.name||'Радио';
+  document.getElementById('fsArtist').textContent=(s.country||'')+(s.language?' • '+s.language:'');
+  document.getElementById('fsMusicAuthor').style.display='none';
+  document.getElementById('totalTime').textContent='LIVE';
+  document.getElementById('fsTotalTime').textContent='LIVE';
+  audio.src=s.url_resolved||s.url||'';
+  audio.play().then(()=>{isPlaying=true;updatePlayButtons();pushCreatorLog('info','RADIO play: '+(s.name||'station'));}).catch(()=>showSnackbar('Не удалось воспроизвести радио'));
+  try{fetch(RADIO_API_BASE+'/url/'+encodeURIComponent(s.stationuuid||''),{method:'GET'}).catch(()=>{})}catch(e){}
+}
+function playRecommendedRadio(){
+  if(!radioStations.length){loadRealRadio();return}
+  playRadioStation(0);
+}
+
 /* ===== UPLOAD ===== */
 function handleAudioDrop(e){e.preventDefault();e.currentTarget.classList.remove('dragover');if(e.dataTransfer.files[0])processAudioFile(e.dataTransfer.files[0])}
 function handleAudioSelect(e){if(e.target.files[0])processAudioFile(e.target.files[0])}
@@ -3713,16 +3902,69 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
 
 /* ===== THEME ===== */
 function toggleTheme(){
-  const d=document.body.hasAttribute('data-theme');
-  if(d){document.body.removeAttribute('data-theme');document.getElementById('themeIcon').textContent='dark_mode';localStorage.setItem('theme','light')}
-  else{document.body.setAttribute('data-theme','dark');document.getElementById('themeIcon').textContent='light_mode';localStorage.setItem('theme','dark')}
+  const mode=localStorage.getItem('mp_theme_mode')||'light';
+  if(mode==='device'){ localStorage.setItem('mp_theme_mode','dark'); }
+  else if(mode==='dark'){ localStorage.setItem('mp_theme_mode','light'); }
+  else { localStorage.setItem('mp_theme_mode','dark'); }
+  applyThemePreference();
 }
-if(localStorage.getItem('theme')==='dark'||(!localStorage.getItem('theme')&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.body.setAttribute('data-theme','dark');document.getElementById('themeIcon').textContent='light_mode'}
+function cycleThemeMode(){
+  const mode=localStorage.getItem('mp_theme_mode')||'light';
+  const next=mode==='light'?'dark':mode==='dark'?'device':'light';
+  localStorage.setItem('mp_theme_mode',next);
+  if(next==='device') labsSettings.adaptiveTheme=true;
+  saveLabsSettings();
+  openSettings();
+}
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if((localStorage.getItem('mp_theme_mode')||'device')==='device') applyThemePreference()});
+applyThemePreference();
 
 /* ===== UTILS ===== */
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function showSnackbar(msg){const s=document.getElementById('snackbar');s.textContent=msg;s.classList.remove('show');void s.offsetWidth;s.classList.add('show');clearTimeout(s._t);s._t=setTimeout(()=>s.classList.remove('show'),3000)}
+function pushCreatorLog(level,msg){
+  const line={time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),level:String(level||'info'),msg:String(msg||'')};
+  creatorLogs.unshift(line);
+  if(creatorLogs.length>300) creatorLogs.length=300;
+  if(document.getElementById('creatorRealtimeConsole')) renderCreatorRealtimeConsole();
+}
+function showSnackbar(msg){const s=document.getElementById('snackbar');s.textContent=msg;s.classList.remove('show');void s.offsetWidth;s.classList.add('show');clearTimeout(s._t);s._t=setTimeout(()=>s.classList.remove('show'),3000);pushCreatorLog('info','SNACKBAR: '+msg)}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
+function saveLabsSettings(){localStorage.setItem('mp_labs_settings',JSON.stringify(labsSettings));applyLabsSettings()}
+function applyLabsSettings(){
+  document.body.toggleAttribute('data-ui-style', !!labsSettings.liquidGlass);
+  if(labsSettings.liquidGlass) document.body.setAttribute('data-ui-style','liquid-glass');
+  else document.body.removeAttribute('data-ui-style');
+  applyThemePreference();
+}
+function toggleLabsFlag(key){labsSettings[key]=!labsSettings[key];saveLabsSettings();renderLabsModal()}
+function setAdaptiveThemeMode(mode){localStorage.setItem('mp_theme_mode',mode);applyThemePreference();openSettings()}
+function applyThemePreference(){
+  const mode=localStorage.getItem('mp_theme_mode')||(labsSettings.adaptiveTheme?'device':'light');
+  const prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  let finalTheme='light';
+  if(mode==='dark') finalTheme='dark';
+  else if(mode==='device') finalTheme=prefersDark?'dark':'light';
+  if(finalTheme==='dark'){document.body.setAttribute('data-theme','dark');document.getElementById('themeIcon').textContent='light_mode'}
+  else{document.body.removeAttribute('data-theme');document.getElementById('themeIcon').textContent='dark_mode'}
+}
+function renderLabsModal(){
+  const grid=document.getElementById('labsGrid');
+  if(!grid) return;
+  const items=[
+    ['videoInsteadOfCover','smart_display','Видео вместо обложки','В полноэкранном плеере вместо статичной обложки показывать видео трека, если оно есть.'],
+    ['liquidGlass','blur_on','Apple Liquid Glass','Прозрачный стеклянный стиль поверх текущего интерфейса, без смены структуры.'],
+    ['adaptiveTheme','contrast','Адаптивная тема','Подстраивать светлую/тёмную тему под настройки устройства.'],
+    ['smartPreload','download','Умный прогрев потока','Экспериментальная подзагрузка следующего трека.'],
+    ['aggressiveBeat','graphic_eq','Сильнее под бит','Более заметная реакция обложки на низкие частоты.'],
+    ['radioAutoRegion','travel_explore','Авто-регион радио','Пробовать регион по браузеру/геолокации при открытии радио.'],
+    ['cinematicVideo','movie','Кино-режим видео','Более насыщенный fullscreen-видеопросмотр с оверлеями.'],
+    ['extraTransitions','animation','Мягкие переходы','Дополнительные анимации мелких состояний.'],
+    ['ambientGradient','palette','Ambient glow','Лёгкий фоновый градиент вокруг плеера от обложки.'],
+    ['queueMemory','queue_music','Умная очередь','Сохранять порядок и контекст очереди в течение сессии.']
+  ];
+  grid.innerHTML=items.map(([key,icon,title,sub])=>'<div class="labs-card"><div class="labs-card-title"><span class="material-symbols-rounded">'+icon+'</span>'+title+'</div><div class="labs-card-sub">'+sub+'</div><div class="effect-row" style="margin:0"><div class="effect-meta"><div class="effect-sub">Состояние</div></div><div class="toggle '+(labsSettings[key]?'on':'')+'" onclick="toggleLabsFlag(\''+key+'\')"></div></div></div>').join('');
+}
+function openLabsModal(){renderLabsModal();document.getElementById('labsModal').classList.add('open')}
 
 /* ===== ADMIN TOOLS ===== */
 function openAdminTools(){
@@ -3768,14 +4010,15 @@ function creatorPanelWrap(title, body){
   document.getElementById('settingsContent').innerHTML='<div class="modal-title" style="margin-bottom:12px">'+title+'</div>'+body+'<div class="modal-actions"><button class="btn-outlined" onclick="openAdminTools()">Назад</button></div>';
   document.getElementById('settingsModal').classList.add('open');
 }
+function renderCreatorRealtimeConsole(){
+  const el=document.getElementById('creatorRealtimeConsole');
+  if(!el) return;
+  el.innerHTML=creatorLogs.length?creatorLogs.map(l=>'<div class="creator-console-line"><div class="creator-console-time">['+esc(l.time)+']</div><div class="creator-console-level '+esc(l.level)+'">'+esc(l.level.toUpperCase())+'</div><div class="creator-console-msg">'+esc(l.msg)+'</div></div>').join(''):'<div class="creator-console-line"><div class="creator-console-msg">Логи пока пусты</div></div>';
+}
 function openCreatorLogs(){
-  const logs=[];
-  logs.push({label:'Треков в базе',value:Object.keys(allTracks).length});
-  logs.push({label:'Текущий трек',value:currentTrackId&&allTracks[currentTrackId]?allTracks[currentTrackId].title:'—'});
-  logs.push({label:'Party mode',value:partySessionId||'неактивен'});
-  logs.push({label:'Remote device',value:activeReceiverId||'нет'});
-  logs.push({label:'Тема',value:document.body.getAttribute('data-theme')==='dark'?'dark':'light'});
-  creatorPanelWrap('Логи', logs.map(x=>'<div class="settings-item"><span class="material-symbols-rounded">terminal</span><div class="settings-item-info"><div class="settings-item-title">'+esc(x.label)+'</div><div class="settings-item-sub">'+esc(String(x.value))+'</div></div></div>').join(''));
+  creatorPanelWrap('Логи', '<div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px"><button class="btn-tonal" onclick="creatorLogs=[];renderCreatorRealtimeConsole();pushCreatorLog(\'info\',\'Логи очищены\')"><span class="material-symbols-rounded">delete_sweep</span> Очистить</button></div><div class="creator-console" id="creatorRealtimeConsole"></div>');
+  pushCreatorLog('info','Открыта realtime-консоль создателя');
+  renderCreatorRealtimeConsole();
 }
 async function openCreatorReports(){
   const snap=await db.ref('reports').once('value');
