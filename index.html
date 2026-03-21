@@ -230,10 +230,14 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .creator-profile .profile-avatar{background:linear-gradient(135deg,#0d7a43,#3fd27d);box-shadow:0 0 0 4px rgba(63,210,125,.18),var(--md-elevation-2)}
 .creator-profile .profile-avatar .material-symbols-rounded{color:#fff}
 .creator-profile .profile-name{color:#179c52}
-.creator-badge{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:8px;width:24px;height:24px;border:none;border-radius:50%;background:#18a957;color:#fff;cursor:pointer;box-shadow:0 2px 10px rgba(24,169,87,.28);transition:transform .2s,filter .2s}
-.creator-badge:hover{transform:translateY(-1px) scale(1.06);filter:brightness(1.06)}
-.creator-badge .material-symbols-rounded{font-size:16px;color:#fff}
-.creator-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(24,169,87,.12);color:#14944d;font:600 12px/16px 'Inter',sans-serif;margin-top:8px}
+.creator-badge,.admin-badge{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:8px;width:24px;height:24px;border:none;border-radius:50%;background:#18a957;color:#fff;cursor:pointer;box-shadow:0 2px 10px rgba(24,169,87,.28);transition:transform .2s,filter .2s}
+.creator-badge:hover,.admin-badge:hover{transform:translateY(-1px) scale(1.06);filter:brightness(1.06)}
+.creator-badge .material-symbols-rounded,.admin-badge .material-symbols-rounded{font-size:16px;color:#fff}
+.creator-chip,.admin-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(24,169,87,.12);color:#14944d;font:600 12px/16px 'Inter',sans-serif;margin-top:8px}
+.admin-chip{background:rgba(24,169,87,.12)}
+.inline-profile-badges{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px;margin-left:8px}
+.public-role-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;background:rgba(24,169,87,.12);color:#169b51;font:700 11px/15px 'Inter',sans-serif}
+.public-role-chip .material-symbols-rounded{font-size:14px}
 .pinned-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#ffe9b3;color:#8a5a00;font:700 11px/16px 'Inter',sans-serif}
 
 /* ===== BOTTOM NAV ===== */
@@ -326,9 +330,9 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 @keyframes fsIn{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
 .fs-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
 .fs-cover-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
-.fs-cover{width:100%;max-width:360px;aspect-ratio:1;border-radius:var(--md-shape-lg);background:var(--md-surface-container-highest);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:var(--md-elevation-3);transition:border-radius .5s cubic-bezier(.2,0,0,1),transform .08s ease-out, box-shadow .12s ease-out}
+.fs-cover{width:100%;max-width:360px;aspect-ratio:1;border-radius:var(--md-shape-lg);background:var(--md-surface-container-highest);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:var(--md-elevation-3);transition:border-radius .5s cubic-bezier(.2,0,0,1),transform .045s linear, box-shadow .08s linear, filter .08s linear}
 .fs-cover.playing{border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.04) inset}
-.fs-cover.beat{transform:translateY(calc(var(--beat-bounce, 0px) * -1)) scale(calc(1 + var(--beat-scale, 0)));box-shadow:0 18px 48px rgba(0,0,0,.26),0 0 0 1px rgba(255,255,255,.06) inset}
+.fs-cover.beat{transform:translateY(calc(var(--beat-bounce, 0px) * -1)) scale(calc(1 + var(--beat-scale, 0))) rotate(calc(var(--beat-tilt, 0deg)));box-shadow:0 24px 56px rgba(0,0,0,.30),0 0 0 1px rgba(255,255,255,.06) inset;filter:saturate(calc(1 + var(--beat-sat, 0)))}
 @keyframes coverPulse{0%,100%{opacity:1}50%{opacity:.985}}
 .fs-cover img{width:100%;height:100%;object-fit:cover}
 .fs-cover .material-symbols-rounded{font-size:96px;color:var(--md-outline)}
@@ -781,6 +785,7 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
         <div class="profile-info" id="profileInfo">
           <div class="profile-name" id="profileName">Пользователь</div>
           <div style="font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:2px" id="profileLogin">@user</div>
+          <div id="profilePublicRoles" style="margin-top:8px"></div>
           <div id="profileCreatorMeta"></div>
           <div class="profile-stats">
             <span><strong id="profileTracks">0</strong> треков</span>
@@ -1126,7 +1131,26 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
     <div class="modal-title" id="videoTrackTitle" style="margin-bottom:0;flex:1">Видео трека</div>
     <button class="btn-icon" onclick="closeTrackVideo()"><span class="material-symbols-rounded">close</span></button>
   </div>
-  <div id="videoTrackBody" style="padding:0;background:black;min-height:240px;display:flex;align-items:center;justify-content:center"></div>
+  <div id="videoTrackBody" style="padding:0;background:black;min-height:240px;display:flex;align-items:center;justify-content:center;position:relative"></div>
+  <div id="videoTrackControls" style="display:none;padding:12px 14px;background:var(--md-surface-container-high);border-top:1px solid var(--md-outline-variant)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <button class="player-play-btn" id="videoPlayBtn" onclick="toggleTrackVideoPlayback()"><span class="material-symbols-rounded" id="videoPlayIcon">play_arrow</span></button>
+      <div style="font:500 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);min-width:42px;text-align:center" id="videoCurrentTime">0:00</div>
+      <div class="progress-track" id="videoProgressTrack" style="flex:1"><div class="progress-fill" id="videoProgressFill"></div></div>
+      <div style="font:500 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);min-width:42px;text-align:center" id="videoTotalTime">0:00</div>
+      <button class="btn-icon" id="videoMuteBtn" onclick="toggleTrackVideoMute()"><span class="material-symbols-rounded" id="videoMuteIcon">volume_up</span></button>
+      <button class="btn-icon" onclick="toggleTrackVideoFullscreen()"><span class="material-symbols-rounded">fullscreen</span></button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap">
+      <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant)">Кастомный видеоплеер MusicPlatforme</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font:500 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant)">Скорость</span>
+        <button class="speed-btn" onclick="setTrackVideoRate(0.75)">0.75x</button>
+        <button class="speed-btn" onclick="setTrackVideoRate(1)">1x</button>
+        <button class="speed-btn" onclick="setTrackVideoRate(1.25)">1.25x</button>
+      </div>
+    </div>
+  </div>
 </div></div>
 
 <div class="modal-overlay" id="audioEffectsModal"><div class="modal" style="max-width:760px">
@@ -1935,22 +1959,49 @@ function openTgPopup(cbName){
 function isCreatorUser(user){
   return !!(user && String(user.email||'').toLowerCase()==='vriskas@catniti.ru');
 }
-function updateCreatorProfileUi(){
+function isAdminUser(user){
+  return isCreatorUser(user);
+}
+function buildPublicRoleBadges(user){
+  const roles=[];
+  if(isCreatorUser(user)) roles.push('<button class="creator-badge" onclick="showCreatorBadgeInfo()" title="Создатель сервиса"><span class="material-symbols-rounded filled">verified</span></button>');
+  if(isAdminUser(user)) roles.push('<button class="admin-badge" onclick="showAdminBadgeInfo()" title="Администратор"><span class="material-symbols-rounded filled">shield</span></button>');
+  return '<span class="inline-profile-badges">'+roles.join('')+'</span>';
+}
+function renderPublicRolesForUser(user){
+  const box=document.getElementById('profilePublicRoles');
+  if(!box) return;
+  const chips=[];
+  if(isCreatorUser(user)) chips.push('<button class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель сервиса</button>');
+  if(isAdminUser(user)) chips.push('<button class="public-role-chip" onclick="showAdminBadgeInfo()"><span class="material-symbols-rounded filled">shield</span> Администратор</button>');
+  box.innerHTML=chips.join('');
+  box.style.display=chips.length?'flex':'none';
+  box.style.gap='8px';
+  box.style.flexWrap='wrap';
+}
+function updateCreatorProfileUi(viewedUser=currentUser){
   const content=document.getElementById('profileContent');
   const meta=document.getElementById('profileCreatorMeta');
   const nameEl=document.getElementById('profileName');
   if(!content||!meta||!nameEl) return;
-  content.classList.toggle('creator-profile', !!isCreatorUser(currentUser));
-  if(isCreatorUser(currentUser)){
-    nameEl.innerHTML=esc(currentUser.displayName||'Пользователь')+' <button class="creator-badge" onclick="showCreatorBadgeInfo()" title="Создатель сервиса"><span class="material-symbols-rounded filled">verified</span></button>';
+  content.classList.toggle('creator-profile', !!isCreatorUser(viewedUser));
+  if(isCreatorUser(viewedUser)){
+    nameEl.innerHTML=esc(viewedUser?.displayName||'Пользователь')+buildPublicRoleBadges(viewedUser);
     meta.innerHTML='<div class="creator-chip"><span class="material-symbols-rounded filled" style="font-size:16px">eco</span> Создатель MusicPlatforme</div>';
+  }else if(isAdminUser(viewedUser)){
+    nameEl.innerHTML=esc(viewedUser?.displayName||'Пользователь')+buildPublicRoleBadges(viewedUser);
+    meta.innerHTML='<div class="admin-chip"><span class="material-symbols-rounded filled" style="font-size:16px">shield</span> Администратор MusicPlatforme</div>';
   }else{
-    nameEl.textContent=currentUser?.displayName||'Пользователь';
+    nameEl.textContent=viewedUser?.displayName||'Пользователь';
     meta.innerHTML='';
   }
+  renderPublicRolesForUser(viewedUser);
 }
 function showCreatorBadgeInfo(){
   showSnackbar('Это создатель сервиса MusicPlatforme');
+}
+function showAdminBadgeInfo(){
+  showSnackbar('Этот профиль имеет права администратора MusicPlatforme');
 }
 function updateAuthUI(){
   const ai=document.getElementById('avatarIcon'),am=document.getElementById('avatarImg');
@@ -1976,11 +2027,12 @@ function updateAuthUI(){
 function updateUserMenu(){
   const c=document.getElementById('userMenuContent');
   if(currentUser){
-    c.innerHTML='<div style="padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--md-outline-variant)"><div style="width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--md-primary-container);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+(currentUser.photo?'<img src="'+currentUser.photo+'" style="width:100%;height:100%;object-fit:cover">':'<span class="material-symbols-rounded">person</span>')+'</div><div style="min-width:0"><div style="font:500 14px/20px \'Inter\',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(currentUser.displayName)+'</div><div style="font:400 12px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant)">@'+esc(currentUser.username)+'</div></div></div>'+
+    c.innerHTML='<div style="padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--md-outline-variant)"><div style="width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--md-primary-container);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+(currentUser.photo?'<img src="'+currentUser.photo+'" style="width:100%;height:100%;object-fit:cover">':'<span class="material-symbols-rounded">person</span>')+'</div><div style="min-width:0"><div style="font:500 14px/20px \'Inter\',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(currentUser.displayName)+(isCreatorUser(currentUser)?' <span style="color:#18a957">●</span>':'')+'</div><div style="font:400 12px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant)">@'+esc(currentUser.username)+'</div></div></div>'+
     '<div class="user-menu-item" onclick="navigate(\'profile\');closeUserMenu()"><span class="material-symbols-rounded">person</span> Профиль</div>'+
     '<div class="user-menu-item" onclick="navigate(\'upload\');closeUserMenu()"><span class="material-symbols-rounded">upload</span> Загрузить</div>'+
     '<div class="user-menu-item" onclick="navigate(\'history\');closeUserMenu()"><span class="material-symbols-rounded">history</span> История</div>'+
     '<div class="user-menu-item" onclick="openSleepTimer();closeUserMenu()"><span class="material-symbols-rounded">bedtime</span> Таймер сна</div>'+
+    (isAdminUser(currentUser)?'<div class="user-menu-item" onclick="openAdminTools();closeUserMenu()"><span class="material-symbols-rounded">admin_panel_settings</span> Админ-инструменты</div>':'')+
     '<div class="user-menu-item" onclick="openSettings();closeUserMenu()"><span class="material-symbols-rounded">settings</span> Настройки</div>'+
     '<div class="user-menu-item" onclick="signOutUser();closeUserMenu()"><span class="material-symbols-rounded">logout</span> Выйти</div>';
   }else{
@@ -2013,6 +2065,7 @@ function openSettings(){
       '<div class="settings-item" onclick="toggleTheme();openSettings()"><span class="material-symbols-rounded">'+((document.body.getAttribute('data-theme')==='dark')?'light_mode':'dark_mode')+'</span><div class="settings-item-info"><div class="settings-item-title">Тема</div><div class="settings-item-sub">'+((document.body.getAttribute('data-theme')==='dark')?'Тёмная':'Светлая')+'</div></div></div>'+
       '<div class="settings-item" onclick="openSleepTimer()"><span class="material-symbols-rounded">bedtime</span><div class="settings-item-info"><div class="settings-item-title">Таймер сна</div><div class="settings-item-sub">'+(sleepTimerId?'Активен':'Не установлен')+'</div></div></div>'+
       '<div class="settings-item" onclick="openPartyMode()"><span class="material-symbols-rounded">celebration</span><div class="settings-item-info"><div class="settings-item-title">Режим вечеринки</div><div class="settings-item-sub">Синхронное воспроизведение до 8 устройств рядом</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+      (isAdminUser(currentUser)?'<div class="settings-item" onclick="openAdminTools()"><span class="material-symbols-rounded">admin_panel_settings</span><div class="settings-item-info"><div class="settings-item-title">Админ-инструменты</div><div class="settings-item-sub">Выделение, модерация и сервисные действия</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
       '<div style="margin:16px 0;height:1px;background:var(--md-outline-variant)"></div>'+
       '<div class="settings-item" onclick="signOutUser();closeModal(\'settingsModal\')"><span class="material-symbols-rounded" style="color:var(--md-error)">logout</span><div class="settings-item-info"><div class="settings-item-title" style="color:var(--md-error)">Выйти из аккаунта</div></div></div>';
     document.getElementById('settingsModal').classList.add('open');
@@ -2159,12 +2212,14 @@ function renderTrackItem(id,track,num,showDel){
   const isExp=track.explicit,isFav=favorites[id],isNP=currentTrackId===id,dur=track.duration?formatTime(track.duration):'—';
   const plays=track.plays||0;
   const isPinned=!!(currentUser&&track.artistId===currentUser.uid&&pinnedTracks[id]);
+  const creatorChip=isCreatorUser({email:track.artistEmail||'',displayName:track.artistName||''})?'<span class="public-role-chip" style="padding:2px 8px;font-size:10px"><span class="material-symbols-rounded filled" style="font-size:12px">verified</span> creator</span>':'';
+  const featuredChip=track.serviceFeatured?'<span class="badge" title="Рекомендация MusicPlatforme">★ MusicPlatforme</span>':'';
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
     '<div class="track-num">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
     '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
-    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав">©?</span>':'')+'</div>'+
+    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit">!</span>':'')+featuredChip+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав">©?</span>':'')+'</div>'+
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
-    '<div style="font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Автор музыки: '+esc(track.musicAuthor||track.artistName||'Не указан')+'</div></div>'+
+    '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Автор музыки: '+esc(track.musicAuthor||track.artistName||'Не указан')+creatorChip+'</div></div>'+
     '<div class="track-plays"><span class="material-symbols-rounded">play_arrow</span>'+formatPlays(plays)+'</div>'+
     '<div class="track-actions">'+
     '<button class="btn-icon '+(isFav?'active':'')+'" onclick="event.stopPropagation();toggleFavorite(\''+id+'\')" title="Нравится"><span class="material-symbols-rounded '+(isFav?'filled':'')+'">favorite</span></button>'+
@@ -3050,24 +3105,38 @@ function animateBeatCover(){
     cover.classList.remove('beat');
     cover.style.setProperty('--beat-bounce','0px');
     cover.style.setProperty('--beat-scale','0');
+    cover.style.setProperty('--beat-tilt','0deg');
+    cover.style.setProperty('--beat-sat','0');
     return;
   }
   const analyser=fxNodes.analyser;
   const data=new Uint8Array(analyser.frequencyBinCount);
   analyser.getByteFrequencyData(data);
-  let bass=0, mids=0;
-  const bassEnd=Math.max(4, Math.floor(data.length*0.12));
-  const midStart=bassEnd, midEnd=Math.max(midStart+4, Math.floor(data.length*0.32));
-  for(let i=0;i<bassEnd;i++) bass+=data[i]||0;
-  for(let i=midStart;i<midEnd;i++) mids+=data[i]||0;
-  bass/=bassEnd||1;
-  mids/=(midEnd-midStart)||1;
-  const energy=Math.max(0, Math.min(1, ((bass*0.72 + mids*0.28) / 255)));
-  const bounce=(energy*18).toFixed(2)+'px';
-  const scale=(energy*0.055).toFixed(4);
+  let sub=0,bass=0,mids=0,highs=0;
+  const len=data.length;
+  const subEnd=Math.max(3,Math.floor(len*0.06));
+  const bassEnd=Math.max(subEnd+3, Math.floor(len*0.16));
+  const midEnd=Math.max(bassEnd+4, Math.floor(len*0.42));
+  for(let i=0;i<subEnd;i++) sub+=data[i]||0;
+  for(let i=subEnd;i<bassEnd;i++) bass+=data[i]||0;
+  for(let i=bassEnd;i<midEnd;i++) mids+=data[i]||0;
+  for(let i=midEnd;i<len;i++) highs+=data[i]||0;
+  sub/=subEnd||1;
+  bass/=(bassEnd-subEnd)||1;
+  mids/=(midEnd-bassEnd)||1;
+  highs/=(len-midEnd)||1;
+  const pulse=Math.max(0,Math.min(1,((sub*0.52+bass*0.28+mids*0.14+highs*0.06)/255)));
+  const transient=Math.max(0,Math.min(1,((sub-bass*0.35)+40)/180));
+  const energy=Math.max(pulse, transient*0.92);
+  const bounce=(energy*30).toFixed(2)+'px';
+  const scale=(energy*0.085).toFixed(4);
+  const tilt=((mids-highs)/255*1.8).toFixed(2)+'deg';
+  const sat=(energy*0.22).toFixed(3);
   cover.classList.add('beat');
   cover.style.setProperty('--beat-bounce', bounce);
   cover.style.setProperty('--beat-scale', scale);
+  cover.style.setProperty('--beat-tilt', tilt);
+  cover.style.setProperty('--beat-sat', sat);
 }
 let eightDLoopHandle=null;
 function start8DLoop(){
@@ -3213,11 +3282,12 @@ function viewArtist(aid){
   document.getElementById('artistTabs').style.display='none';
   db.ref('users/'+aid).once('value').then(s=>{
     const u=s.val()||{};const isSub=subscriptions[aid];
+    const roleBadges=(isCreatorUser(u)?'<span class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель сервиса</span>':'')+(isAdminUser(u)?'<span class="public-role-chip" onclick="showAdminBadgeInfo()"><span class="material-symbols-rounded filled">shield</span> Админ</span>':'');
     db.ref('subscribers/'+aid).once('value').then(ss=>{
       const sc=Object.keys(ss.val()||{}).length;
       currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===aid).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
       const totalPlays=currentArtistTracks.reduce((s,[id,t])=>s+(t.plays||0),0);
-      h.innerHTML='<div class="artist-page-avatar">'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>')+'</div><div style="flex:1"><div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Артист')+'</div>'+(u.username?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>':'')+(u.bio?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>':'')+'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);display:flex;gap:16px;flex-wrap:wrap"><span>'+currentArtistTracks.length+' треков</span><span>'+sc+' подписчиков</span><span>'+formatPlays(totalPlays)+' прослушиваний</span></div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'+(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')+(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')+'</div></div>';
+      h.innerHTML='<div class="artist-page-avatar">'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>')+'</div><div style="flex:1"><div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Артист')+(isCreatorUser(u)?' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>':'')+'</div>'+(u.username?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>':'')+(roleBadges?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">'+roleBadges+'</div>':'')+(u.bio?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>':'')+'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);display:flex;gap:16px;flex-wrap:wrap"><span>'+currentArtistTracks.length+' треков</span><span>'+sc+' подписчиков</span><span>'+formatPlays(totalPlays)+' прослушиваний</span></div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'+(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')+(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')+(isAdminUser(currentUser)&&currentUser.uid!==aid?'<button class="btn-outlined" onclick="adminOpenUserActions(\''+aid+'\')"><span class="material-symbols-rounded">gavel</span> Админ-действия</button>':'')+'</div></div>';
       document.getElementById('artistTabs').style.display='flex';
       tl.innerHTML=currentArtistTracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
     });
@@ -3304,9 +3374,51 @@ function clearEditTrackVideo(){
   document.getElementById('editTrackVideoUrl').value='';
   document.getElementById('editTrackVideoStatus').textContent='Видео убрано';
 }
+let currentTrackVideoElement=null;
+function updateTrackVideoUi(){
+  const v=currentTrackVideoElement;
+  if(!v)return;
+  document.getElementById('videoPlayIcon').textContent=v.paused?'play_arrow':'pause';
+  document.getElementById('videoMuteIcon').textContent=v.muted||v.volume===0?'volume_off':'volume_up';
+  document.getElementById('videoCurrentTime').textContent=formatTime(v.currentTime||0);
+  document.getElementById('videoTotalTime').textContent=formatTime(v.duration||0);
+  const pct=v.duration?((v.currentTime||0)/v.duration*100):0;
+  document.getElementById('videoProgressFill').style.width=pct+'%';
+}
+function toggleTrackVideoPlayback(){
+  if(!currentTrackVideoElement)return;
+  if(currentTrackVideoElement.paused) currentTrackVideoElement.play().catch(()=>{});
+  else currentTrackVideoElement.pause();
+  updateTrackVideoUi();
+}
+function toggleTrackVideoMute(){
+  if(!currentTrackVideoElement)return;
+  currentTrackVideoElement.muted=!currentTrackVideoElement.muted;
+  updateTrackVideoUi();
+}
+function setTrackVideoRate(rate){
+  if(!currentTrackVideoElement)return;
+  currentTrackVideoElement.playbackRate=Number(rate||1);
+  showSnackbar('Скорость видео: '+Number(rate||1).toFixed(2)+'x');
+}
+function toggleTrackVideoFullscreen(){
+  const host=document.getElementById('videoTrackBody');
+  if(!host)return;
+  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  else host.requestFullscreen?.().catch(()=>{});
+}
+function bindTrackVideoElement(video){
+  currentTrackVideoElement=video;
+  ['timeupdate','loadedmetadata','play','pause','volumechange','ended','ratechange','seeking'].forEach(ev=>video.addEventListener(ev,updateTrackVideoUi));
+  initDrag(document.getElementById('videoProgressTrack'),p=>{if(video.duration)video.currentTime=p*video.duration});
+  updateTrackVideoUi();
+}
 function closeTrackVideo(){
   const body=document.getElementById('videoTrackBody');
+  if(currentTrackVideoElement){try{currentTrackVideoElement.pause()}catch(e){}}
+  currentTrackVideoElement=null;
   if(body) body.innerHTML='';
+  document.getElementById('videoTrackControls').style.display='none';
   closeModal('videoTrackModal');
 }
 async function openTrackVideo(tid){
@@ -3314,17 +3426,22 @@ async function openTrackVideo(tid){
   if(!t||!(t.videoData||t.videoUrl||t.videoStorageMode==='chunks'||Number(t.videoChunkCount||0)>0)){showSnackbar('У этого трека нет видео');return}
   const body=document.getElementById('videoTrackBody');
   const title=document.getElementById('videoTrackTitle');
+  const controls=document.getElementById('videoTrackControls');
   if(title) title.textContent='Видео: '+(t.title||'Трек');
   body.innerHTML='<div class="loading-spinner"></div>';
+  controls.style.display='none';
   const url=normalizeVideoUrl(t.videoUrl||'');
   try{
     const resolvedData=await resolveTrackVideoSource(tid,t);
-    if(resolvedData){
-      body.innerHTML='<video controls autoplay playsinline style="width:100%;max-height:min(78vh,720px);background:black" src="'+resolvedData+'"></video>';
-    }else if(/youtube\.com\/embed\//i.test(url)){
-      body.innerHTML='<iframe src="'+url+'" style="width:100%;aspect-ratio:16/9;border:0;background:black" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
-    }else if(url){
-      body.innerHTML='<video controls autoplay playsinline style="width:100%;max-height:min(78vh,720px);background:black" src="'+url+'"></video>';
+    if(resolvedData||url){
+      if(/youtube\.com\/embed\//i.test(url) && !resolvedData){
+        body.innerHTML='<iframe src="'+url+'" style="width:100%;aspect-ratio:16/9;border:0;background:black" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+      }else{
+        const src=resolvedData||url;
+        body.innerHTML='<video id="customTrackVideo" autoplay playsinline preload="metadata" style="width:100%;max-height:min(78vh,720px);background:black;display:block" src="'+src+'"></video>';
+        const video=body.querySelector('#customTrackVideo');
+        if(video){bindTrackVideoElement(video);controls.style.display='block';}
+      }
     }else{
       body.innerHTML='<div class="empty-state" style="padding:24px"><span class="material-symbols-rounded">videocam_off</span><h3>Видео не найдено</h3></div>';
     }
@@ -3588,6 +3705,48 @@ if(localStorage.getItem('theme')==='dark'||(!localStorage.getItem('theme')&&wind
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function showSnackbar(msg){const s=document.getElementById('snackbar');s.textContent=msg;s.classList.remove('show');void s.offsetWidth;s.classList.add('show');clearTimeout(s._t);s._t=setTimeout(()=>s.classList.remove('show'),3000)}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+/* ===== ADMIN TOOLS ===== */
+function openAdminTools(){
+  if(!isAdminUser(currentUser)){showSnackbar('Недостаточно прав');return}
+  closeModal('settingsModal');
+  const topTracks=Object.entries(allTracks).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0)).slice(0,5);
+  const pendingModeration=Object.entries(allTracks).filter(([id,t])=>t?.moderationMeta?.pending).length;
+  document.getElementById('settingsContent').innerHTML=
+    '<div class="modal-title" style="margin-bottom:12px">Админ-инструменты</div>'+
+    '<div class="settings-item" onclick="featureCurrentTrackAsAdmin()"><span class="material-symbols-rounded">star</span><div class="settings-item-info"><div class="settings-item-title">Выделить текущий трек</div><div class="settings-item-sub">Добавить бейдж рекомендаций от сервиса</div></div></div>'+
+    '<div class="settings-item" onclick="toggleMaintenanceBanner()"><span class="material-symbols-rounded">campaign</span><div class="settings-item-info"><div class="settings-item-title">Сервисный баннер</div><div class="settings-item-sub">Показывать/скрывать уведомление сервиса</div></div></div>'+
+    '<div class="settings-item" onclick="reviewPendingModeration()"><span class="material-symbols-rounded">policy</span><div class="settings-item-info"><div class="settings-item-title">Проверить ожидающие модерации</div><div class="settings-item-sub">Сейчас ожидают: '+pendingModeration+'</div></div></div>'+
+    '<div style="margin:16px 0;font:600 13px/18px Inter,sans-serif;color:var(--md-on-surface-variant)">Топ треков</div>'+
+    (topTracks.length?topTracks.map(([id,t])=>'<div class="settings-item" onclick="playTrackById(\''+id+'\')"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+formatPlays(t.plays||0)+' прослушиваний</div></div></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">bar_chart</span><h3>Нет данных</h3></div>')+
+    '<div class="modal-actions"><button class="btn-outlined" onclick="openSettings()">Назад</button></div>';
+  document.getElementById('settingsModal').classList.add('open');
+}
+function adminOpenUserActions(uid){
+  if(!isAdminUser(currentUser)){showSnackbar('Недостаточно прав');return}
+  const artist=uid&&Object.values(allTracks).find(t=>t.artistId===uid);
+  const name=artist?.artistName||uid;
+  const ok=confirm('Админ-действия для '+name+'\n\nОК — открыть профиль\nОтмена — ничего не делать');
+  if(ok) viewArtist(uid);
+}
+async function featureCurrentTrackAsAdmin(){
+  if(!isAdminUser(currentUser)){showSnackbar('Недостаточно прав');return}
+  if(!currentTrackId||!allTracks[currentTrackId]){showSnackbar('Нет текущего трека');return}
+  await db.ref('tracks/'+currentTrackId+'/serviceFeatured').set(true);
+  await db.ref('tracks/'+currentTrackId+'/serviceFeaturedAt').set(Date.now());
+  showSnackbar('Трек отмечен как рекомендация сервиса');
+}
+function toggleMaintenanceBanner(){
+  const key='mp_service_banner';
+  const current=localStorage.getItem(key)==='1';
+  localStorage.setItem(key,current?'0':'1');
+  showSnackbar(current?'Баннер сервиса скрыт':'Баннер сервиса включён');
+}
+function reviewPendingModeration(){
+  const pending=Object.entries(allTracks).filter(([id,t])=>t?.moderationMeta?.pending);
+  if(!pending.length){showSnackbar('Нет ожидающих модерации');return}
+  playlist=pending.map(([id])=>id);playlistIndex=0;currentTrackId=playlist[0];loadAndPlay(allTracks[currentTrackId]);showSnackbar('Открыт первый трек с ожидающей модерацией');
+}
 
 /* ===== EVENT LISTENERS ===== */
 window.addEventListener('scroll',()=>{document.getElementById('topBar').classList.toggle('scrolled',window.scrollY>10)});
