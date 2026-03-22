@@ -891,32 +891,6 @@ body[data-ui-style="glass"] .video-secondary-btn:hover{
 .sidebar nav{overflow-y:auto;overflow-x:hidden;max-height:calc(100vh - 86px);padding-bottom:24px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
 @media(max-width:600px){.sidebar nav{max-height:calc(100dvh - 86px);padding-bottom:40px}}
 
-/* ===== PIANO ===== */
-.piano-shell{display:flex;flex-direction:column;gap:18px}
-.piano-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.piano-mode-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(255,193,7,.12);color:#9a6a00;font:700 11px/14px 'Inter',sans-serif}
-.piano-stage{position:relative;border-radius:24px;background:linear-gradient(180deg,var(--md-surface-container-high),var(--md-surface-container));min-height:260px;padding:16px;overflow:hidden;border:1px solid var(--md-outline-variant)}
-.piano-fall-lane{position:absolute;top:0;bottom:120px;width:calc(100% / 14);border-right:1px dashed rgba(255,255,255,.05)}
-.piano-note-fall{position:absolute;top:-72px;height:72px;border-radius:16px;background:linear-gradient(180deg,var(--md-primary),#9d7dff);box-shadow:0 6px 16px rgba(103,80,164,.26);display:flex;align-items:center;justify-content:center;color:white;font:700 12px/16px 'Inter',sans-serif}
-.piano-keyboard{display:flex;position:relative;height:160px;border-radius:22px;background:#121117;padding:10px 10px 12px;gap:4px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
-.piano-white-key{flex:1;border-radius:0 0 16px 16px;background:linear-gradient(180deg,#fff,#ede9f7);border:1px solid #d4cee2;position:relative;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;color:#534b62;font:700 11px/14px 'Inter',sans-serif;transition:transform .05s,background .08s,box-shadow .08s;box-shadow:inset 0 -6px 12px rgba(0,0,0,.08)}
-.piano-white-key.active{background:linear-gradient(180deg,#eadcff,#d6c1ff);transform:translateY(2px);box-shadow:inset 0 -2px 6px rgba(0,0,0,.08)}
-.piano-black-key{position:absolute;top:0;width:7.2%;height:92px;border-radius:0 0 12px 12px;background:linear-gradient(180deg,#3a3743,#111017);border:1px solid rgba(255,255,255,.08);z-index:2;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;color:#d8d1ea;font:700 9px/12px 'Inter',sans-serif;transition:transform .05s,filter .08s}
-.piano-black-key.active{transform:translateY(2px);filter:brightness(1.25)}
-.piano-list-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.piano-song-card{padding:14px;border-radius:20px;background:var(--md-surface-container-low);border:1px solid var(--md-outline-variant);cursor:pointer;transition:all .22s cubic-bezier(.2,0,0,1)}
-.piano-song-card:hover{transform:translateY(-2px);box-shadow:var(--md-elevation-1)}
-.piano-song-card.active{border-color:var(--md-primary);background:var(--md-primary-container);box-shadow:var(--md-elevation-1)}
-.piano-song-title{font:700 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)}
-.piano-song-sub{font:400 12px/17px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px}
-.piano-hit-line{position:absolute;left:16px;right:16px;bottom:112px;height:4px;border-radius:999px;background:linear-gradient(90deg,transparent,var(--md-primary),transparent);opacity:.9;box-shadow:0 0 14px rgba(103,80,164,.35)}
-.piano-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:600 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant)}
-.piano-status strong{color:var(--md-on-surface)}
-.piano-note-fall.pending{opacity:.95}
-.piano-note-fall.hit{background:linear-gradient(180deg,#61d28e,#22a35a);box-shadow:0 8px 18px rgba(34,163,90,.28)}
-.piano-note-fall.miss{background:linear-gradient(180deg,#ff8a80,#d84315);box-shadow:0 8px 18px rgba(216,67,21,.28)}
-@media(max-width:600px){.piano-stage{min-height:220px;padding:10px}.piano-keyboard{height:136px;padding:8px;gap:3px}.piano-black-key{height:78px}.sidebar nav{max-height:calc(100dvh - 86px)}.piano-hit-line{left:10px;right:10px;bottom:96px}.piano-song-card{padding:12px}}
-
 /* ===== GLASS REMOVED ===== */
 body[data-ui-style="glass"]{all:unset}
 body[data-ui-style="glass"] *{all:revert}
@@ -974,7 +948,6 @@ body[data-ui-style="glass"] *{all:revert}
     <a class="nav-item" data-page="explore" onclick="navigate('explore')"><span class="material-symbols-rounded">explore</span> Обзор</a>
     <a class="nav-item" data-page="wave" onclick="navigate('wave')"><span class="material-symbols-rounded">waves</span> Моя волна</a>
     <a class="nav-item" data-page="radio" onclick="navigate('radio')"><span class="material-symbols-rounded">radio</span> Радио</a>
-    <a class="nav-item" data-page="piano" id="pianoNavItem" onclick="navigate('piano')" style="display:none"><span class="material-symbols-rounded">piano</span> Пианино <span class="badge" style="margin-left:auto">beta</span></a>
     <a class="nav-item" data-page="charts" onclick="navigate('charts')"><span class="material-symbols-rounded">trending_up</span> Чарты</a>
     <a class="nav-item" data-page="new-releases" onclick="navigate('new-releases')"><span class="material-symbols-rounded">new_releases</span> Новинки</a>
     <div class="nav-divider"></div>
@@ -1068,47 +1041,6 @@ body[data-ui-style="glass"] *{all:revert}
     <div class="radio-grid" id="radioGrid"></div>
   </div>
 
-  <!-- PIANO -->
-  <div class="page" id="page-piano">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-      <div>
-        <div class="section-title" style="margin-bottom:4px">🎹 Пианино</div>
-        <div class="section-sub" style="margin-bottom:0">Свободная игра, обучение с остановкой на промахе и профи-режим без остановок.</div>
-      </div>
-      <span class="piano-mode-badge"><span class="material-symbols-rounded" style="font-size:16px">science</span> beta</span>
-    </div>
-    <div class="piano-shell">
-      <div class="piano-toolbar">
-        <select class="md-input" id="pianoCategory" style="max-width:220px;padding:12px 14px;border-radius:16px;margin:0" onchange="renderPianoSongs()">
-          <option value="classic">Классика</option>
-          <option value="games">Игры</option>
-          <option value="phonk">Фонк / фанк</option>
-        </select>
-        <select class="md-input" id="pianoMode" style="max-width:220px;padding:12px 14px;border-radius:16px;margin:0" onchange="updatePianoStatus()">
-          <option value="free">Свободная игра</option>
-          <option value="learn">Обучение</option>
-          <option value="pro">Профи режим</option>
-        </select>
-        <input class="md-input" id="pianoSearch" placeholder="Поиск мелодии..." style="max-width:240px;padding:12px 14px;border-radius:16px;margin:0" oninput="renderPianoSongs()">
-        <button class="btn-primary" onclick="startSelectedPianoSong()"><span class="material-symbols-rounded">play_arrow</span> Играть</button>
-        <button class="btn-tonal" onclick="stopPianoTrainer()"><span class="material-symbols-rounded">stop</span> Стоп</button>
-      </div>
-      <div class="piano-status" id="pianoStatus"><strong>Готово.</strong> Выберите мелодию ниже и нажмите «Играть».</div>
-      <div class="piano-stage" id="pianoStage">
-        <div class="piano-hit-line"></div>
-        <div id="pianoFallArea"></div>
-      </div>
-      <div class="piano-keyboard" id="pianoKeyboard"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <div class="section-sub" style="margin:0">150 мелодий: 50 классических, 50 игровых и 50 фонк/фанк-pattern based треков для тренировки.</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-outlined" onclick="previewSelectedPianoSong()"><span class="material-symbols-rounded">visibility</span> Превью</button>
-          <button class="btn-outlined" onclick="shufflePianoSelection()"><span class="material-symbols-rounded">shuffle</span> Случайная</button>
-        </div>
-      </div>
-      <div class="piano-list-grid" id="pianoSongsGrid"></div>
-    </div>
-  </div>
 
   <!-- CHARTS -->
   <div class="page" id="page-charts">
@@ -4037,73 +3969,13 @@ function playRecommendedRadio(){
   playRadioStation(0);
 }
 
-/* ===== PIANO BETA ===== */
-const PIANO_NOTES=['C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5','G5','A5','B5'];
-const PIANO_BLACK=[{note:'C#4',left:5.2},{note:'D#4',left:12.8},{note:'F#4',left:27.2},{note:'G#4',left:34.6},{note:'A#4',left:42.0},{note:'C#5',left:56.4},{note:'D#5',left:63.8},{note:'F#5',left:78.2},{note:'G#5',left:85.6},{note:'A#5',left:93.0}];
-let pianoAudioCtx=null,pianoMaster=null,pianoSelectedSongId='',pianoTimer=null,pianoAnimationFrame=0,pianoActiveFalls=[],pianoSongStartAt=0,pianoPausedOnMiss=false,pianoCurrentSong=null,pianoSynthPoly=new Set();
-function makeSong(id,title,category,tempo,notes,artist){return{id,title,category,tempo,artist:artist||'',notes}}
-function buildPattern(seed,length,bank){const out=[];for(let i=0;i<length;i++){out.push(bank[(seed+i*3+Math.floor(i/3))%bank.length])}return out}
-function seqToTimed(seq,step=0.5,start=0){return seq.map((n,i)=>({t:start+i*step,n,d:step*0.9}))}
-const CLASSIC_SEEDS=[
-  ['fur-elise-fragment',['E5','D#5','E5','D#5','E5','B4','D5','C5','A4']],['Für Elise','Beethoven'],
-  ['moonlight-fragment',['C#4','E4','G#4','C#5','G#4','E4']],['Moonlight Sonata','Beethoven'],
-  ['turkish-march-fragment',['A4','B4','C5','D5','E5','D5','C5','B4']],['Turkish March','Mozart'],
-  ['nocturne-fragment',['G4','C5','D#5','G5','D#5','C5']],['Nocturne Op.9 No.2','Chopin'],
-  ['swan-lake-fragment',['B4','G4','E4','F#4','G4','A4']],['Swan Lake','Tchaikovsky'],
-  ['vltava-fragment',['E4','G4','A4','B4','A4','G4']],['Vltava','Smetana'],
-  ['ode-to-joy-fragment',['E4','E4','F4','G4','G4','F4','E4','D4']],['Ode to Joy','Beethoven'],
-  ['vivaldi-spring',['E5','F#5','G#5','E5','E5','F#5','G#5','E5']],['Spring','Vivaldi'],
-  ['canon-fragment',['D4','A4','B4','F#4','G4','D4','G4','A4']],['Canon in D','Pachelbel'],
-  ['gymnopedie-fragment',['D4','G4','A4','B4','A4','G4']],['Gymnopédie No.1','Satie']
-];
-const GAME_SEEDS=[
-  ['minecraft-calm',['E4','G4','B4','A4','G4','E4']],['Minecraft Calm 1','C418'],
-  ['mario-theme',['E5','E5','E5','C5','E5','G5']],['Super Mario Bros Theme','Koji Kondo'],
-  ['zelda-lullaby',['B4','D5','A4','B4','D5','A4']],['Zelda Lullaby','Koji Kondo'],
-  ['song-of-storms',['D4','F4','D5','D4','F4','D5']],['Song of Storms','Koji Kondo'],
-  ['tetris-theme',['E5','B4','C5','D5','C5','B4','A4']],['Tetris Theme','Hirokazu Tanaka'],
-  ['undertale-theme',['C4','G4','A4','G4','E4','D4']],['Undertale Theme','Toby Fox'],
-  ['megalovania-fragment',['D4','D4','D5','A4','G#4','G4']],['Megalovania','Toby Fox'],
-  ['sonic-green-hill',['D5','B4','A4','G4','A4','B4']],['Green Hill Zone','Masato Nakamura'],
-  ['halo-fragment',['A4','E4','G4','A4','E4']],['Halo Theme','Martin O’Donnell'],
-  ['skyrim-fragment',['A4','C5','D5','A4','C5','D5']],['Skyrim Theme','Jeremy Soule']
-];
-const PHONK_SEEDS=[
-  ['no-batidao',['A4','C5','D5','C5','A4','G4']],['NO BATIDÃO inspired','Brazilian Phonk'],
-  ['furia-suprema',['G4','A#4','C5','A#4','G4','F4']],['Furia Suprema inspired','Brazilian Phonk'],
-  ['sen-parar',['F4','G4','A#4','C5','A#4','G4']],['Sen Parar inspired','Brazilian Phonk'],
-  ['vai-aguentar',['C4','D#4','F4','G4','F4','D#4']],['Vai Aguentar inspired','Brazilian Phonk'],
-  ['masha-ultrafunk',['E4','G4','A4','G4','E4','D4']],['Masha Ultrafunk inspired','Phonk'],
-  ['dream-funk',['A4','G4','E4','D4','E4','G4']],['Dream Funk inspired','Phonk'],
-  ['drift-cowbell',['A#4','B4','A#4','C#5','A#4','G#4']],['Drift Cowbell Pattern','Drift Phonk'],
-  ['brazil-bell-1',['G4','B4','D5','B4','A4','G4']],['Brazil Bell Run','Brazilian Funk'],
-  ['aggressive-1',['F4','F4','G#4','A#4','G#4','F4']],['Aggressive Bell Lead','Aggressive Phonk'],
-  ['street-ride',['D4','F4','G4','A4','G4','F4']],['Street Ride Pattern','Phonk Ride']
-];
-function expandSeedCollection(seeds,target){const list=[];let idx=0;while(list.length<target){const [seedId,base,[title,artist]]=seeds[idx%seeds.length];const variant=Math.floor(idx/seeds.length)+1;const bank=[...base,...base.slice().reverse(),...PIANO_NOTES];const seq=buildPattern(idx+3,12+(idx%10),bank).map((n,i)=> i%4===0?base[i%base.length]:n);const notes=seqToTimed(seq,0.38+(idx%4)*0.03,0);list.push(makeSong(seedId+'-'+variant,title+(variant>1?' • Вариация '+variant:''),title.includes('inspired')||artist?.includes('Phonk')?'phonk':(artist&&artist!=='C418'&&artist!=='Koji Kondo'&&artist!=='Toby Fox'&&artist!=='Masato Nakamura'&&artist!=='Martin O’Donnell'&&artist!=='Jeremy Soule'?'classic':'games'),92+(idx%8)*6,notes,artist));idx++}return list.slice(0,target)}
-const PIANO_LIBRARY={classic:expandSeedCollection(CLASSIC_SEEDS,50),games:expandSeedCollection(GAME_SEEDS,50),phonk:expandSeedCollection(PHONK_SEEDS,50)};
-function ensurePianoEngine(){if(pianoAudioCtx)return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;pianoAudioCtx=new AC();pianoMaster=pianoAudioCtx.createGain();pianoMaster.gain.value=.18;pianoMaster.connect(pianoAudioCtx.destination)}
-function noteToFreq(note){const map={'C':0,'C#':1,'D':2,'D#':3,'E':4,'F':5,'F#':6,'G':7,'G#':8,'A':9,'A#':10,'B':11};const m=String(note).match(/^([A-G]#?)(\d)$/);if(!m)return 440;const semi=map[m[1]];const oct=Number(m[2]);const midi=(oct+1)*12+semi;return 440*Math.pow(2,(midi-69)/12)}
-function playPianoNote(note,duration=.48,velocity=1){ensurePianoEngine();if(!pianoAudioCtx||!pianoMaster)return;const now=pianoAudioCtx.currentTime+0.001;const osc=pianoAudioCtx.createOscillator();const osc2=pianoAudioCtx.createOscillator();const gain=pianoAudioCtx.createGain();const lp=pianoAudioCtx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3200;osc.type='triangle';osc2.type='sine';osc.frequency.value=noteToFreq(note);osc2.frequency.value=noteToFreq(note)*2;gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(.23*velocity,now+.012);gain.gain.exponentialRampToValueAtTime(0.0001,now+duration);osc.connect(lp);osc2.connect(lp);lp.connect(gain);gain.connect(pianoMaster);osc.start(now);osc2.start(now);osc.stop(now+duration+.05);osc2.stop(now+duration+.05)}
-function buildPianoKeyboard(){const kb=document.getElementById('pianoKeyboard');if(!kb)return;kb.innerHTML='';PIANO_NOTES.forEach((note,idx)=>{const k=document.createElement('button');k.className='piano-white-key';k.type='button';k.dataset.note=note;k.innerHTML='<span>'+note.replace(/\d+/,'')+'</span>';k.onpointerdown=()=>triggerPianoKey(note,k);kb.appendChild(k)});PIANO_BLACK.forEach(def=>{const k=document.createElement('button');k.className='piano-black-key';k.type='button';k.dataset.note=def.note;k.style.left=def.left+'%';k.innerHTML='<span>'+def.note.replace(/\d+/,'')+'</span>';k.onpointerdown=()=>triggerPianoKey(def.note,k);kb.appendChild(k)})}
-function triggerPianoKey(note,el,fromTrainer=false){playPianoNote(note,.42,fromTrainer?.9:1);if(el){el.classList.add('active');setTimeout(()=>el.classList.remove('active'),110)}if(pianoCurrentSong&&document.getElementById('pianoMode')?.value!=='free'){matchTrainerHit(note)}}
-function getCurrentPianoSongs(){const cat=document.getElementById('pianoCategory')?.value||'classic';const q=(document.getElementById('pianoSearch')?.value||'').trim().toLowerCase();const list=PIANO_LIBRARY[cat]||[];return q?list.filter(s=>(s.title+' '+(s.artist||'')).toLowerCase().includes(q)):list}
-function renderPianoSongs(){const grid=document.getElementById('pianoSongsGrid');if(!grid)return;const songs=getCurrentPianoSongs();if(!pianoSelectedSongId&&songs[0]) pianoSelectedSongId=songs[0].id;grid.innerHTML=songs.map((s,idx)=>'<div class="piano-song-card '+(pianoSelectedSongId===s.id?'active':'')+'" onclick="selectPianoSong(\''+s.id+'\')"><div class="piano-song-title">'+(idx+1)+'. '+esc(s.title)+'</div><div class="piano-song-sub">'+esc((s.artist||'')+' • '+(s.notes.length)+' нот').replace(/^ • /,'')+'</div></div>').join('');updatePianoStatus('Категория: '+({classic:'Классика',games:'Игры',phonk:'Фонк/фанк'}[document.getElementById('pianoCategory')?.value||'classic'])+' • найдено '+songs.length+' мелодий')}
-function selectPianoSong(id){pianoSelectedSongId=id;renderPianoSongs()}
-function shufflePianoSelection(){const songs=getCurrentPianoSongs();if(!songs.length)return;const pick=songs[Math.floor(Math.random()*songs.length)];pianoSelectedSongId=pick.id;renderPianoSongs();showSnackbar('Выбрано: '+pick.title)}
-function updatePianoStatus(text){const el=document.getElementById('pianoStatus');if(el) el.innerHTML='<strong>Пианино:</strong> '+esc(text)}
-function getSelectedPianoSong(){const cat=document.getElementById('pianoCategory')?.value||'classic';return (PIANO_LIBRARY[cat]||[]).find(s=>s.id===pianoSelectedSongId)||(PIANO_LIBRARY[cat]||[])[0]||null}
-function stopPianoTrainer(){if(pianoTimer){clearInterval(pianoTimer);pianoTimer=null}if(pianoAnimationFrame){cancelAnimationFrame(pianoAnimationFrame);pianoAnimationFrame=0}pianoActiveFalls=[];pianoPausedOnMiss=false;pianoCurrentSong=null;const area=document.getElementById('pianoFallArea');if(area) area.innerHTML='';updatePianoStatus('Остановлено')}
-function startSelectedPianoSong(){const mode=document.getElementById('pianoMode')?.value||'free';const song=getSelectedPianoSong();if(mode==='free'){updatePianoStatus('Свободная игра включена');return}if(!song){showSnackbar('Выберите мелодию');return}runPianoTrainer(song,mode)}
-function laneIndexForNote(note){const n=PIANO_NOTES.indexOf(note.replace('#',''));return Math.max(0,PIANO_NOTES.indexOf(note.replace('#','')))}
-function noteToLane(note){const base=note.replace('#','');let i=PIANO_NOTES.indexOf(base);if(i<0){const white=note.startsWith('C#')?'C4':note.startsWith('D#')?'D4':note.startsWith('F#')?'F4':note.startsWith('G#')?'G4':'A4';i=PIANO_NOTES.indexOf(white)}return Math.max(0,i)}
-function createFallingNotes(song){const area=document.getElementById('pianoFallArea');if(!area)return;area.innerHTML='';pianoActiveFalls=song.notes.map((nt,idx)=>{const lane=noteToLane(nt.n);const el=document.createElement('div');el.className='piano-note-fall pending';el.innerHTML='<span>'+nt.n.replace(/\d+/,'')+'</span>';el.style.width='calc((100% - 0px) / 14 - 6px)';el.style.left='calc((' + lane + ' * (100% / 14)) + 3px)';area.appendChild(el);return{...nt,idx,lane,el,hit:false,miss:false,y:-72}})}
-function runPianoTrainer(song,mode){stopPianoTrainer();pianoCurrentSong=song;pianoSongStartAt=performance.now();createFallingNotes(song);updatePianoStatus((mode==='learn'?'Обучение':'Профи')+' • '+song.title);const speedPxPerSec=mode==='pro'?210:180;const hitY=(document.getElementById('pianoStage')?.clientHeight||260)-120;const loop=(now)=>{const elapsed=(now-pianoSongStartAt)/1000;let allDone=true;for(const note of pianoActiveFalls){if(note.hit||note.miss) continue;allDone=false;const appearAt=note.t;const y=(elapsed-appearAt)*speedPxPerSec;note.y=y;note.el.style.transform='translateY('+Math.max(-72,y)+'px)';if(y>=hitY && !note.hit){if(mode==='learn' && !note.miss){note.miss=true;note.el.classList.add('miss');pianoPausedOnMiss=true;updatePianoStatus('Промах. Нажми нужную клавишу: '+note.n);break}else if(mode==='pro'){note.miss=true;note.el.classList.add('miss')}}}
- if(!pianoPausedOnMiss && !allDone){pianoAnimationFrame=requestAnimationFrame(loop)}else if(allDone){updatePianoStatus('Мелодия сыграна: '+song.title)}};pianoAnimationFrame=requestAnimationFrame(loop)}
-function matchTrainerHit(note){if(!pianoCurrentSong) return;const mode=document.getElementById('pianoMode')?.value||'free';const target=pianoActiveFalls.find(n=>!n.hit && !n.miss && n.n===note) || pianoActiveFalls.find(n=>n.miss && !n.hit && n.n===note);if(!target) return;target.hit=true;target.el.classList.remove('miss');target.el.classList.add('hit');setTimeout(()=>target.el.remove(),200);if(mode==='learn'&&pianoPausedOnMiss){pianoPausedOnMiss=false;pianoSongStartAt=performance.now()-((target.t+0.05)*1000);pianoAnimationFrame=requestAnimationFrame((t)=>runResumePianoLoop(t,mode))}}
-function runResumePianoLoop(now,mode){const speedPxPerSec=mode==='pro'?210:180;const hitY=(document.getElementById('pianoStage')?.clientHeight||260)-120;const loop=(t)=>{const elapsed=(t-pianoSongStartAt)/1000;let allDone=true;for(const note of pianoActiveFalls){if(note.hit||note.miss&&mode==='pro') continue;if(note.hit) continue;allDone=false;const y=(elapsed-note.t)*speedPxPerSec;note.y=y;note.el.style.transform='translateY('+Math.max(-72,y)+'px)';if(y>=hitY && !note.hit){if(mode==='learn' && !note.miss){note.miss=true;note.el.classList.add('miss');pianoPausedOnMiss=true;updatePianoStatus('Промах. Нажми нужную клавишу: '+note.n);break}else if(mode==='pro'){note.miss=true;note.el.classList.add('miss')}}}
- if(!pianoPausedOnMiss && !allDone){pianoAnimationFrame=requestAnimationFrame(loop)}else if(allDone){updatePianoStatus('Мелодия сыграна: '+(pianoCurrentSong?.title||''))}};loop(now)}
-function initPiano(){buildPianoKeyboard();renderPianoSongs();updatePianoStatus('Готово. Можно просто играть или выбрать мелодию.')}
+/* ===== PIANO REMOVED ===== */
+function initPiano(){}
+function stopPianoTrainer(){}
+function startSelectedPianoSong(){showSnackbar('Пианино удалено');}
+function renderPianoSongs(){}
+function shufflePianoSelection(){}
+function previewSelectedPianoSong(){}
 
 /* ===== UPLOAD ===== */
 function handleAudioDrop(e){e.preventDefault();e.currentTarget.classList.remove('dragover');if(e.dataTransfer.files[0])processAudioFile(e.dataTransfer.files[0])}
@@ -4503,7 +4375,8 @@ function cycleThemeMode(){
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if((localStorage.getItem('mp_theme_mode')||'device')==='device') applyThemePreference()});
 applyThemePreference();
 
-labsSettings = Object.assign({videoInsteadOfCover:false,pianoBeta:false}, labsSettings||{});
+labsSettings = Object.assign({videoInsteadOfCover:false}, labsSettings||{});
+delete labsSettings.pianoBeta;
 if(labsSettings.glass!==undefined) delete labsSettings.glass;
 if(labsSettings.liquidGlass!==undefined) delete labsSettings.liquidGlass;
 applyLabsSettings();
@@ -4540,8 +4413,6 @@ function saveLabsSettings(){
 function applyLabsSettings(){
   document.body.removeAttribute('data-ui-style');
   applyThemePreference();
-  const pianoNav=document.getElementById('pianoNavItem');
-  if(pianoNav) pianoNav.style.display=labsSettings.pianoBeta?'':'none';
   if(currentTrackId&&allTracks[currentTrackId]) updateFullscreenMediaSurface(allTracks[currentTrackId]);
 }
 function toggleLabsFlag(key){labsSettings[key]=!labsSettings[key];saveLabsSettings();renderLabsModal()}
@@ -4561,8 +4432,7 @@ function renderLabsModal(){
   const grid=document.getElementById('labsGrid');
   if(!grid) return;
   const items=[
-    ['videoInsteadOfCover','smart_display','Видео вместо обложки','Если у трека есть видео, в полноэкранном плеере вместо статичной обложки будет показываться само видео. Экспериментально.'],
-    ['pianoBeta','piano','Пианино','Бета-режим с интерактивным пианино: свободная игра, обучение и профи-режим с падающими полосками.']
+    ['videoInsteadOfCover','smart_display','Видео вместо обложки','Если у трека есть видео, в полноэкранном плеере вместо статичной обложки будет показываться само видео. Экспериментально.']
   ];
   grid.innerHTML=items.map(([key,icon,title,sub])=>'<div class="labs-card"><div class="labs-card-title"><span class="material-symbols-rounded">'+icon+'</span>'+title+'</div><div class="labs-card-sub">'+sub+'</div><div class="effect-row" style="margin:0"><div class="effect-meta"><div class="effect-sub">Состояние</div></div><div class="toggle '+(labsSettings[key]?'on':'')+'" onclick="toggleLabsFlag(\''+key+'\')"></div></div></div>').join('');
 }
@@ -4708,7 +4578,7 @@ restoreSession();
 updateUserMenu();
 updateUploadExplicitUI();
 updateEditExplicitUI();
-initPiano();
+window.addEventListener('load',()=>{try{restoreSession()}catch(e){}});
 if(typeof updateFxSummary==='function') updateFxSummary();
 </script>
 </body>
