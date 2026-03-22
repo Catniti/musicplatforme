@@ -920,6 +920,44 @@ body[data-ui-style="glass"] .video-secondary-btn:hover{
 /* ===== GLASS REMOVED ===== */
 body[data-ui-style="glass"]{all:unset}
 body[data-ui-style="glass"] *{all:revert}
+
+/* ===== PIANO BETA ===== */
+.piano-shell{display:flex;flex-direction:column;gap:16px;background:var(--md-surface-container-low);border:1px solid var(--md-outline-variant);border-radius:24px;padding:16px;overflow:hidden}
+.piano-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.piano-status{padding:12px 14px;border-radius:16px;background:var(--md-surface-container-high);font:500 13px/18px 'Inter',sans-serif;color:var(--md-on-surface)}
+.piano-mode-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--md-primary-container);color:var(--md-on-primary-container);font:600 12px/16px 'Inter',sans-serif}
+.piano-stage{position:relative;height:280px;border-radius:22px;background:linear-gradient(180deg,var(--md-surface-container-high) 0%,var(--md-surface-container-low) 100%);overflow:hidden;border:1px solid var(--md-outline-variant)}
+#pianoFallArea{position:absolute;inset:0;overflow:hidden}
+.piano-hit-line{position:absolute;left:0;right:0;bottom:0;height:6px;background:linear-gradient(90deg,transparent 0%,var(--md-primary) 15%,var(--md-primary) 85%,transparent 100%);box-shadow:0 0 20px rgba(103,80,164,.35);z-index:3}
+.piano-note-lane{position:absolute;top:0;bottom:0;width:12.5%;border-right:1px solid rgba(255,255,255,.03)}
+.piano-note{position:absolute;top:-110px;height:96px;border-radius:16px;background:linear-gradient(180deg,color-mix(in srgb,var(--md-primary) 92%,white 8%),color-mix(in srgb,var(--md-primary) 68%,black 32%));box-shadow:0 12px 28px rgba(103,80,164,.18),inset 0 1px 0 rgba(255,255,255,.22);opacity:.96;transition:transform .04s linear}
+.piano-note.black{background:linear-gradient(180deg,#8f77d7,#5b4698)}
+.piano-note.missed{filter:grayscale(.5);opacity:.45}
+.piano-note.hit{background:linear-gradient(180deg,#81f0b2,#1aa56c);box-shadow:0 12px 30px rgba(27,163,101,.28),inset 0 1px 0 rgba(255,255,255,.28)}
+.piano-keyboard{position:relative;height:240px;border-radius:22px;background:linear-gradient(180deg,#d9d2df 0%,#cfc7d8 100%);padding:12px 12px 14px;border:1px solid var(--md-outline-variant);overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.piano-white-wrap{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;height:100%}
+.piano-key.white{position:relative;border:none;border-radius:0 0 18px 18px;background:linear-gradient(180deg,#fff 0%,#f4eef8 65%,#e8dfee 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -8px 14px rgba(0,0,0,.05),0 8px 18px rgba(0,0,0,.10);cursor:pointer;transition:transform .05s linear,filter .12s ease, box-shadow .12s ease}
+.piano-key.white:active,.piano-key.white.active{transform:translateY(3px);filter:brightness(.96);box-shadow:inset 0 2px 8px rgba(0,0,0,.09),0 4px 8px rgba(0,0,0,.10)}
+.piano-key.black{position:absolute;top:12px;width:calc(12.5% - 10px);height:130px;border:none;border-radius:0 0 14px 14px;background:linear-gradient(180deg,#40384d 0%,#1d1824 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 24px rgba(0,0,0,.26);cursor:pointer;z-index:2;transition:transform .05s linear,filter .12s ease}
+.piano-key.black:active,.piano-key.black.active{transform:translateY(3px);filter:brightness(1.08)}
+.piano-key-label{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font:700 10px/12px 'Inter',sans-serif;color:rgba(35,26,46,.45);pointer-events:none}
+.piano-key.black .piano-key-label{color:rgba(255,255,255,.5)}
+.piano-list-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.piano-song-card{padding:14px;border-radius:18px;background:var(--md-surface-container);border:1px solid var(--md-outline-variant);cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.piano-song-card:hover{transform:translateY(-2px);box-shadow:var(--md-elevation-1)}
+.piano-song-card.active{border-color:var(--md-primary);box-shadow:0 0 0 1px color-mix(in srgb,var(--md-primary) 40%,transparent),var(--md-elevation-1);background:color-mix(in srgb,var(--md-primary-container) 46%,var(--md-surface-container) 54%)}
+.piano-song-title{font:700 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:4px}
+.piano-song-sub{font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant)}
+.piano-song-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.piano-tag{padding:4px 8px;border-radius:999px;background:var(--md-surface-container-high);font:600 10px/14px 'Inter',sans-serif;color:var(--md-on-surface-variant)}
+@media (max-width:700px){
+  .piano-shell{padding:12px;border-radius:20px}
+  .piano-stage{height:220px}
+  .piano-keyboard{height:200px;padding:10px 8px 10px}
+  .piano-key.black{height:108px;top:10px}
+  .piano-list-grid{grid-template-columns:1fr}
+  .piano-toolbar .md-input{max-width:none!important;width:100%}
+}
 </style>
 </head>
 <body>
@@ -1035,7 +1073,7 @@ body[data-ui-style="glass"] *{all:revert}
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
       <div>
         <div class="section-title" style="margin-bottom:4px">🎹 Пианино</div>
-        <div class="section-sub" style="margin-bottom:0">Потыкай клавиши, сыграй по нотам в обучении или попробуй профи-режим без остановок.</div>
+        <div class="section-sub" style="margin-bottom:0">Свободная игра, обучение с остановкой на промахе и профи-режим без остановок.</div>
       </div>
       <span class="piano-mode-badge"><span class="material-symbols-rounded" style="font-size:16px">science</span> beta</span>
     </div>
@@ -1046,7 +1084,7 @@ body[data-ui-style="glass"] *{all:revert}
           <option value="games">Игры</option>
           <option value="phonk">Фонк / фанк</option>
         </select>
-        <select class="md-input" id="pianoMode" style="max-width:220px;padding:12px 14px;border-radius:16px;margin:0">
+        <select class="md-input" id="pianoMode" style="max-width:220px;padding:12px 14px;border-radius:16px;margin:0" onchange="updatePianoStatus()">
           <option value="free">Свободная игра</option>
           <option value="learn">Обучение</option>
           <option value="pro">Профи режим</option>
@@ -1055,15 +1093,18 @@ body[data-ui-style="glass"] *{all:revert}
         <button class="btn-primary" onclick="startSelectedPianoSong()"><span class="material-symbols-rounded">play_arrow</span> Играть</button>
         <button class="btn-tonal" onclick="stopPianoTrainer()"><span class="material-symbols-rounded">stop</span> Стоп</button>
       </div>
-      <div class="piano-status" id="pianoStatus"><strong>Готово.</strong> Выберите категорию, режим и мелодию.</div>
+      <div class="piano-status" id="pianoStatus"><strong>Готово.</strong> Выберите мелодию ниже и нажмите «Играть».</div>
       <div class="piano-stage" id="pianoStage">
         <div class="piano-hit-line"></div>
         <div id="pianoFallArea"></div>
       </div>
       <div class="piano-keyboard" id="pianoKeyboard"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <div class="section-sub" style="margin:0">По 50+ мелодий на категорию: классика, игры и фонк/фанк.</div>
-        <button class="btn-outlined" onclick="shufflePianoSelection()"><span class="material-symbols-rounded">shuffle</span> Случайная мелодия</button>
+        <div class="section-sub" style="margin:0">150 мелодий: 50 классических, 50 игровых и 50 фонк/фанк-pattern based треков для тренировки.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-outlined" onclick="previewSelectedPianoSong()"><span class="material-symbols-rounded">visibility</span> Превью</button>
+          <button class="btn-outlined" onclick="shufflePianoSelection()"><span class="material-symbols-rounded">shuffle</span> Случайная</button>
+        </div>
       </div>
       <div class="piano-list-grid" id="pianoSongsGrid"></div>
     </div>
