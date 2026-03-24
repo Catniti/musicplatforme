@@ -1332,7 +1332,7 @@ body[data-ui-style="glass"] *{all:revert}
   <div class="player-track-info" onclick="openFullscreenPlayer()">
     <div class="player-thumb" id="playerThumb"><span class="material-symbols-rounded">music_note</span></div>
     <div class="player-meta">
-      <div class="player-title-row"><div class="player-song" id="playerSong">—</div><span class="explicit-badge" id="playerExplicit" style="display:none" title="Explicit">!</span></div>
+      <div class="player-title-row"><div class="player-song" id="playerSong">—</div><span class="explicit-badge" id="playerExplicit" style="display:none" title="Explicit" onclick="event.stopPropagation();if(currentTrackId)showModerationDetails(currentTrackId,'explicit')">!</span><span class="badge" id="playerCopyrightBadge" style="display:none;cursor:pointer" onclick="event.stopPropagation();if(currentTrackId)showModerationDetails(currentTrackId,'copyright')">©?</span></div>
       <div class="player-artist-name" id="playerArtist">—</div>
     </div>
   </div>
@@ -1367,7 +1367,7 @@ body[data-ui-style="glass"] *{all:revert}
     <div class="fs-cover" id="fsCover"><span class="material-symbols-rounded">music_note</span></div>
   </div>
   <div class="fs-info">
-    <div class="fs-title" id="fsTitle">—</div>
+    <div class="fs-title" style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap"><span id="fsTitle">—</span><span class="explicit-badge" id="fsExplicitBadge" style="display:none;cursor:pointer" onclick="if(currentTrackId)showModerationDetails(currentTrackId,'explicit')">!</span><span class="badge" id="fsCopyrightBadge" style="display:none;cursor:pointer" onclick="if(currentTrackId)showModerationDetails(currentTrackId,'copyright')">©?</span></div>
     <div class="fs-artist" id="fsArtist" onclick="fsGoToArtist()">—</div>
     <div id="fsMusicAuthor" style="font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:6px">Автор музыки: —</div>
   </div>
@@ -2775,7 +2775,7 @@ function renderTrackItem(id,track,num,showDel){
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
     '<div class="track-num">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
     '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
-    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit">!</span>':'')+featuredChip+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав">©?</span>':'')+'</div>'+
+    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+featuredChip+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'copyright\')">©?</span>':'')+'</div>'+ 
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
     '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Автор музыки: '+esc(track.musicAuthor||track.artistName||'Не указан')+creatorChip+'</div></div>'+
     '<div class="track-plays"><span class="material-symbols-rounded">play_arrow</span>'+formatPlays(plays)+'</div>'+
@@ -2836,6 +2836,7 @@ function openReport(tid){reportTrackId=tid;document.getElementById('reportModal'
 function submitReport(reason){if(!currentUser||!reportTrackId)return;db.ref('reports').push({trackId:reportTrackId,userId:currentUser.uid,reason,timestamp:Date.now()});closeModal('reportModal');showSnackbar('Жалоба отправлена');reportTrackId=null}
 
 function openEditTrack(tid){
+  adminEditingTrackId=null;
   editTrackId=tid;const t=allTracks[tid];if(!t)return;
   document.getElementById('editTrackTitle').value=t.title||'';
   document.getElementById('editTrackGenre').value=t.genre||'';
@@ -2889,7 +2890,8 @@ async function saveTrackEdits(){
   if(saveBtn) saveBtn.disabled=true;
   try{
     const track=allTracks[editTrackId];
-    if(!track||track.artistId!==currentUser.uid){showSnackbar('Нет доступа');return}
+    const creatorOverride=isCreatorUser(currentUser)&&adminEditingTrackId===editTrackId;
+    if(!track||(!creatorOverride && track.artistId!==currentUser.uid)){showSnackbar('Нет доступа');return}
     const title=document.getElementById('editTrackTitle').value.trim();
     const genre=document.getElementById('editTrackGenre').value.trim();
     const lyrics=document.getElementById('editTrackLyrics').value.trim();
@@ -2987,7 +2989,7 @@ async function saveTrackEdits(){
       if(lyricsOpen) renderRealtimeLyrics(allTracks[editTrackId]);
       loadAndPlay(allTracks[editTrackId]);
     }
-    editTrackId=null;editTrackCoverData='';
+    editTrackId=null;editTrackCoverData='';adminEditingTrackId=null;
   }catch(e){
     console.error(e);
     showSnackbar('Ошибка сохранения: '+(e?.message||'не удалось сохранить'));
@@ -3128,9 +3130,12 @@ function loadAndPlay(track){
   document.getElementById('playerSong').textContent=track.title||'Без названия';
   document.getElementById('playerArtist').textContent=track.artistName||'Неизвестен';
   document.getElementById('playerExplicit').style.display=track.explicit?'inline-flex':'none';
+  document.getElementById('playerCopyrightBadge').style.display=(track.moderationMeta&&track.moderationMeta.copyrightPossible)?'inline-flex':'none';
   document.getElementById('playerThumb').innerHTML=track.cover?'<img src="'+track.cover+'" alt="">':'<span class="material-symbols-rounded">music_note</span>';
   updateFullscreenMediaSurface(track);
-  document.getElementById('fsTitle').innerHTML=esc(track.title||'')+(track.explicit?' <span class="explicit-badge">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?' <span class="badge" style="margin-left:6px;vertical-align:middle">©?</span>':'');
+  document.getElementById('fsTitle').textContent=track.title||'';
+  document.getElementById('fsExplicitBadge').style.display=track.explicit?'inline-flex':'none';
+  document.getElementById('fsCopyrightBadge').style.display=(track.moderationMeta&&track.moderationMeta.copyrightPossible)?'inline-flex':'none';
   document.getElementById('fsArtist').textContent=track.artistName||'Неизвестен';
   const fsAuthorEl=document.getElementById('fsMusicAuthor');
   const artistDisplay=String(track.artistName||'').trim().toLowerCase();
@@ -4054,6 +4059,18 @@ async function loadRealRadio(){
   pushCreatorLog('info','RADIO load: country='+country+', tag='+(tag||'—'));
   try{
     let data=[];
+    if(country==='RU'){
+      data=mergePriorityRadioStations('RU', RADIO_FALLBACK_STATIONS.RU||[]);
+      if(tag){
+        const q=tag.toLowerCase();
+        data=data.filter(s=>String(s.name||'').toLowerCase().includes(q)||String(s.tags||'').toLowerCase().includes(q)||String(s.country||'').toLowerCase().includes(q));
+      }
+      radioStations=data;
+      status.textContent=radioStations.length ? 'Для России используется встроенный каталог станций: найдено '+radioStations.length : 'Станции не найдены в российском каталоге.';
+      renderRadioGrid();
+      pushCreatorLog('warn','RADIO RU forced builtin catalog due to blocked external directory');
+      return;
+    }
     if(tag){
       data=await radioFetchJson('/stations/bytag/'+encodeURIComponent(tag)+'?hidebroken=true&limit=50&order=votes&reverse=true');
       data=normalizeRadioStations(data,country).filter(s=>!country || String(s.countrycode||'').toUpperCase()===country || String(s.country||'').toUpperCase().includes(country));
@@ -4946,7 +4963,7 @@ function openCreatorStats(){
 }
 function openCreatorTrackManager(){
   const rows=Object.entries(allTracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0)).slice(0,100);
-  creatorPanelWrap('Управление треками', rows.length?rows.map(([id,t])=>'<div class="settings-item"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+esc(t.artistName||'—')+' • '+formatPlays(t.plays||0)+' прослушиваний</div></div><button class="btn-text" onclick="playTrackById(\''+id+'\')">Открыть</button><button class="btn-tonal" onclick="toggleServiceFeatured(\''+id+'\')">'+(t.serviceFeatured?'Убрать рекомендацию':'Рекомендовать')+'</button></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">music_off</span><h3>Нет треков</h3></div>');
+  creatorPanelWrap('Управление треками', rows.length?rows.map(([id,t])=>'<div class="settings-item"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+esc(t.artistName||'—')+' • '+formatPlays(t.plays||0)+' прослушиваний</div></div><button class="btn-text" onclick="playTrackById(\''+id+'\')">Открыть</button><button class="btn-tonal" onclick="toggleServiceFeatured(\''+id+'\')">'+(t.serviceFeatured?'Убрать рекомендацию':'Рекомендовать')+'</button><button class="btn-outlined" onclick="creatorEditForeignTrack(\''+id+'\')">Изменить</button><button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+id+'\')">Удалить</button></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">music_off</span><h3>Нет треков</h3></div>');
 }
 async function toggleServiceFeatured(tid){
   const t=allTracks[tid];
@@ -4970,15 +4987,43 @@ function openCreatorModuleCheck(){
 function openCreatorUsers(){
   db.ref('users').once('value').then(s=>{
     const users=Object.values(s.val()||{}).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-    creatorPanelWrap('Управление пользователями', users.length?users.map(u=>'<div class="settings-item" onclick="openCreatorUserDetail(\''+u.uid+'\')"><span class="material-symbols-rounded">person</span><div class="settings-item-info"><div class="settings-item-title">'+esc(u.displayName||u.username||u.uid)+'</div><div class="settings-item-sub">@'+esc(u.username||'')+' '+(isCreatorUser(u)?'• создатель':'')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">group_off</span><h3>Нет пользователей</h3></div>');
+    creatorPanelWrap('Управление пользователями', users.length?users.map(u=>'<div class="settings-item" onclick="openCreatorUserDetail(\''+u.uid+'\')"><span class="material-symbols-rounded">person</span><div class="settings-item-info"><div class="settings-item-title">'+esc(u.displayName||u.username||u.uid)+'</div><div class="settings-item-sub">@'+esc(u.username||'')+' '+(isCreatorUser(u)?'• создатель':'')+(u.banned?' • забанен':'')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">group_off</span><h3>Нет пользователей</h3></div>');
   });
 }
 function openCreatorUserDetail(uid){
   db.ref('users/'+uid).once('value').then(s=>{
     const u=s.val()||{};
     const tracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===uid);
-    creatorPanelWrap('Пользователь', '<div class="settings-item"><span class="material-symbols-rounded">badge</span><div class="settings-item-info"><div class="settings-item-title">'+esc(u.displayName||'Пользователь')+'</div><div class="settings-item-sub">@'+esc(u.username||'')+' • '+esc(u.email||'без email')+'</div></div></div><div class="settings-item"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Треков</div><div class="settings-item-sub">'+tracks.length+'</div></div></div>'+(tracks.length?tracks.map(([id,t])=>'<div class="settings-item"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+formatPlays(t.plays||0)+' прослушиваний</div></div><button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+id+'\')">Удалить трек</button></div>').join(''):'') );
+    creatorPanelWrap('Пользователь', '<div class="settings-item"><span class="material-symbols-rounded">badge</span><div class="settings-item-info"><div class="settings-item-title">'+esc(u.displayName||'Пользователь')+'</div><div class="settings-item-sub">@'+esc(u.username||'')+' • '+esc(u.email||'без email')+'</div></div>'+(isCreatorUser(u)?'':'<button class="btn-outlined" onclick="creatorToggleBanUser(\''+uid+'\')">'+(u.banned?'Разбанить':'Бан')</button>')+'</div><div class="settings-item"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Треков</div><div class="settings-item-sub">'+tracks.length+'</div></div></div>'+(tracks.length?tracks.map(([id,t])=>'<div class="settings-item"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+formatPlays(t.plays||0)+' прослушиваний</div></div><button class="btn-tonal" onclick="creatorEditForeignTrack(\''+id+'\')">Изменить</button><button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+id+'\')">Удалить трек</button></div>').join(''):'') );
   });
+}
+async function creatorToggleBanUser(uid){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
+  const snap=await db.ref('users/'+uid).once('value');
+  const u=snap.val()||{};
+  if(isCreatorUser(u)){showSnackbar('Создателя нельзя банить');return}
+  await db.ref('users/'+uid+'/banned').set(!u.banned);
+  showSnackbar(!u.banned?'Пользователь забанен':'Пользователь разбанен');
+  openCreatorUserDetail(uid);
+}
+function creatorEditForeignTrack(tid){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
+  editTrackId=tid;
+  adminEditingTrackId=tid;
+  const t=allTracks[tid];
+  if(!t){showSnackbar('Трек не найден');return}
+  document.getElementById('editTrackTitle').value=t.title||'';
+  document.getElementById('editTrackGenre').value=t.genre||'';
+  document.getElementById('editTrackLyrics').value=t.lyrics||'';
+  document.getElementById('editTrackMusicAuthor').value=t.musicAuthor||'';
+  document.getElementById('editTrackCoverUrl').value=t.cover||'';
+  document.getElementById('editTrackVideoUrl').value=t.videoUrl||'';
+  document.getElementById('editTrackVideoStatus').textContent=t.videoData?'Видео загружено в трек':(t.videoUrl?'Подключено видео по ссылке':'Видео не выбрано');
+  document.getElementById('editAiLyricsStatus').textContent='';
+  editTrackCoverData='';
+  editTrackVideoData='';
+  document.getElementById('editTrackCoverPreview').innerHTML=t.cover?'<img src="'+t.cover+'" alt="">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">music_note</span>';
+  document.getElementById('editTrackModal').classList.add('open');
 }
 
 /* ===== EVENT LISTENERS ===== */
