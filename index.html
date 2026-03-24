@@ -5026,6 +5026,71 @@ function creatorEditForeignTrack(tid){
   document.getElementById('editTrackModal').classList.add('open');
 }
 
+/* ===== SAFETY SHIMS FOR RECENT FEATURES ===== */
+function updateUploadExplicitUI(){
+  const wrap=document.getElementById('uploadExplicitWrap');
+  const badge=document.getElementById('uploadExplicitBadge');
+  if(wrap) wrap.style.display='none';
+  if(badge) badge.style.display='none';
+}
+function updateEditExplicitUI(){
+  const wrap=document.getElementById('editExplicitWrap');
+  const badge=document.getElementById('editExplicitBadge');
+  if(wrap) wrap.style.display='none';
+  if(badge) badge.style.display='none';
+}
+function openAdminTools(){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
+  const modal=document.getElementById('adminToolsModal');
+  if(modal){modal.classList.add('open');return}
+  openCreatorLogs();
+}
+function renderNotificationsModal(){
+  const list=document.getElementById('notificationsList');
+  const countEl=document.getElementById('notificationCount');
+  if(!list) return;
+  const items=(notifications||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(countEl) countEl.textContent=String(items.filter(n=>!n.read).length||0);
+  list.innerHTML=items.length?items.map(n=>'<div class="settings-item" onclick="markNotificationRead(\''+escAttr(n.id||'')+'\')"><span class="material-symbols-rounded">'+(n.type==='moderation'?'policy':n.type==='copyright'?'copyright':'notifications')+'</span><div class="settings-item-info"><div class="settings-item-title">'+esc(n.title||'Уведомление')+'</div><div class="settings-item-sub">'+esc(n.body||'')+' • '+new Date(n.ts||Date.now()).toLocaleString('ru-RU')+'</div></div>'+(!n.read?'<span class="badge">new</span>':'')+'</div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">notifications_off</span><h3>Уведомлений нет</h3></div>';
+}
+function openNotificationsModal(){
+  if(!currentUser){showSnackbar('Уведомления доступны после входа');return}
+  renderNotificationsModal();
+  const modal=document.getElementById('notificationsModal');
+  if(modal) modal.classList.add('open');
+}
+function markNotificationRead(id){
+  if(!currentUser||!id) return;
+  db.ref('notifications/'+currentUser.uid+'/'+id+'/read').set(true).catch(()=>{});
+  const item=(notifications||[]).find(n=>n.id===id); if(item) item.read=true;
+  renderNotificationsModal();
+}
+function openModerationDetails(trackId,mode){
+  const t=allTracks?.[trackId||currentTrackId];
+  if(!t){showSnackbar('Данные модерации не найдены');return}
+  const modal=document.getElementById('moderationDetailsModal');
+  const title=document.getElementById('moderationDetailsTitle');
+  const body=document.getElementById('moderationDetailsBody');
+  if(!modal||!title||!body){showSnackbar('Окно модерации недоступно');return}
+  const m=t.moderationMeta||{};
+  if(mode==='copyright'){
+    title.textContent='Проверка авторских прав';
+    body.innerHTML='<div class="effect-card"><div class="effect-name">Статус</div><div class="effect-sub">'+esc(m.copyrightPossible?'Есть возможное совпадение':'Совпадений не найдено')+'</div></div>'+
+      '<div class="effect-card"><div class="effect-name">Причина</div><div class="effect-sub">'+esc(m.copyrightReason||'Подробности не указаны')+'</div></div>'+
+      '<div class="effect-card"><div class="effect-name">Источник</div><div class="effect-sub">'+esc(m.copyrightMatchedSource||'Источник не найден')+'</div></div>'+
+      '<div class="effect-card"><div class="effect-name">Автор / совпадение</div><div class="effect-sub">'+esc(m.copyrightMatchedArtist||'—')+'</div></div>'+
+      '<div class="effect-card"><div class="effect-name">Время проверки</div><div class="effect-sub">'+(m.updatedAt?new Date(m.updatedAt).toLocaleString('ru-RU'):'Неизвестно')+'</div></div>';
+  }else{
+    title.textContent='Почему у трека пометка !';
+    body.innerHTML='<div class="effect-card"><div class="effect-name">Причина</div><div class="effect-sub">'+esc(m.reason||m.explicitReason||'ИИ обнаружила потенциально нежелательный контент для детей')+'</div></div>'+
+      '<div class="effect-card"><div class="effect-name">Фрагмент / текст</div><div class="effect-sub">'+esc(m.detectedLyrics||m.transcript||t.lyrics||'Фрагмент не сохранён')+'</div></div>'+
+      '<div class="effect-card"><div class="effect-name">Время проверки</div><div class="effect-sub">'+(m.updatedAt?new Date(m.updatedAt).toLocaleString('ru-RU'):'Неизвестно')+'</div></div>'+
+      '<div class="effect-card"><div class="effect-name">Источник пометки</div><div class="effect-sub">'+esc(m.sourceModel||m.model||'Автоматическая модерация')+'</div></div>';
+  }
+  modal.classList.add('open');
+}
+function escAttr(v){return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
 /* ===== EVENT LISTENERS ===== */
 window.addEventListener('scroll',()=>{document.getElementById('topBar').classList.toggle('scrolled',window.scrollY>10)});
 function checkResponsive(){const b=document.getElementById('sidebarCloseBtn');if(window.innerWidth<=1024)b.style.display='';else{b.style.display='none';document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open')}}
