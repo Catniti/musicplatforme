@@ -4693,7 +4693,7 @@ function adminOpenUserActions(uid){
   const ok=confirm('Открыть действия для пользователя '+name+'?');
   if(ok) openCreatorUserDetail(uid);
 }
-async function featureCurrentTrackAsAdmin(){
+async async function featureCurrentTrackAsAdmin(){
   if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
   if(!currentTrackId||!allTracks[currentTrackId]){showSnackbar('Нет текущего трека');return}
   await db.ref('tracks/'+currentTrackId+'/serviceFeatured').set(true);
