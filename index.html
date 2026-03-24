@@ -1720,6 +1720,27 @@ body[data-ui-style="glass"] *{all:revert}
   <div id="moderationDetailsBody"></div>
 </div></div>
 
+<div class="modal-overlay" id="partyQrScannerModal"><div class="modal" style="max-width:760px;padding:0;overflow:hidden">
+  <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--md-outline-variant)">
+    <button class="btn-icon" onclick="stopPartyQrScanner(true)"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0;flex:1">Сканер QR вечеринки</div>
+    <button class="btn-icon" onclick="document.getElementById('partyQrInput').click()" title="Выбрать изображение"><span class="material-symbols-rounded">image_search</span></button>
+  </div>
+  <div style="padding:16px">
+    <div style="position:relative;border-radius:24px;overflow:hidden;background:#000;aspect-ratio:3/4;max-height:min(70vh,640px)">
+      <video id="partyQrVideo" playsinline autoplay muted style="width:100%;height:100%;object-fit:cover;background:#000"></video>
+      <div style="position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center">
+        <div style="width:min(70vw,260px);height:min(70vw,260px);border:2px solid rgba(255,255,255,.92);border-radius:28px;box-shadow:0 0 0 9999px rgba(0,0,0,.28),0 0 0 1px rgba(255,255,255,.12) inset"></div>
+      </div>
+    </div>
+    <div id="partyQrScannerStatus" style="font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);padding:14px 2px 4px">Наведи камеру на QR-код вечеринки. Если камера или API сканирования недоступны — можно выбрать изображение QR вручную.</div>
+    <div class="modal-actions" style="padding:0 0 16px 0;margin-top:8px">
+      <button class="btn-outlined" onclick="stopPartyQrScanner(true)">Закрыть</button>
+      <button class="btn-tonal" onclick="document.getElementById('partyQrInput').click()"><span class="material-symbols-rounded">photo_library</span> Выбрать QR</button>
+    </div>
+  </div>
+</div></div>
+
 <div class="snackbar" id="snackbar"></div>
 <audio id="audioPlayer" preload="auto"></audio>
 
@@ -1748,9 +1769,13 @@ let selectedAudioFile=null,selectedAudioDataURL=null,playerVisible=false;
 let selectedCoverDataURL=null,selectedVideoDataURL=null,selectedVideoFile=null,reportTrackId=null,contextTrackId=null;
 let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null,editTrackVideoData='';
 let creatorLogs=[];
+let globalCreatorLogs=[];
 let radioStations=[];
 let activeRadioStation=null;
 let notificationsMap={};
+let partyQrScannerStream=null;
+let partyQrDetector=null;
+let adminEditingTrackId=null;
 let loadedTrackEntries=[];
 let trackPageSize=24;
 let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"glass":false}');
@@ -3315,6 +3340,15 @@ async function leavePartyMode(){
   refreshPartyDevices();
   showSnackbar('Режим вечеринки отключён');
 }
+function calcDistanceMeters(a,b){
+  if(!a||!b||!a.lat||!a.lon||!b.lat||!b.lon) return null;
+  const R=6371000;
+  const toRad=x=>x*Math.PI/180;
+  const dLat=toRad(b.lat-a.lat),dLon=toRad(b.lon-a.lon);
+  const lat1=toRad(a.lat),lat2=toRad(b.lat);
+  const h=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+  return Math.round(2*R*Math.asin(Math.sqrt(h)));
+}
 async function refreshPartyDevices(){
   const box=document.getElementById('partyModeList');
   if(!box)return;
@@ -3325,17 +3359,28 @@ async function refreshPartyDevices(){
   const entries=Object.entries(sessions).filter(([id,s])=>{
     if(!s) return false;
     if(s.joinPolicy==='code' && s.hostDeviceId!==deviceId && !s.members?.[deviceId]) return false;
+    if(partyGeo.enabled && s.joinPolicy!=='code'){
+      const hostMember=s.members?.[s.hostDeviceId];
+      const dist=calcDistanceMeters(partyGeo,hostMember?.geo||null);
+      if(dist!==null && Number(s.radius||80)>0 && dist>Number(s.radius||80)) return false;
+    }
     return true;
-  }).slice(0,8);
+  }).sort((a,b)=>(b[1]?.updatedAt||0)-(a[1]?.updatedAt||0)).slice(0,8);
   if(!entries.length){
-    box.innerHTML='<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">celebration</span><h3>Поблизости нет вечеринок</h3><p>Создайте свою вечеринку или попросите друга показать код.</p></div>';
+    box.innerHTML='<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">celebration</span><h3>Поблизости нет вечеринок</h3><p>Создайте свою вечеринку или попросите друга показать код / QR.</p></div>';
     return;
   }
   box.innerHTML=entries.map(([id,s])=>{
     const members=s.members||{};
     const isHost=s.hostDeviceId===deviceId;
-    const memberRows=Object.values(members).slice(0,8).map(m=>'<div class="device-item '+(m.deviceId===deviceId?'active':'')+'"><span class="material-symbols-rounded">devices</span><div class="device-meta"><div class="device-name">'+esc((m.accountName||'Гость')+' • ~'+(m.nearbyDistance||'?')+' м • '+(m.deviceName||'Устройство'))+'</div><div class="device-sub">'+esc(m.deviceId===s.hostDeviceId?'Хост':'Участник')+'</div></div>'+(isHost&&m.deviceId!==deviceId?'<button class="btn-text" onclick="partyKickMember(\''+id+'\',\''+m.deviceId+'\')">Кик</button><button class="btn-outlined" onclick="partyBanMember(\''+id+'\',\''+m.deviceId+'\')">Бан</button>':'')+'</div>').join('');
-    return '<div class="effect-card" style="padding:16px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px"><div><div class="effect-name">'+esc(s.hostName||'Вечеринка')+'</div><div class="effect-sub">Код: '+esc(s.code||'')+' • Устройств: '+Object.keys(members).length+'/8 • '+(s.joinPolicy==='code'?'Только код / QR':'Nearby')+'</div></div><button class="btn-tonal" onclick="joinSpecificParty(\''+id+'\')"><span class="material-symbols-rounded">group_add</span> Войти</button></div><div class="device-list">'+memberRows+'</div></div>';
+    const hostMember=members[s.hostDeviceId]||null;
+    const dist=partyGeo.enabled?calcDistanceMeters(partyGeo,hostMember?.geo||null):null;
+    const distanceLabel=dist===null?'~? м':('~'+dist+' м');
+    const memberRows=Object.values(members).slice(0,8).map(m=>{
+      const mdist=partyGeo.enabled?calcDistanceMeters(partyGeo,m.geo||null):null;
+      return '<div class="device-item '+(m.deviceId===deviceId?'active':'')+'"><span class="material-symbols-rounded">devices</span><div class="device-meta"><div class="device-name">'+esc((m.accountName||'Гость')+' • '+(mdist===null?('~'+(m.nearbyDistance||'?')+' м'):('~'+mdist+' м'))+' • '+(m.deviceName||'Устройство'))+'</div><div class="device-sub">'+esc(m.deviceId===s.hostDeviceId?'Хост':'Участник')+'</div></div>'+(isHost&&m.deviceId!==deviceId?'<button class="btn-text" onclick="partyKickMember(\''+id+'\',\''+m.deviceId+'\')">Кик</button><button class="btn-outlined" onclick="partyBanMember(\''+id+'\',\''+m.deviceId+'\')">Бан</button>':'')+'</div>';
+    }).join('');
+    return '<div class="effect-card" style="padding:16px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px"><div><div class="effect-name">'+esc(s.hostName||'Вечеринка')+'</div><div class="effect-sub">Код: '+esc(s.code||'')+' • Устройств: '+Object.keys(members).length+'/8 • '+(s.joinPolicy==='code'?'Только код / QR':'Nearby')+' • '+distanceLabel+'</div></div><button class="btn-tonal" onclick="joinSpecificParty(\''+id+'\')"><span class="material-symbols-rounded">group_add</span> Войти</button></div><div class="device-list">'+memberRows+'</div></div>';
   }).join('');
 }
 async function joinSpecificParty(id){
@@ -4715,40 +4760,107 @@ function showModerationDetails(trackId,kind){
   const isCopyright=kind==='copyright';
   document.getElementById('moderationDetailsTitle').textContent=isCopyright?'Подробности авторских прав':'Подробности пометки !';
   const body=document.getElementById('moderationDetailsBody');
+  const stamp=new Date(Number(t.timestamp||Date.now())).toLocaleString('ru-RU');
   if(isCopyright){
-    body.innerHTML='<div class="settings-item" style="align-items:flex-start"><span class="material-symbols-rounded">copyright</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Трек')+'</div><div class="settings-item-sub">Возможное совпадение по авторским правам</div></div></div>'+
+    body.innerHTML='<div class="settings-item" style="align-items:flex-start"><span class="material-symbols-rounded">copyright</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Трек')+'</div><div class="settings-item-sub">Возможное совпадение по авторским правам • '+stamp+'</div></div></div>'+
     '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Причина</div><div class="effect-sub" style="margin-top:8px">'+esc(m.copyrightReason||'Похожий текст / внешний источник нашёл возможное совпадение')+'</div></div>'+
     '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Источник совпадения</div><div class="effect-sub" style="margin-top:8px">'+esc(m.copyrightMatchedSource||'Не указан')+'</div></div>'+
     '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Возможный правообладатель</div><div class="effect-sub" style="margin-top:8px">'+esc(m.copyrightMatchedArtist||'Не указан')+'</div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Что проверялось</div><div class="effect-sub" style="margin-top:8px">Автор музыки: '+esc(t.musicAuthor||'Не указан')+'<br>Артист публикации: '+esc(t.artistName||'Не указан')+'</div></div>'+
     '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Уверенность</div><div class="effect-sub" style="margin-top:8px">'+Math.round(Number(m.copyrightConfidence||0)*100)+'%</div></div>';
   }else{
     const transcript=String(m.transcript||'').trim();
-    body.innerHTML='<div class="settings-item" style="align-items:flex-start"><span class="material-symbols-rounded">warning</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Трек')+'</div><div class="settings-item-sub">Трек отмечен как содержащий чувствительный контент</div></div></div>'+
-    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Почему поставлена пометка</div><div class="effect-sub" style="margin-top:8px">'+esc(m.reason||'В тексте/транскрипции обнаружены маты, токсичные или неприемлемые слова')+'</div></div>'+
-    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Что распознано</div><div class="effect-sub" style="margin-top:8px">'+esc((m.detectedLyrics||'[нет данных]').slice(0,1500))+'</div></div>'+
+    const detected=String(m.detectedLyrics||'').trim();
+    const reasons=[];
+    if(m.reason) reasons.push(m.reason);
+    if(detected && detected!=='[инструментал]') reasons.push('В распознанном тексте найдены чувствительные слова или выражения');
+    body.innerHTML='<div class="settings-item" style="align-items:flex-start"><span class="material-symbols-rounded">warning</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Трек')+'</div><div class="settings-item-sub">Трек отмечен как содержащий чувствительный контент • '+stamp+'</div></div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Почему поставлена пометка</div><div class="effect-sub" style="margin-top:8px">'+esc(reasons.join('. ')||'В тексте/транскрипции обнаружены маты, токсичные или неприемлемые слова')+'</div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Что распознано</div><div class="effect-sub" style="margin-top:8px">'+esc((detected||'[нет данных]').slice(0,1800))+'</div></div>'+
     '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Транскрипция</div><div class="effect-sub" style="margin-top:8px">'+esc(transcript||'Транскрипция недоступна')+'</div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Момент проверки</div><div class="effect-sub" style="margin-top:8px">При публикации / фоновом анализе после загрузки трека</div></div>'+
     '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Уверенность</div><div class="effect-sub" style="margin-top:8px">'+Math.round(Number(m.confidence||0)*100)+'%</div></div>';
   }
   document.getElementById('moderationDetailsModal').classList.add('open');
 }
-function scanPartyQr(){
-  const input=document.getElementById('partyQrInput');
-  if(input) input.click();
+function extractPartyCodeFromText(text=''){
+  const match=String(text||'').match(/PARTY-[A-Z0-9]{4,}/i);
+  return match?match[0].toUpperCase():'';
+}
+async function joinPartyByCodeValue(code){
+  const finalCode=extractPartyCodeFromText(code);
+  if(!finalCode){showSnackbar('QR-код не содержит код вечеринки');return false}
+  const snap=await db.ref('partySessions').once('value');
+  const sessions=snap.val()||{};
+  const found=Object.entries(sessions).find(([id,s])=>String(s.code||'').toUpperCase()===finalCode);
+  if(found){await joinSpecificParty(found[0]);return true}
+  showSnackbar('Вечеринка по QR не найдена');
+  return false;
+}
+async function scanPartyQr(){
+  const modal=document.getElementById('partyQrScannerModal');
+  const status=document.getElementById('partyQrScannerStatus');
+  const video=document.getElementById('partyQrVideo');
+  if(!modal||!video){showSnackbar('Сканер QR недоступен');return}
+  modal.classList.add('open');
+  status.textContent='Запрашиваем доступ к камере...';
+  try{
+    if(!navigator.mediaDevices?.getUserMedia) throw new Error('camera-api-unavailable');
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    partyQrScannerStream=stream;
+    video.srcObject=stream;
+    await video.play().catch(()=>{});
+    status.textContent='Наведи камеру на QR-код вечеринки';
+    if('BarcodeDetector' in window){
+      partyQrDetector=new BarcodeDetector({formats:['qr_code']});
+      const loop=async()=>{
+        if(!partyQrScannerStream||!modal.classList.contains('open')) return;
+        try{
+          const codes=await partyQrDetector.detect(video);
+          if(codes?.length){
+            const raw=codes[0].rawValue||codes[0].rawText||'';
+            const ok=await joinPartyByCodeValue(raw);
+            if(ok){stopPartyQrScanner(true);return}
+          }
+        }catch(e){}
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    }else{
+      status.textContent='На этом устройстве нет встроенного QR API. Выбери изображение QR вручную.';
+    }
+  }catch(e){
+    status.textContent='Не удалось открыть камеру. Можно выбрать изображение QR вручную.';
+    showSnackbar('Камера недоступна для сканера QR');
+  }
+}
+function stopPartyQrScanner(closeToo=false){
+  if(partyQrScannerStream){
+    try{partyQrScannerStream.getTracks().forEach(t=>t.stop())}catch(e){}
+  }
+  partyQrScannerStream=null;
+  partyQrDetector=null;
+  const video=document.getElementById('partyQrVideo');
+  if(video){try{video.pause()}catch(e){};video.srcObject=null;video.removeAttribute('src')}
+  if(closeToo) closeModal('partyQrScannerModal');
 }
 async function handlePartyQrImage(event){
   const file=event.target.files?.[0];
   if(!file){showSnackbar('Файл не выбран');return}
   try{
-    const text=await file.text().catch(()=> '');
-    const match=text.match(/PARTY-[A-Z0-9]{4,}/i);
-    if(match){
-      const code=match[0].toUpperCase();
-      const snap=await db.ref('partySessions').once('value');
-      const sessions=snap.val()||{};
-      const found=Object.entries(sessions).find(([id,s])=>String(s.code||'').toUpperCase()===code);
-      if(found){await joinSpecificParty(found[0]);return}
+    if('BarcodeDetector' in window){
+      const img=await createImageBitmap(file);
+      const detector=new BarcodeDetector({formats:['qr_code']});
+      const codes=await detector.detect(img);
+      if(codes?.length){
+        const raw=codes[0].rawValue||codes[0].rawText||'';
+        const ok=await joinPartyByCodeValue(raw);
+        if(ok){event.target.value='';return}
+      }
     }
-    showSnackbar('QR не распознан. Пока можно использовать код вечеринки.');
+    const text=await file.text().catch(()=> '');
+    const ok=await joinPartyByCodeValue(text);
+    if(!ok) showSnackbar('QR не распознан. Можно использовать код вечеринки вручную.');
   }catch(e){showSnackbar('Не удалось прочитать QR');}
   event.target.value='';
 }
@@ -4759,6 +4871,8 @@ function requestPartyGeolocation(){
     if(partySessionId){
       await db.ref('partySessions/'+partySessionId+'/members/'+deviceId+'/geo').set({lat:partyGeo.lat,lon:partyGeo.lon,accuracy:partyGeo.accuracy});
     }
+    const status=document.getElementById('partyModeStatus');
+    if(status) status.textContent='Геолокация включена. Ближайшие вечеринки теперь можно видеть по nearby-режиму.';
     showSnackbar('Геолокация включена для nearby-вечеринок');
     refreshPartyDevices();
   },()=>showSnackbar('Не удалось получить геолокацию'),{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
@@ -4774,10 +4888,30 @@ async function cleanupOldPartySessions(){
   });
   if(Object.keys(updates).length) await db.ref('partySessions').update(updates).catch(()=>{});
 }
+async function loadAllCreatorLogs(){
+  const snap=await db.ref('creatorLogs').once('value').catch(()=>null);
+  const data=snap?.val()||{};
+  globalCreatorLogs=Object.values(data).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  return globalCreatorLogs;
+}
+function getFilteredCreatorLogs(){
+  const from=document.getElementById('creatorLogFromDate')?.value||'';
+  const to=document.getElementById('creatorLogToDate')?.value||'';
+  const fromTs=from?new Date(from+'T00:00:00').getTime():0;
+  const toTs=to?new Date(to+'T23:59:59').getTime():Infinity;
+  const merged=[...creatorLogs,...globalCreatorLogs].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const seen=new Set();
+  return merged.filter(l=>{
+    const id=String(l.id||[l.ts,l.msg,l.level].join('_'));
+    if(seen.has(id)) return false;
+    seen.add(id);
+    return (l.ts||0)>=fromTs&&(l.ts||0)<=toTs;
+  });
+}
 function openCreatorLogs(){
-  creatorPanelWrap('Логи', '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:12px"><input class="md-input" id="creatorLogFromDate" type="date" style="max-width:180px;margin:0;border-radius:14px"><input class="md-input" id="creatorLogToDate" type="date" style="max-width:180px;margin:0;border-radius:14px"><button class="btn-tonal" onclick="renderCreatorRealtimeConsole()"><span class="material-symbols-rounded">filter_alt</span> Фильтр</button><button class="btn-tonal" onclick="creatorLogs=[];renderCreatorRealtimeConsole();pushCreatorLog(\'info\',\'Логи очищены\')"><span class="material-symbols-rounded">delete_sweep</span> Очистить</button></div><div class="creator-console" id="creatorRealtimeConsole"></div>');
+  creatorPanelWrap('Логи', '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:12px"><input class="md-input" id="creatorLogFromDate" type="date" style="max-width:180px;margin:0;border-radius:14px"><input class="md-input" id="creatorLogToDate" type="date" style="max-width:180px;margin:0;border-radius:14px"><button class="btn-tonal" onclick="renderCreatorRealtimeConsole()"><span class="material-symbols-rounded">filter_alt</span> Фильтр</button><button class="btn-tonal" onclick="loadAllCreatorLogs().then(renderCreatorRealtimeConsole)"><span class="material-symbols-rounded">sync</span> Все логи</button><button class="btn-tonal" onclick="creatorLogs=[];globalCreatorLogs=[];renderCreatorRealtimeConsole();pushCreatorLog(\'info\',\'Логи очищены локально\')"><span class="material-symbols-rounded">delete_sweep</span> Очистить локально</button></div><div class="creator-console" id="creatorRealtimeConsole"></div>');
   pushCreatorLog('info','Открыта realtime-консоль создателя');
-  renderCreatorRealtimeConsole();
+  loadAllCreatorLogs().then(renderCreatorRealtimeConsole);
 }
 async function openCreatorReports(){
   const snap=await db.ref('reports').once('value');
