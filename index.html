@@ -997,6 +997,10 @@ body[data-ui-style="glass"] *{all:revert}
     </div>
     <div class="user-area">
       <button class="btn-icon" onclick="toggleQueue()" title="Очередь"><span class="material-symbols-rounded">queue_music</span></button>
+      <button class="btn-icon" id="notificationsBtn" onclick="openNotifications()" title="Уведомления" style="position:relative;display:none">
+        <span class="material-symbols-rounded">notifications</span>
+        <span id="notificationsCount" class="badge" style="position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 6px;display:none;align-items:center;justify-content:center;border-radius:999px;font-size:10px;line-height:18px;background:var(--md-error);color:white">0</span>
+      </button>
       <button class="btn-icon" onclick="toggleTheme()" title="Сменить тему"><span class="material-symbols-rounded" id="themeIcon">dark_mode</span></button>
       <div class="user-avatar" id="userAvatarBtn" onclick="toggleUserMenu()">
         <span class="material-symbols-rounded" id="avatarIcon">person</span>
@@ -1561,6 +1565,7 @@ body[data-ui-style="glass"] *{all:revert}
     <div class="modal-title" style="margin-bottom:0">Режим вечеринки</div>
   </div>
   <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:16px">Синхронное воспроизведение одного трека до 8 устройств рядом. Не требует входа в один аккаунт: устройства видят общую nearby-вечеринку и могут присоединиться по коду.</p>
+  <input type="file" id="partyQrInput" accept="image/*" capture="environment" style="display:none" onchange="handlePartyQrImage(event)">
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
     <button class="btn-primary" onclick="startPartyMode()"><span class="material-symbols-rounded">celebration</span> Создать вечеринку</button>
     <button class="btn-tonal" onclick="joinPartyPrompt()"><span class="material-symbols-rounded">group_add</span> Присоединиться по коду</button>
@@ -1693,6 +1698,28 @@ body[data-ui-style="glass"] *{all:revert}
   <div class="modal-actions" style="margin-top:16px"><button class="btn-outlined" onclick="resetFx()">Сбросить</button><button class="btn-primary" onclick="closeModal('audioEffectsModal')">Готово</button></div>
 </div></div>
 
+<div class="modal-overlay" id="notificationsModal"><div class="modal" style="max-width:760px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <button class="btn-icon" onclick="closeModal('notificationsModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0">Уведомления</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    <input class="md-input" id="notificationsFromDate" type="date" style="max-width:200px;margin:0;border-radius:14px">
+    <input class="md-input" id="notificationsToDate" type="date" style="max-width:200px;margin:0;border-radius:14px">
+    <button class="btn-tonal" onclick="renderNotifications()"><span class="material-symbols-rounded">filter_alt</span> Фильтр</button>
+    <button class="btn-outlined" onclick="markAllNotificationsRead()"><span class="material-symbols-rounded">done_all</span> Прочитать всё</button>
+  </div>
+  <div id="notificationsList"></div>
+</div></div>
+
+<div class="modal-overlay" id="moderationDetailsModal"><div class="modal" style="max-width:760px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <button class="btn-icon" onclick="closeModal('moderationDetailsModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" id="moderationDetailsTitle" style="margin-bottom:0">Подробности модерации</div>
+  </div>
+  <div id="moderationDetailsBody"></div>
+</div></div>
+
 <div class="snackbar" id="snackbar"></div>
 <audio id="audioPlayer" preload="auto"></audio>
 
@@ -1723,6 +1750,9 @@ let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null
 let creatorLogs=[];
 let radioStations=[];
 let activeRadioStation=null;
+let notificationsMap={};
+let loadedTrackEntries=[];
+let trackPageSize=24;
 let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"glass":false}');
 if(labsSettings && labsSettings.liquidGlass!==undefined && labsSettings.glass===undefined){
   labsSettings.glass=!!labsSettings.liquidGlass;
@@ -2634,6 +2664,18 @@ function loadUserData(){
   db.ref('history/'+uid).orderByChild('time').limitToLast(100).on('value',s=>{
     listeningHistory=[];s.forEach(c=>{listeningHistory.unshift({id:c.key,...c.val()})});renderHistory();
   });
+  db.ref('notifications/'+uid).limitToLast(200).on('value',s=>{
+    notificationsMap=s.val()||{};
+    updateNotificationsUi();
+    if(document.getElementById('notificationsModal').classList.contains('open')) renderNotifications();
+  });
+  if(isCreatorUser(currentUser)){
+    db.ref('creatorLogs').limitToLast(500).on('value',s=>{
+      const data=s.val()||{};
+      creatorLogs=Object.values(data).sort((a,b)=>(b.ts||0)-(a.ts||0));
+      if(document.getElementById('creatorRealtimeConsole')) renderCreatorRealtimeConsole();
+    });
+  }
   loadMyTracks();loadProfileStats();
 }
 function loadMyTracks(){
@@ -2684,6 +2726,7 @@ async function togglePinTrack(trackId){
 /* ===== TRACKS LISTENER ===== */
 db.ref('tracks').on('value',snap=>{
   allTracks=snap.val()||{};
+  loadedTrackEntries=Object.entries(allTracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   renderHome();
   renderExplore();
   renderCharts();
@@ -2969,36 +3012,36 @@ function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,c
 
 /* ===== RENDER PAGES ===== */
 function renderHome(){
-  const entries=Object.entries(allTracks);
+  const entries=loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks);
   const sorted=[...entries].sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-  document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,10).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
   const popular=[...entries].sort((a,b)=>(b[1].plays||0)-(a[1].plays||0)).slice(0,8);
   document.getElementById('homePopular').innerHTML=popular.length===0?'':popular.map(([id,t])=>'<div class="md-card" onclick="playTrackById(\''+id+'\')"><div class="card-img">'+(t.cover?'<img src="'+t.cover+'" alt="" loading="lazy">':'<span class="material-symbols-rounded">music_note</span>')+'<div class="card-play-fab"><span class="material-symbols-rounded filled">play_arrow</span></div></div><div class="card-body"><div class="card-title" style="display:flex;align-items:center;gap:4px">'+esc(t.title||'')+(t.explicit?'<span class="explicit-badge" style="font-size:10px;width:16px;height:16px">!</span>':'')+'</div><div class="card-sub">'+esc(t.artistName||'')+'</div><div class="card-sub" style="display:flex;align-items:center;gap:4px;margin-top:2px"><span class="material-symbols-rounded" style="font-size:14px">play_arrow</span>'+formatPlays(t.plays||0)+'</div></div></div>').join('');
-  const am={};entries.forEach(([id,t])=>{if(t.artistId&&!am[t.artistId])am[t.artistId]={name:t.artistName,photo:t.artistPhoto||'',id:t.artistId}});
+  const am={};entries.slice(0,trackPageSize*2).forEach(([id,t])=>{if(t.artistId&&!am[t.artistId])am[t.artistId]={name:t.artistName,photo:t.artistPhoto||'',id:t.artistId}});
   document.getElementById('homeArtists').innerHTML=Object.values(am).slice(0,12).map(a=>'<div class="artist-card" onclick="viewArtist(\''+a.id+'\')"><div class="artist-img">'+(a.photo?'<img src="'+a.photo+'" alt="" loading="lazy">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">person</span>')+'</div><div class="card-title" style="font-size:13px">'+esc(a.name||'Артист')+'</div></div>').join('');
 }
 
 let currentGenre='all';
 function renderExplore(){
   document.getElementById('genrePills').innerHTML=genres.map(g=>'<div class="chip '+(currentGenre===g.id?'active':'')+'" onclick="filterGenre(\''+g.id+'\')"><span class="material-symbols-rounded" style="font-size:16px">'+g.icon+'</span> '+g.label+'</div>').join('');
-  const entries=Object.entries(allTracks);
+  const entries=loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks);
   let filtered=currentGenre==='all'?entries:entries.filter(([id,t])=>t.genre===currentGenre);
   filtered.sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   const gl=genres.find(g=>g.id===currentGenre);
   document.getElementById('exploreTitle').textContent=currentGenre==='all'?'Все треки':(gl?gl.label:'Треки');
-  document.getElementById('exploreTracks').innerHTML=filtered.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':filtered.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  document.getElementById('exploreTracks').innerHTML=filtered.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':filtered.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('')+(filtered.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderExplore()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
-function filterGenre(g){currentGenre=g;renderExplore()}
+function filterGenre(g){currentGenre=g;trackPageSize=24;renderExplore()}
 
 function renderCharts(){
-  const entries=Object.entries(allTracks).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0)).slice(0,50);
-  document.getElementById('chartsTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">trending_up</span><h3>Нет данных</h3></div>':entries.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0));
+  document.getElementById('chartsTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">trending_up</span><h3>Нет данных</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderCharts()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
 function renderNewReleases(){
   const weekAgo=Date.now()-7*24*60*60*1000;
-  const entries=Object.entries(allTracks).filter(([id,t])=>(t.timestamp||0)>weekAgo).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-  document.getElementById('newReleasesTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">new_releases</span><h3>Нет новинок за последнюю неделю</h3></div>':entries.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([id,t])=>(t.timestamp||0)>weekAgo).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+  document.getElementById('newReleasesTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">new_releases</span><h3>Нет новинок за последнюю неделю</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderNewReleases()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
 function renderHistory(){
@@ -3272,21 +3315,27 @@ async function leavePartyMode(){
   refreshPartyDevices();
   showSnackbar('Режим вечеринки отключён');
 }
-async function refreshPartyDevices(){
+async async function refreshPartyDevices(){
   const box=document.getElementById('partyModeList');
   if(!box)return;
   box.innerHTML='<div class="loading-spinner"></div>';
+  await cleanupOldPartySessions();
   const snap=await db.ref('partySessions').once('value').catch(()=>null);
   const sessions=snap?.val()||{};
-  const entries=Object.entries(sessions).slice(0,8);
+  const entries=Object.entries(sessions).filter(([id,s])=>{
+    if(!s) return false;
+    if(s.joinPolicy==='code' && s.hostDeviceId!==deviceId && !s.members?.[deviceId]) return false;
+    return true;
+  }).slice(0,8);
   if(!entries.length){
     box.innerHTML='<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">celebration</span><h3>Поблизости нет вечеринок</h3><p>Создайте свою вечеринку или попросите друга показать код.</p></div>';
     return;
   }
   box.innerHTML=entries.map(([id,s])=>{
     const members=s.members||{};
-    const memberRows=Object.values(members).slice(0,8).map(m=>'<div class="device-item '+(m.deviceId===deviceId?'active':'')+'"><span class="material-symbols-rounded">devices</span><div class="device-meta"><div class="device-name">'+esc((m.accountName||'Гость')+' • ~'+(m.nearbyDistance||'?')+' м • '+(m.deviceName||'Устройство'))+'</div><div class="device-sub">'+esc(m.deviceId===s.hostDeviceId?'Хост':'Участник')+'</div></div></div>').join('');
-    return '<div class="effect-card" style="padding:16px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px"><div><div class="effect-name">'+esc(s.hostName||'Вечеринка')+'</div><div class="effect-sub">Код: '+esc(s.code||'')+' • Устройств: '+Object.keys(members).length+'/8</div></div><button class="btn-tonal" onclick="joinSpecificParty(\''+id+'\')"><span class="material-symbols-rounded">group_add</span> Войти</button></div><div class="device-list">'+memberRows+'</div></div>';
+    const isHost=s.hostDeviceId===deviceId;
+    const memberRows=Object.values(members).slice(0,8).map(m=>'<div class="device-item '+(m.deviceId===deviceId?'active':'')+'"><span class="material-symbols-rounded">devices</span><div class="device-meta"><div class="device-name">'+esc((m.accountName||'Гость')+' • ~'+(m.nearbyDistance||'?')+' м • '+(m.deviceName||'Устройство'))+'</div><div class="device-sub">'+esc(m.deviceId===s.hostDeviceId?'Хост':'Участник')+'</div></div>'+(isHost&&m.deviceId!==deviceId?'<button class="btn-text" onclick="partyKickMember(\''+id+'\',\''+m.deviceId+'\')">Кик</button><button class="btn-outlined" onclick="partyBanMember(\''+id+'\',\''+m.deviceId+'\')">Бан</button>':'')+'</div>').join('');
+    return '<div class="effect-card" style="padding:16px"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px"><div><div class="effect-name">'+esc(s.hostName||'Вечеринка')+'</div><div class="effect-sub">Код: '+esc(s.code||'')+' • Устройств: '+Object.keys(members).length+'/8 • '+(s.joinPolicy==='code'?'Только код / QR':'Nearby')+'</div></div><button class="btn-tonal" onclick="joinSpecificParty(\''+id+'\')"><span class="material-symbols-rounded">group_add</span> Войти</button></div><div class="device-list">'+memberRows+'</div></div>';
   }).join('');
 }
 async function joinSpecificParty(id){
@@ -3294,6 +3343,8 @@ async function joinSpecificParty(id){
   const session=sessionSnap.val();
   if(!session){showSnackbar('Комната уже недоступна');refreshPartyDevices();return}
   const members=session.members||{};
+  const banned=session.bannedDevices||{};
+  if(banned[deviceId]){showSnackbar('Вы заблокированы в этой вечеринке');return}
   if(Object.keys(members).length>=8 && !members[deviceId]){showSnackbar('Комната заполнена');return}
   partySessionId=id;
   localStorage.setItem('mp_party_session',partySessionId);
@@ -3302,6 +3353,33 @@ async function joinSpecificParty(id){
   refreshPartyDevices();
   ensurePartyListener();
   showSnackbar('Вы подключились к вечеринке');
+}
+async function updatePartyJoinPolicy(value){
+  if(!partySessionId)return;
+  await db.ref('partySessions/'+partySessionId+'/joinPolicy').set(String(value||'nearby')).catch(()=>{});
+  refreshPartyDevices();
+}
+async function updatePartyRadius(value){
+  if(!partySessionId)return;
+  await db.ref('partySessions/'+partySessionId+'/radius').set(Number(value||80)).catch(()=>{});
+  refreshPartyDevices();
+}
+async function partyKickMember(sessionId,targetDeviceId){
+  const snap=await db.ref('partySessions/'+sessionId).once('value');
+  const s=snap.val();
+  if(!s||s.hostDeviceId!==deviceId){showSnackbar('Только хост может кикать');return}
+  await db.ref('partySessions/'+sessionId+'/members/'+targetDeviceId).remove().catch(()=>{});
+  showSnackbar('Участник кикнут');
+  refreshPartyDevices();
+}
+async function partyBanMember(sessionId,targetDeviceId){
+  const snap=await db.ref('partySessions/'+sessionId).once('value');
+  const s=snap.val();
+  if(!s||s.hostDeviceId!==deviceId){showSnackbar('Только хост может банить');return}
+  await db.ref('partySessions/'+sessionId+'/bannedDevices/'+targetDeviceId).set(true).catch(()=>{});
+  await db.ref('partySessions/'+sessionId+'/members/'+targetDeviceId).remove().catch(()=>{});
+  showSnackbar('Участник забанен');
+  refreshPartyDevices();
 }
 function broadcastPartyState(){
   if(!partySessionId)return;
@@ -4472,10 +4550,14 @@ applyLabsSettings();
 
 /* ===== UTILS ===== */
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
-function pushCreatorLog(level,msg){
-  const line={time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),level:String(level||'info'),msg:String(msg||'')};
+function pushCreatorLog(level,msg,meta){
+  const ts=Date.now();
+  const line={id:'log_'+ts+'_'+Math.random().toString(36).slice(2,7),time:new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),ts,level:String(level||'info'),msg:String(msg||''),meta:meta||null};
   creatorLogs.unshift(line);
-  if(creatorLogs.length>300) creatorLogs.length=300;
+  if(creatorLogs.length>500) creatorLogs.length=500;
+  if(isCreatorUser(currentUser)){
+    db.ref('creatorLogs/'+line.id).set(prepareFirebasePayload(line)).catch(()=>{});
+  }
   if(document.getElementById('creatorRealtimeConsole')) renderCreatorRealtimeConsole();
 }
 function showSnackbar(msg){const s=document.getElementById('snackbar');s.textContent=msg;s.classList.remove('show');void s.offsetWidth;s.classList.add('show');clearTimeout(s._t);s._t=setTimeout(()=>s.classList.remove('show'),3000);pushCreatorLog('info','SNACKBAR: '+msg)}
@@ -4574,10 +4656,126 @@ function creatorPanelWrap(title, body){
 function renderCreatorRealtimeConsole(){
   const el=document.getElementById('creatorRealtimeConsole');
   if(!el) return;
-  el.innerHTML=creatorLogs.length?creatorLogs.map(l=>'<div class="creator-console-line"><div class="creator-console-time">['+esc(l.time)+']</div><div class="creator-console-level '+esc(l.level)+'">'+esc(l.level.toUpperCase())+'</div><div class="creator-console-msg">'+esc(l.msg)+'</div></div>').join(''):'<div class="creator-console-line"><div class="creator-console-msg">Логи пока пусты</div></div>';
+  const from=document.getElementById('creatorLogFromDate')?.value||'';
+  const to=document.getElementById('creatorLogToDate')?.value||'';
+  const fromTs=from?new Date(from+'T00:00:00').getTime():0;
+  const toTs=to?new Date(to+'T23:59:59').getTime():Infinity;
+  const rows=creatorLogs.filter(l=>(l.ts||0)>=fromTs&&(l.ts||0)<=toTs);
+  el.innerHTML=rows.length?rows.map(l=>'<div class="creator-console-line"><div class="creator-console-time">['+esc(l.time)+']</div><div class="creator-console-level '+esc(l.level)+'">'+esc(l.level.toUpperCase())+'</div><div class="creator-console-msg">'+esc(l.msg)+(l.meta?'\n'+esc(JSON.stringify(l.meta)):'')+'</div></div>').join(''):'<div class="creator-console-line"><div class="creator-console-msg">Логи пока пусты</div></div>';
+}
+function updateNotificationsUi(){
+  const btn=document.getElementById('notificationsBtn');
+  const countEl=document.getElementById('notificationsCount');
+  if(!btn||!countEl) return;
+  if(!currentUser){btn.style.display='none';return}
+  btn.style.display='inline-flex';
+  const unread=Object.values(notificationsMap||{}).filter(n=>!n.read).length;
+  if(unread>0){countEl.style.display='inline-flex';countEl.textContent=String(Math.min(unread,99));}
+  else countEl.style.display='none';
+}
+function openNotifications(){
+  if(!currentUser){showSnackbar('Войдите');return}
+  renderNotifications();
+  document.getElementById('notificationsModal').classList.add('open');
+}
+function renderNotifications(){
+  const list=document.getElementById('notificationsList');
+  if(!list) return;
+  const from=document.getElementById('notificationsFromDate')?.value||'';
+  const to=document.getElementById('notificationsToDate')?.value||'';
+  const fromTs=from?new Date(from+'T00:00:00').getTime():0;
+  const toTs=to?new Date(to+'T23:59:59').getTime():Infinity;
+  const items=Object.entries(notificationsMap||{}).map(([id,n])=>({id,...n})).filter(n=>(n.timestamp||0)>=fromTs&&(n.timestamp||0)<=toTs).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  list.innerHTML=items.length?items.map(n=>'<div class="settings-item" onclick="openNotificationItem(\''+n.id+'\')" style="align-items:flex-start"><span class="material-symbols-rounded" style="color:'+(n.read?'var(--md-outline)':'var(--md-primary)')+'">'+esc(n.icon||'notifications')+'</span><div class="settings-item-info"><div class="settings-item-title">'+esc(n.title||'Уведомление')+'</div><div class="settings-item-sub">'+esc(n.message||'')+'</div><div style="font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">'+new Date(n.timestamp||Date.now()).toLocaleString('ru-RU')+'</div></div>'+(n.read?'':'<span class="badge">new</span>')+'</div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">notifications</span><h3>Пока пусто</h3><p>Здесь будут решения модерации, пометки и важные статусы треков.</p></div>';
+}
+function openNotificationItem(id){
+  const n=(notificationsMap||{})[id];
+  if(!n||!currentUser) return;
+  db.ref('notifications/'+currentUser.uid+'/'+id+'/read').set(true);
+  if(n.trackId && allTracks[n.trackId]){
+    if(n.type==='explicit' || n.type==='copyright') showModerationDetails(n.trackId,n.type);
+    else {playTrackById(n.trackId);openFullscreenPlayer();}
+  }
+}
+function markAllNotificationsRead(){
+  if(!currentUser)return;
+  const updates={};
+  Object.keys(notificationsMap||{}).forEach(id=>updates[id+'/read']=true);
+  if(!Object.keys(updates).length) return;
+  db.ref('notifications/'+currentUser.uid).update(updates);
+}
+function createTrackNotification(userId,type,title,message,trackId,extra){
+  if(!userId) return;
+  db.ref('notifications/'+userId).push(prepareFirebasePayload({type,title,message,trackId:trackId||'',timestamp:Date.now(),read:false,icon:type==='explicit'?'warning':type==='copyright'?'copyright':'notifications',extra:extra||null})).catch(()=>{});
+}
+function showModerationDetails(trackId,kind){
+  const t=allTracks[trackId];
+  if(!t){showSnackbar('Трек не найден');return}
+  const m=t.moderationMeta||{};
+  const isCopyright=kind==='copyright';
+  document.getElementById('moderationDetailsTitle').textContent=isCopyright?'Подробности авторских прав':'Подробности пометки !';
+  const body=document.getElementById('moderationDetailsBody');
+  if(isCopyright){
+    body.innerHTML='<div class="settings-item" style="align-items:flex-start"><span class="material-symbols-rounded">copyright</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Трек')+'</div><div class="settings-item-sub">Возможное совпадение по авторским правам</div></div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Причина</div><div class="effect-sub" style="margin-top:8px">'+esc(m.copyrightReason||'Похожий текст / внешний источник нашёл возможное совпадение')+'</div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Источник совпадения</div><div class="effect-sub" style="margin-top:8px">'+esc(m.copyrightMatchedSource||'Не указан')+'</div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Возможный правообладатель</div><div class="effect-sub" style="margin-top:8px">'+esc(m.copyrightMatchedArtist||'Не указан')+'</div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Уверенность</div><div class="effect-sub" style="margin-top:8px">'+Math.round(Number(m.copyrightConfidence||0)*100)+'%</div></div>';
+  }else{
+    const transcript=String(m.transcript||'').trim();
+    body.innerHTML='<div class="settings-item" style="align-items:flex-start"><span class="material-symbols-rounded">warning</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Трек')+'</div><div class="settings-item-sub">Трек отмечен как содержащий чувствительный контент</div></div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Почему поставлена пометка</div><div class="effect-sub" style="margin-top:8px">'+esc(m.reason||'В тексте/транскрипции обнаружены маты, токсичные или неприемлемые слова')+'</div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Что распознано</div><div class="effect-sub" style="margin-top:8px">'+esc((m.detectedLyrics||'[нет данных]').slice(0,1500))+'</div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Транскрипция</div><div class="effect-sub" style="margin-top:8px">'+esc(transcript||'Транскрипция недоступна')+'</div></div>'+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Уверенность</div><div class="effect-sub" style="margin-top:8px">'+Math.round(Number(m.confidence||0)*100)+'%</div></div>';
+  }
+  document.getElementById('moderationDetailsModal').classList.add('open');
+}
+function scanPartyQr(){
+  const input=document.getElementById('partyQrInput');
+  if(input) input.click();
+}
+async function handlePartyQrImage(event){
+  const file=event.target.files?.[0];
+  if(!file){showSnackbar('Файл не выбран');return}
+  try{
+    const text=await file.text().catch(()=> '');
+    const match=text.match(/PARTY-[A-Z0-9]{4,}/i);
+    if(match){
+      const code=match[0].toUpperCase();
+      const snap=await db.ref('partySessions').once('value');
+      const sessions=snap.val()||{};
+      const found=Object.entries(sessions).find(([id,s])=>String(s.code||'').toUpperCase()===code);
+      if(found){await joinSpecificParty(found[0]);return}
+    }
+    showSnackbar('QR не распознан. Пока можно использовать код вечеринки.');
+  }catch(e){showSnackbar('Не удалось прочитать QR');}
+  event.target.value='';
+}
+function requestPartyGeolocation(){
+  if(!navigator.geolocation){showSnackbar('Геолокация не поддерживается');return}
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    partyGeo={enabled:true,lat:pos.coords.latitude,lon:pos.coords.longitude,accuracy:pos.coords.accuracy||0};
+    if(partySessionId){
+      await db.ref('partySessions/'+partySessionId+'/members/'+deviceId+'/geo').set({lat:partyGeo.lat,lon:partyGeo.lon,accuracy:partyGeo.accuracy});
+    }
+    showSnackbar('Геолокация включена для nearby-вечеринок');
+    refreshPartyDevices();
+  },()=>showSnackbar('Не удалось получить геолокацию'),{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+}
+async function cleanupOldPartySessions(){
+  const snap=await db.ref('partySessions').once('value').catch(()=>null);
+  const all=snap?.val()||{};
+  const now=Date.now();
+  const updates={};
+  Object.entries(all).forEach(([id,s])=>{
+    const last=Math.max(Number(s.updatedAt||0),Number(s.createdAt||0));
+    if(now-last>24*60*60*1000) updates[id]=null;
+  });
+  if(Object.keys(updates).length) await db.ref('partySessions').update(updates).catch(()=>{});
 }
 function openCreatorLogs(){
-  creatorPanelWrap('Логи', '<div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px"><button class="btn-tonal" onclick="creatorLogs=[];renderCreatorRealtimeConsole();pushCreatorLog(\'info\',\'Логи очищены\')"><span class="material-symbols-rounded">delete_sweep</span> Очистить</button></div><div class="creator-console" id="creatorRealtimeConsole"></div>');
+  creatorPanelWrap('Логи', '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:12px"><input class="md-input" id="creatorLogFromDate" type="date" style="max-width:180px;margin:0;border-radius:14px"><input class="md-input" id="creatorLogToDate" type="date" style="max-width:180px;margin:0;border-radius:14px"><button class="btn-tonal" onclick="renderCreatorRealtimeConsole()"><span class="material-symbols-rounded">filter_alt</span> Фильтр</button><button class="btn-tonal" onclick="creatorLogs=[];renderCreatorRealtimeConsole();pushCreatorLog(\'info\',\'Логи очищены\')"><span class="material-symbols-rounded">delete_sweep</span> Очистить</button></div><div class="creator-console" id="creatorRealtimeConsole"></div>');
   pushCreatorLog('info','Открыта realtime-консоль создателя');
   renderCreatorRealtimeConsole();
 }
