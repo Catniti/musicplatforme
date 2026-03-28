@@ -79,6 +79,9 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 /* ===== INPUTS ===== */
 .md-input{width:100%;padding:16px;background:var(--md-surface-container-highest);border:none;border-radius:var(--md-shape-xl);font:400 16px/24px 'Inter',sans-serif;color:var(--md-on-surface);outline:none;transition:all .3s cubic-bezier(.2,0,0,1)}
 .md-input:focus{outline:2px solid var(--md-primary)!important;background:var(--md-surface-container-high)}.md-input::placeholder{color:var(--md-on-surface-variant)}
+input[type="date"].md-input{color:var(--md-on-surface)!important;color-scheme:light dark}
+input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor:pointer;filter:none}
+[data-theme="dark"] input[type="date"].md-input::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.2)}
 
 /* ===== CARDS ===== */
 .md-card{background:var(--md-surface-container-low);border-radius:var(--md-shape-md);overflow:hidden;transition:all .3s cubic-bezier(.2,0,0,1);cursor:pointer;position:relative}
@@ -244,6 +247,9 @@ button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-high
 .public-role-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;background:rgba(24,169,87,.12);color:#169b51;font:700 11px/15px 'Inter',sans-serif}
 .public-role-chip .material-symbols-rounded{font-size:14px}
 .pinned-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#ffe9b3;color:#8a5a00;font:700 11px/16px 'Inter',sans-serif}
+#profileCreatorMeta,#profilePublicRoles{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px;text-align:center}
+.profile-info #profileCreatorMeta,.profile-info #profilePublicRoles{justify-content:flex-start;text-align:left}
+@media(max-width:600px){.profile-info #profileCreatorMeta,.profile-info #profilePublicRoles{justify-content:center;text-align:center}}
 
 /* ===== BOTTOM NAV ===== */
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--nav-height);background:var(--md-surface-container);border-top:1px solid var(--md-outline-variant);z-index:200;align-items:center;justify-content:space-around}
@@ -919,6 +925,7 @@ body.radio-mode .player-artist-name{font-size:11px}
 /* ===== GLASS REMOVED ===== */
 body[data-ui-style="glass"]{all:unset}
 body[data-ui-style="glass"] *{all:revert}
+body[data-ui-style="glass"]{display:contents}
 
 /* ===== PIANO BETA ===== */
 .piano-shell{display:flex;flex-direction:column;gap:16px;background:var(--md-surface-container-low);border:1px solid var(--md-outline-variant);border-radius:24px;padding:16px;overflow:hidden}
@@ -1757,6 +1764,8 @@ window.getDocs=window.getDocs||function(){return Promise.resolve({forEach:functi
 window.query=window.query||function(){return null;};
 window.where=window.where||function(){return null;};
 window.serverTimestamp=window.serverTimestamp||function(){return Date.now();};
+window.addEventListener('error',e=>{try{console.error('GlobalError',e?.error||e?.message||e);const sb=document.getElementById('snackbar');if(sb){sb.textContent='JS ошибка: '+String(e?.message||'unknown');sb.classList.add('show');setTimeout(()=>sb.classList.remove('show'),3500)}}catch(_){}});
+window.addEventListener('unhandledrejection',e=>{try{console.error('UnhandledRejection',e?.reason||e);const sb=document.getElementById('snackbar');if(sb){sb.textContent='Promise ошибка: '+String(e?.reason?.message||e?.reason||'unknown');sb.classList.add('show');setTimeout(()=>sb.classList.remove('show'),3500)}}catch(_){}});
 const firebaseConfig={apiKey:"AIzaSyBi_ZxAPL7SOZGf-EX-mYxEuePztC4XoVc",authDomain:"musicplatforme.firebaseapp.com",databaseURL:"https://musicplatforme-default-rtdb.firebaseio.com",projectId:"musicplatforme",storageBucket:"musicplatforme.firebasestorage.app",messagingSenderId:"947754451244",appId:"1:947754451244:web:0e4bbe8403f91a57c8ec89"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
@@ -1778,7 +1787,7 @@ let partyQrDetector=null;
 let adminEditingTrackId=null;
 let loadedTrackEntries=[];
 let trackPageSize=24;
-let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"glass":false}');
+let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"compactTrackList":false,"glass":false}');
 if(labsSettings && labsSettings.liquidGlass!==undefined && labsSettings.glass===undefined){
   labsSettings.glass=!!labsSettings.liquidGlass;
   delete labsSettings.liquidGlass;
@@ -1831,7 +1840,7 @@ function inferAudioExtension(file){
   return '.mp3';
 }
 async function transcribeAudioWithPollinations(file,opts={}){
-  const models=opts.models||['whisper-large-v3','scribe'];
+  const models=opts.models||['scribe','whisper-large-v3','whisper'];
   const retries=Math.max(1,Number(opts.retries||2));
   const minLetters=Math.max(1,Number(opts.minLetters||8));
   const perRequestTimeoutMs=Math.max(5000,Number(opts.perRequestTimeoutMs||18000));
@@ -1994,27 +2003,30 @@ async function analyzeAudioSafetyWithPollinations({title='',lyrics='',genre='',d
     {role:'system',content:'Ты модератор музыкальной платформы для детей и подростков. Тебе дали название трека, текст, расшифровку слов, жанр, длительность и автора музыки. Ответь только JSON без пояснений. Формат: {"explicit": boolean, "lowQuality": boolean, "reason": string, "confidence": number, "detectedLyrics": string}. explicit=true если в тексте есть мат, сексуальные темы, жесть, наркотики, токсичные оскорбления или другой неприятный детям контент. lowQuality=true если это спам, мусор, бессмысленная нарезка или фейковый трек. Ничего не выдумывай сверх текста.'},
     {role:'user',content:JSON.stringify({title,lyrics,genre,duration,fileName,musicAuthor,transcript})}
   ];
-  try{
-    const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
-      body:JSON.stringify({model:'openai-fast',messages,response_format:{type:'json_object'},temperature:0})
-    });
-    if(!res.ok) throw new Error('audio-safety-failed');
-    const json=await res.json();
-    const content=json?.choices?.[0]?.message?.content||'{}';
-    let parsed={};
-    try{parsed=JSON.parse(content)}catch(e){parsed={}}
-    return {
-      explicit: !!(localExplicit||parsed.explicit),
-      lowQuality: !!parsed.lowQuality,
-      reason: parsed.reason||'',
-      confidence: Number(parsed.confidence||0),
-      detectedLyrics: (parsed.detectedLyrics||transcript||lyrics||'').trim()
-    };
-  }catch(e){
-    return {explicit:localExplicit,lowQuality:false,reason:'fallback-local',confidence:localExplicit?0.65:0.3,detectedLyrics:(transcript||lyrics||'').trim()};
+  const models=['qwen-safety','openai-fast','mistral'];
+  for(const model of models){
+    try{
+      const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
+        body:JSON.stringify({model,messages,response_format:{type:'json_object'},temperature:0})
+      });
+      if(!res.ok) throw new Error('audio-safety-failed-'+model);
+      const json=await res.json();
+      const content=json?.choices?.[0]?.message?.content||'{}';
+      let parsed={};
+      try{parsed=JSON.parse(content)}catch(e){parsed={}}
+      return {
+        explicit: !!(localExplicit||parsed.explicit),
+        lowQuality: !!parsed.lowQuality,
+        reason: parsed.reason||'',
+        confidence: Number(parsed.confidence||0),
+        detectedLyrics: (parsed.detectedLyrics||transcript||lyrics||'').trim(),
+        sourceModel:model
+      };
+    }catch(e){}
   }
+  return {explicit:localExplicit,lowQuality:false,reason:'fallback-local',confidence:localExplicit?0.65:0.3,detectedLyrics:(transcript||lyrics||'').trim(),sourceModel:'local-fallback'};
 }
 async function analyzeSongStructureWithPollinations({title='',lyrics='',genre='',duration=0,musicAuthor='',transcript=''}){
   const rawText=String(lyrics||transcript||'').trim();
@@ -2023,33 +2035,36 @@ async function analyzeSongStructureWithPollinations({title='',lyrics='',genre=''
     {role:'system',content:'Ты анализируешь уже готовую транскрипцию песни. Ответь только JSON без пояснений. Формат: {"hasVocals": boolean, "normalizedLyrics": string, "chorus": string, "sections": [{"type": string, "label": string, "text": string}], "summary": string}. Найди припев, куплеты, бридж, интро/аутро если они различимы. Не выдумывай строки, которых нет в тексте. Если текст слабый, просто структурируй то, что есть.'},
     {role:'user',content:JSON.stringify({title,lyrics,genre,duration,musicAuthor,transcript:rawText})}
   ];
-  try{
-    const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
-      body:JSON.stringify({model:'openai-fast',messages,response_format:{type:'json_object'},temperature:0})
-    });
-    if(!res.ok) throw new Error('structure-analysis-failed');
-    const json=await res.json();
-    const content=json?.choices?.[0]?.message?.content||'{}';
-    let parsed={};
-    try{parsed=JSON.parse(content)}catch(e){parsed={}}
-    const normalizedLyrics=String(parsed.normalizedLyrics||rawText||'').trim();
-    const hasVocals=normalizedLyrics.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'').length>=10;
-    const sections=Array.isArray(parsed.sections)?parsed.sections.filter(s=>s&&String(s.text||'').trim()).map(s=>({type:String(s.type||'section'),label:String(s.label||s.type||'Секция').trim(),text:String(s.text||'').trim()})):[];
-    const safeNormalized=hasVocals?(normalizedLyrics||rawText):(rawText||'[текст не распознан транскрибатором]');
-    const safeSections=sections.length?sections:[{type:'lyrics',label:'Текст',text:safeNormalized}];
-    return {
-      hasVocals,
-      normalizedLyrics:safeNormalized,
-      chorus:hasVocals?String(parsed.chorus||'').trim():'',
-      sections:safeSections,
-      displayLyrics:buildLyricsDisplayFromSections(safeSections,safeNormalized),
-      summary:String(parsed.summary||'').trim()||(hasVocals?'Найдены слова и структура песни':'Текст распознан частично')
-    };
-  }catch(e){
-    return fallbackSongStructure({lyrics,transcript});
+  const models=['openai-fast','mistral','gemini-fast'];
+  for(const model of models){
+    try{
+      const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
+        body:JSON.stringify({model,messages,response_format:{type:'json_object'},temperature:0})
+      });
+      if(!res.ok) throw new Error('structure-analysis-failed-'+model);
+      const json=await res.json();
+      const content=json?.choices?.[0]?.message?.content||'{}';
+      let parsed={};
+      try{parsed=JSON.parse(content)}catch(e){parsed={}}
+      const normalizedLyrics=String(parsed.normalizedLyrics||rawText||'').trim();
+      const hasVocals=normalizedLyrics.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'').length>=10;
+      const sections=Array.isArray(parsed.sections)?parsed.sections.filter(s=>s&&String(s.text||'').trim()).map(s=>({type:String(s.type||'section'),label:String(s.label||s.type||'Секция').trim(),text:String(s.text||'').trim()})):[];
+      const safeNormalized=hasVocals?(normalizedLyrics||rawText):(rawText||'[текст не распознан транскрибатором]');
+      const safeSections=sections.length?sections:[{type:'lyrics',label:'Текст',text:safeNormalized}];
+      return {
+        hasVocals,
+        normalizedLyrics:safeNormalized,
+        chorus:hasVocals?String(parsed.chorus||'').trim():'',
+        sections:safeSections,
+        displayLyrics:buildLyricsDisplayFromSections(safeSections,safeNormalized),
+        summary:String(parsed.summary||'').trim()||(hasVocals?'Найдены слова и структура песни':'Текст распознан частично'),
+        sourceModel:model
+      };
+    }catch(e){}
   }
+  return fallbackSongStructure({lyrics,transcript});
 }
 async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor='',lyricsSample=''}){
   const snippet=(lyricsSample||'').replace(/\s+/g,' ').trim().slice(0,700);
@@ -2058,27 +2073,30 @@ async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor=''
     {role:'system',content:'Ты ищешь в интернете возможные совпадения текста песни и признаки авторских прав. Используй веб-поиск. Ответь только JSON без пояснений. Формат: {"possibleCopyright": boolean, "confidence": number, "reason": string, "matchedSource": string, "matchedArtist": string}. possibleCopyright=true если вероятно, что текст уже опубликован и принадлежит другому артисту/правообладателю. Если musicAuthor соответствует найденному правообладателю или источнику, снижай риск.'},
     {role:'user',content:JSON.stringify({title,artistName,musicAuthor,lyricsSample:snippet})}
   ];
-  try{
-    const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
-      body:JSON.stringify({model:'gemini-search',messages,response_format:{type:'json_object'},temperature:0})
-    });
-    if(!res.ok) throw new Error('copyright-check-failed');
-    const json=await res.json();
-    const content=json?.choices?.[0]?.message?.content||'{}';
-    let parsed={};
-    try{parsed=JSON.parse(content)}catch(e){parsed={}}
-    return {
-      possibleCopyright: !!parsed.possibleCopyright,
-      confidence: Number(parsed.confidence||0),
-      reason: parsed.reason||'',
-      matchedSource: parsed.matchedSource||'',
-      matchedArtist: parsed.matchedArtist||''
-    };
-  }catch(e){
-    return {possibleCopyright:false,confidence:0,reason:'search-unavailable',matchedSource:'',matchedArtist:''};
+  const models=['gemini-search','perplexity-fast','openai-fast'];
+  for(const model of models){
+    try{
+      const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
+        body:JSON.stringify({model,messages,response_format:{type:'json_object'},temperature:0})
+      });
+      if(!res.ok) throw new Error('copyright-check-failed-'+model);
+      const json=await res.json();
+      const content=json?.choices?.[0]?.message?.content||'{}';
+      let parsed={};
+      try{parsed=JSON.parse(content)}catch(e){parsed={}}
+      return {
+        possibleCopyright: !!parsed.possibleCopyright,
+        confidence: Number(parsed.confidence||0),
+        reason: parsed.reason||'',
+        matchedSource: parsed.matchedSource||'',
+        matchedArtist: parsed.matchedArtist||'',
+        sourceModel:model
+      };
+    }catch(e){}
   }
+  return {possibleCopyright:false,confidence:0,reason:'search-unavailable',matchedSource:'',matchedArtist:'',sourceModel:'fallback'};
 }
 async function moderateTrackWithAI({title='',lyrics='',genre='',duration=0,fileName='',musicAuthor='',audioFile=null,artistName=''}){
   const transcript=audioFile?await transcribeAudioWithPollinations(audioFile):'';
@@ -3992,7 +4010,11 @@ const RADIO_FALLBACK_STATIONS={
     {name:'Radio Monte Carlo',country:'Россия',language:'ru',tags:'pop,lounge',bitrate:128,favicon:'',url_resolved:'https://montecarlo.hostingradio.ru/montecarlo96.aacp'},
     {name:'Юмор FM',country:'Россия',language:'ru',tags:'humor,fun,talk',bitrate:128,favicon:'https://humorfm.101.ru/favicon.ico',url_resolved:'https://pub0302.101.ru:8443/stream/pro/aac/64/11',url:'https://pub0302.101.ru:8443/stream/trust/mp3/128/11',homepage:'https://humorfm.101.ru'},
     {name:'Радио Дача',country:'Россия',language:'ru',tags:'pop,retro,russian',bitrate:128,favicon:'https://www.radiodacha.ru/favicon.ico',url_resolved:'https://pub0302.101.ru:8443/stream/pro/aac/64/182',url:'https://pub0302.101.ru:8443/stream/trust/mp3/128/182',homepage:'https://www.radiodacha.ru'},
-    {name:'Радио Зенит',country:'Россия',language:'ru',tags:'sport,football,news,spb',bitrate:128,favicon:'https://radiozenit.ru/favicon.ico',url_resolved:'https://radiozenit.101.ru:8443/stream/pro/aac/64/269',url:'https://radiozenit.101.ru:8443/stream/trust/mp3/128/269',homepage:'https://radiozenit.ru'}
+    {name:'Радио Зенит',country:'Россия',language:'ru',tags:'sport,football,news,spb',bitrate:128,favicon:'https://radiozenit.ru/favicon.ico',url_resolved:'https://radiozenit.101.ru:8443/stream/pro/aac/64/269',url:'https://radiozenit.101.ru:8443/stream/trust/mp3/128/269',homepage:'https://radiozenit.ru'},
+    {name:'Дорожное радио',country:'Россия',language:'ru',tags:'road,pop,retro,russian',bitrate:128,favicon:'https://dorognoe.ru/favicon.ico',url_resolved:'https://dorognoe.hostingradio.ru:8000/dorognoe',url:'https://dorognoe.hostingradio.ru/dorognoe',homepage:'https://dorognoe.ru'},
+    {name:'Русское Радио',country:'Россия',language:'ru',tags:'pop,russian',bitrate:128,favicon:'https://rusradio.ru/favicon.ico',url_resolved:'https://rusradio.hostingradio.ru/rusradio128.mp3',homepage:'https://rusradio.ru'},
+    {name:'Авторадио',country:'Россия',language:'ru',tags:'pop,russian,auto',bitrate:128,favicon:'https://www.avtoradio.ru/favicon.ico',url_resolved:'https://ic7.101.ru:8000/v3_1',homepage:'https://avtoradio.ru'},
+    {name:'Ретро FM',country:'Россия',language:'ru',tags:'retro,pop,80s,90s',bitrate:128,favicon:'https://retrofm.ru/favicon.ico',url_resolved:'http://hls-01-retro.emgsound.ru/12/128/playlist.m3u8',homepage:'https://retrofm.ru'}
   ],
   US:[
     {name:'181.FM The Buzz',country:'USA',language:'en',tags:'rock,alternative',bitrate:128,favicon:'',url_resolved:'https://listen.181fm.com/181-buzz_128k.mp3'},
@@ -4050,49 +4072,20 @@ async function radioFetchJson(path){
 }
 async function loadRealRadio(){
   const country=(document.getElementById('radioCountry')?.value||'RU').toUpperCase();
-  const tag=(document.getElementById('radioTag')?.value||'').trim();
+  const tag=(document.getElementById('radioTag')?.value||'').trim().toLowerCase();
   const status=document.getElementById('radioStatus');
   const grid=document.getElementById('radioGrid');
   if(!grid||!status) return;
-  status.textContent='Загружаем радиостанции...';
+  status.textContent='Загружаем встроенный каталог радиостанций...';
   grid.innerHTML='<div class="loading-spinner"></div>';
-  pushCreatorLog('info','RADIO load: country='+country+', tag='+(tag||'—'));
-  try{
-    let data=[];
-    if(country==='RU'){
-      data=mergePriorityRadioStations('RU', RADIO_FALLBACK_STATIONS.RU||[]);
-      if(tag){
-        const q=tag.toLowerCase();
-        data=data.filter(s=>String(s.name||'').toLowerCase().includes(q)||String(s.tags||'').toLowerCase().includes(q)||String(s.country||'').toLowerCase().includes(q));
-      }
-      radioStations=data;
-      status.textContent=radioStations.length ? 'Для России используется встроенный каталог станций: найдено '+radioStations.length : 'Станции не найдены в российском каталоге.';
-      renderRadioGrid();
-      pushCreatorLog('warn','RADIO RU forced builtin catalog due to blocked external directory');
-      return;
-    }
-    if(tag){
-      data=await radioFetchJson('/stations/bytag/'+encodeURIComponent(tag)+'?hidebroken=true&limit=50&order=votes&reverse=true');
-      data=normalizeRadioStations(data,country).filter(s=>!country || String(s.countrycode||'').toUpperCase()===country || String(s.country||'').toUpperCase().includes(country));
-      data=mergePriorityRadioStations(country,data);
-    }
-    if(!data.length){
-      data=await radioFetchJson('/stations/search?hidebroken=true&limit=50&order=votes&reverse=true&countrycode='+encodeURIComponent(country));
-      data=mergePriorityRadioStations(country,data);
-    }
-    if(!data.length && RADIO_FALLBACK_STATIONS[country]){
-      data=mergePriorityRadioStations(country,RADIO_FALLBACK_STATIONS[country]);
-      pushCreatorLog('warn','RADIO fallback catalog used for '+country);
-    }
-    radioStations=data;
-    status.textContent=radioStations.length ? 'Выбери радиостанцию ниже: найдено '+radioStations.length : 'Станции не найдены. Попробуй другой регион или жанр.';
-    renderRadioGrid();
-  }catch(e){
-    radioStations=mergePriorityRadioStations(country,RADIO_FALLBACK_STATIONS[country]||RADIO_FALLBACK_STATIONS.RU);
-    status.textContent=radioStations.length ? 'Каталог радио загружен из запасного списка.' : 'Не удалось загрузить радио.';
-    renderRadioGrid();
-    pushCreatorLog('warn','RADIO fail, fallback used: '+(e?.message||e));
+  pushCreatorLog('info','RADIO builtin load: country='+country+', tag='+(tag||'—'));
+  let data=mergePriorityRadioStations(country, RADIO_FALLBACK_STATIONS[country]||RADIO_FALLBACK_STATIONS.RU||[]);
+  if(tag){
+    data=data.filter(s=>String(s.name||'').toLowerCase().includes(tag)||String(s.tags||'').toLowerCase().includes(tag)||String(s.country||'').toLowerCase().includes(tag)||String(s.language||'').toLowerCase().includes(tag));
   }
+  radioStations=data;
+  status.textContent=radioStations.length ? 'Используется встроенный каталог станций: найдено '+radioStations.length : 'Станции не найдены во встроенном каталоге.';
+  renderRadioGrid();
 }
 function renderRadioGrid(){
   const grid=document.getElementById('radioGrid');
@@ -5086,10 +5079,18 @@ function updateEditExplicitUI(){
   if(badge) badge.style.display='none';
 }
 function openAdminTools(){
-  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
-  const modal=document.getElementById('adminToolsModal');
-  if(modal){modal.classList.add('open');return}
-  openCreatorLogs();
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю сервиса');return}
+  const settingsModal=document.getElementById('settingsModal');
+  if(settingsModal) settingsModal.classList.add('open');
+  document.getElementById('settingsContent').innerHTML=
+    '<div class="modal-title" style="margin-bottom:12px">Меню создателя</div>'+
+    '<div class="settings-item" onclick="openCreatorLogs()"><span class="material-symbols-rounded">receipt_long</span><div class="settings-item-info"><div class="settings-item-title">Логи</div><div class="settings-item-sub">Все логи, live и архив, с фильтрами по датам</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorReports()"><span class="material-symbols-rounded">flag</span><div class="settings-item-info"><div class="settings-item-title">Жалобы на треки</div><div class="settings-item-sub">Жалобы, причины, удаление треков</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorStats()"><span class="material-symbols-rounded">monitoring</span><div class="settings-item-info"><div class="settings-item-title">Статистика</div><div class="settings-item-sub">Треки, пользователи, прослушивания, жалобы</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorTrackManager()"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Управление треками</div><div class="settings-item-sub">Чужие треки, редактирование, удаление</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorModuleCheck()"><span class="material-symbols-rounded">checklist</span><div class="settings-item-info"><div class="settings-item-title">Проверка модулей</div><div class="settings-item-sub">Сервисы модерации, party mode, видео, радио</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorUsers()"><span class="material-symbols-rounded">group</span><div class="settings-item-info"><div class="settings-item-title">Управление пользователями</div><div class="settings-item-sub">Бан, разбан, чужие треки пользователя</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="modal-actions"><button class="btn-outlined" onclick="openSettings()">Назад</button></div>';
 }
 function renderNotificationsModal(){
   const list=document.getElementById('notificationsList');
