@@ -4979,22 +4979,68 @@ function openCreatorModuleCheck(){
     ['Плеер','ok'],
     ['Видео к треку','ok'],
     ['Party mode', partySessionId?'active':'ready'],
-    ['Модерация', 'ready'],
+    ['Модерация','ready'],
     ['Поиск','ok']
   ];
-  creatorPanelWrap('Проверка модулей', checks.map(([name,state])=>'<div class="settings-item"><span class="material-symbols-rounded">'+(state==='ok'?'check_circle':state==='active'?'radio_button_checked':'hourglass')+'</span><div class="settings-item-info"><div class="settings-item-title">'+esc(name)+'</div><div class="settings-item-sub">Состояние: '+esc(state)+'</div></div></div>').join(''));
+  const html=checks.map(([name,state])=>{
+    const icon=state==='ok' ? 'check_circle' : state==='active' ? 'radio_button_checked' : 'hourglass';
+    return '<div class="settings-item">'
+      + '<span class="material-symbols-rounded">'+icon+'</span>'
+      + '<div class="settings-item-info">'
+      +   '<div class="settings-item-title">'+esc(name)+'</div>'
+      +   '<div class="settings-item-sub">Состояние: '+esc(state)+'</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+  creatorPanelWrap('Проверка модулей', html);
 }
 function openCreatorUsers(){
   db.ref('users').once('value').then(s=>{
     const users=Object.values(s.val()||{}).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-    creatorPanelWrap('Управление пользователями', users.length?users.map(u=>'<div class="settings-item" onclick="openCreatorUserDetail(\''+u.uid+'\')"><span class="material-symbols-rounded">person</span><div class="settings-item-info"><div class="settings-item-title">'+esc(u.displayName||u.username||u.uid)+'</div><div class="settings-item-sub">@'+esc(u.username||'')+' '+(isCreatorUser(u)?'• создатель':'')+(u.banned?' • забанен':'')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">group_off</span><h3>Нет пользователей</h3></div>');
+    const html=users.length
+      ? users.map(u=>'<div class="settings-item" onclick="openCreatorUserDetail(\''+u.uid+'\')"><span class="material-symbols-rounded">person</span><div class="settings-item-info"><div class="settings-item-title">'+esc(u.displayName||u.username||u.uid)+'</div><div class="settings-item-sub">@'+esc(u.username||'')+' '+(isCreatorUser(u)?'• создатель':'')+(u.banned?' • забанен':'')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>').join('')
+      : '<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">group_off</span><h3>Нет пользователей</h3></div>';
+    creatorPanelWrap('Управление пользователями', html);
   });
 }
 function openCreatorUserDetail(uid){
   db.ref('users/'+uid).once('value').then(s=>{
     const u=s.val()||{};
     const tracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===uid);
-    creatorPanelWrap('Пользователь', '<div class="settings-item"><span class="material-symbols-rounded">badge</span><div class="settings-item-info"><div class="settings-item-title">'+esc(u.displayName||'Пользователь')+'</div><div class="settings-item-sub">@'+esc(u.username||'')+' • '+esc(u.email||'без email')+'</div></div>'+(isCreatorUser(u)?'':'<button class="btn-outlined" onclick="creatorToggleBanUser(\''+uid+'\')">'+(u.banned?'Разбанить':'Бан')</button>')+'</div><div class="settings-item"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Треков</div><div class="settings-item-sub">'+tracks.length+'</div></div></div>'+(tracks.length?tracks.map(([id,t])=>'<div class="settings-item"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+formatPlays(t.plays||0)+' прослушиваний</div></div><button class="btn-tonal" onclick="creatorEditForeignTrack(\''+id+'\')">Изменить</button><button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+id+'\')">Удалить трек</button></div>').join(''):'') );
+    const banButton=isCreatorUser(u)
+      ? ''
+      : '<button class="btn-outlined" onclick="creatorToggleBanUser(\''+uid+'\')">'+(u.banned?'Разбанить':'Бан')+'</button>';
+    const trackRows=tracks.length
+      ? tracks.map(([id,t])=>{
+          return '<div class="settings-item">'
+            + '<span class="material-symbols-rounded">music_note</span>'
+            + '<div class="settings-item-info">'
+            +   '<div class="settings-item-title">'+esc(t.title||'Без названия')+'</div>'
+            +   '<div class="settings-item-sub">'+formatPlays(t.plays||0)+' прослушиваний</div>'
+            + '</div>'
+            + '<button class="btn-tonal" onclick="creatorEditForeignTrack(\''+id+'\')">Изменить</button>'
+            + '<button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+id+'\')">Удалить трек</button>'
+            + '</div>';
+        }).join('')
+      : '<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">library_music</span><h3>У пользователя нет треков</h3></div>';
+    const html=''
+      + '<div class="settings-item">'
+      +   '<span class="material-symbols-rounded">badge</span>'
+      +   '<div class="settings-item-info">'
+      +     '<div class="settings-item-title">'+esc(u.displayName||'Пользователь')+'</div>'
+      +     '<div class="settings-item-sub">@'+esc(u.username||'')+' • '+esc(u.email||'без email')+'</div>'
+      +   '</div>'
+      +   banButton
+      + '</div>'
+      + '<div class="settings-item">'
+      +   '<span class="material-symbols-rounded">library_music</span>'
+      +   '<div class="settings-item-info">'
+      +     '<div class="settings-item-title">Треков</div>'
+      +     '<div class="settings-item-sub">'+tracks.length+'</div>'
+      +   '</div>'
+      + '</div>'
+      + trackRows;
+    creatorPanelWrap('Пользователь', html);
   });
 }
 async function creatorToggleBanUser(uid){
