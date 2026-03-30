@@ -4072,18 +4072,96 @@ function deletePlaylist(plId){if(!currentUser)return;db.ref('playlists/'+current
 
 /* ===== VIEW ARTIST ===== */
 function viewArtist(aid){
-  navigate('artist');currentArtistId=aid;
-  const h=document.getElementById('artistHeader'),tl=document.getElementById('artistTracks');
-  h.innerHTML='<div class="loading-spinner"></div>';tl.innerHTML='';
+  navigate('artist');
+  currentArtistId=aid;
+  const h=document.getElementById('artistHeader');
+  const tl=document.getElementById('artistTracks');
+  h.innerHTML='<div class="loading-spinner"></div>';
+  tl.innerHTML='';
   document.getElementById('artistTabs').style.display='none';
+
   db.ref('users/'+aid).once('value').then(s=>{
-    const u=s.val()||{};const isSub=subscriptions[aid];
-const roleBadges=(isCreatorUser(u)?'<span class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель MusicPlatforme</span>':'');
-      db.ref('subscribers/'+aid).once('value').then(ss=>{
-        const sc=Object.keys(ss.val()||{}).length;
-        currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===aid).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-        const totalPlays=currentArtistTracks.reduce((s,[id,t])=>s+(t.plays||0),0);
-        h.innerHTML='<div class="artist-page-avatar">'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>')+'</div><div style="flex:1;text-align:center"><div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Артист')+(isCreatorUser(u)?' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>':'')+'</div>'+(u.username?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>':'')+(roleBadges?'<div class="artist-actions-centered" data-center-wrap="true" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0">'+roleBadges+'</div>':'')+(u.bio?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>':'')+'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);display:flex;gap:16px;flex-wrap:wrap;justify-content:center"><span>'+currentArtistTracks.length+' треков</span><span>'+sc+' подписчиков</span><span>'+formatPlays(totalPlays)+' прослушиваний</span></div><div class="artist-actions-centered" data-center-wrap="true" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center">'+(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')+(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')+(isCreatorUser(currentUser)&&currentUser.uid!==aid?'<button class="btn-outlined" onclick="adminOpenUserActions(\''+aid+'\')"><span class="material-symbols-rounded">gavel</span>' Действия создателя</button>':'')+'</div></div>';
+    const u=s.val()||{};
+    const isSub=!!subscriptions[aid];
+    const roleBadges=isCreatorUser(u)
+      ? '<span class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель MusicPlatforme</span>'
+      : '';
+
+    db.ref('subscribers/'+aid).once('value').then(ss=>{
+      const sc=Object.keys(ss.val()||{}).length;
+      currentArtistTracks=Object.entries(allTracks)
+        .filter(([id,t])=>t.artistId===aid)
+        .sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+      const totalPlays=currentArtistTracks.reduce((sum,[id,t])=>sum+(t.plays||0),0);
+
+      const avatarHtml = u.photo
+        ? '<img src="'+u.photo+'" alt="">'
+        : '<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>';
+
+      const displayNameHtml =
+        esc(u.displayName||'Артист') +
+        (isCreatorUser(u)
+          ? ' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>'
+          : '');
+
+      const usernameHtml = u.username
+        ? '<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>'
+        : '';
+
+      const bioHtml = u.bio
+        ? '<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>'
+        : '';
+
+      const roleHtml = roleBadges
+        ? '<div class="artist-actions-centered" data-center-wrap="true" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0">'+roleBadges+'</div>'
+        : '';
+
+      let actionButtons='';
+      if(currentArtistTracks.length){
+        actionButtons += '<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>';
+      }
+      if(currentUser && currentUser.uid!==aid){
+        actionButtons += '<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>';
+      }
+      if(isCreatorUser(currentUser) && currentUser.uid!==aid){
+        actionButtons += '<button class="btn-outlined" onclick="openCreatorUserDetail(\''+aid+'\')"><span class="material-symbols-rounded">shield_person</span> Действия</button>';
+      }
+
+      h.innerHTML =
+        '<div class="artist-page-avatar">'+avatarHtml+'</div>'+
+        '<div style="flex:1;text-align:center">'+
+          '<div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+displayNameHtml+'</div>'+
+          usernameHtml+
+          roleHtml+
+          bioHtml+
+          '<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);display:flex;gap:16px;flex-wrap:wrap;justify-content:center">'+
+            '<span>'+currentArtistTracks.length+' треков</span>'+
+            '<span>'+sc+' подписчиков</span>'+
+            '<span>'+formatPlays(totalPlays)+' прослушиваний</span>'+
+          '</div>'+
+          '<div class="artist-actions-centered" data-center-wrap="true" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center">'+actionButtons+'</div>'+
+        '</div>';
+
+      document.getElementById('artistTabs').style.display='flex';
+      tl.innerHTML = currentArtistTracks.length===0
+        ? '<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>'
+        : currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+    });
+  });
+}
+
+function switchArtistTab(tab,el){
+  document.querySelectorAll('#artistTabs .tab-item').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const tl=document.getElementById('artistTracks');
+  if(tab==='tracks'){
+    tl.innerHTML=currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  }else if(tab==='popular'){
+    const sorted=[...currentArtistTracks].sort((a,b)=>(b[1].plays||0)-(a[1].plays||0));
+    tl.innerHTML=sorted.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  }
+}
+/* removed corrupted duplicated artist block */'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>')+'</div><div style="flex:1;text-align:center"><div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Артист')+(isCreatorUser(u)?' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>':'')+'</div>'+(u.username?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>':'')+(roleBadges?'<div class="artist-actions-centered" data-center-wrap="true" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0">'+roleBadges+'</div>':'')+(u.bio?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>':'')+'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);display:flex;gap:16px;flex-wrap:wrap;justify-content:center"><span>'+currentArtistTracks.length+' треков</span><span>'+sc+' подписчиков</span><span>'+formatPlays(totalPlays)+' прослушиваний</span></div><div class="artist-actions-centered" data-center-wrap="true" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center">'+(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')+(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')+(isCreatorUser(currentUser)&&currentUser.uid!==aid?'<button class="btn-outlined" onclick="adminOpenUserActions(\''+aid+'\')"><span class="material-symbols-rounded">gavel</span>' Действия создателя</button>':'')+'</div></div>';
       document.getElementById('artistTabs').style.display='flex';
       tl.innerHTML=currentArtistTracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
     });
