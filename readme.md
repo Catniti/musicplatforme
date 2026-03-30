@@ -50,7 +50,7 @@
 - **HTML5 / CSS3 / JavaScript** — Single Page Application (SPA)
 - **GitHub Pages** — хостинг и деплой
 - **Material Icons** — иконки интерфейса
-- Полностью **клиентское приложение** — без серверного бэкенда
+- **Google Firebase** - серверный бекэнд
 
 ---
 
@@ -122,8 +122,8 @@ python -m http.server 8000
 
 Создано и поддерживается **[VriskasYT](https://github.com/vriskasYT)**.
 
-Если у вас есть вопросы или предложения — перейдите по ссылке в чат-бот поддержки в telegram
-**[Перейти](https://github.com/vriskasYT)**
+Если у вас есть вопросы или предложения — перейдите по ссылке в 
+**[чат-бот поддержки в telegram](https://t.me/VriskasSupport_bot)**
 
 
 ---
