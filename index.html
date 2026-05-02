@@ -1438,7 +1438,38 @@ body[data-ui-style="glass"]{display:contents}
 <div class="modal-overlay" id="deleteModal"><div class="modal">
   <div class="modal-title">Удалить трек?</div>
   <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:16px">Этот трек будет безвозвратно удалён.</p>
+  <label class="modal-label">Причина удаления</label>
+  <select class="md-input" id="deleteTrackReason" style="margin-bottom:12px">
+    <option value="">— выберите причину —</option>
+    <option value="copyright">Нарушение авторских прав</option>
+    <option value="explicit">Неприемлемый контент (explicit)</option>
+    <option value="spam">Спам / мусор</option>
+    <option value="lowquality">Низкое качество</option>
+    <option value="duplicate">Дубликат</option>
+    <option value="request">По запросу автора</option>
+    <option value="other">Другое</option>
+  </select>
   <div class="modal-actions"><button class="btn-outlined" onclick="closeModal('deleteModal')">Отмена</button><button class="btn-primary" style="background:var(--md-error);color:var(--md-on-error)" onclick="confirmDeleteTrack()">Удалить</button></div>
+</div></div>
+
+<div class="modal-overlay" id="copyrightAppealModal"><div class="modal" style="max-width:480px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+    <button class="btn-icon" onclick="closeModal('copyrightAppealModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0">Оспорить нарушение</div>
+  </div>
+  <div id="copyrightAppealExistingStatus" style="display:none;padding:10px 14px;background:var(--md-secondary-container);border-radius:12px;margin-bottom:14px;font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-secondary-container)"></div>
+  <div class="effect-card" style="margin-bottom:14px">
+    <div class="effect-name" id="copyrightAppealTrackName" style="margin-bottom:4px">Трек</div>
+    <div class="effect-sub" id="copyrightAppealViolationInfo">Загрузка...</div>
+  </div>
+  <label class="modal-label">Ваши права на этот трек</label>
+  <textarea class="md-input" id="appealOwnershipText" rows="4" placeholder="Опишите, почему вы владеете правами на этот трек. Например: это моё оригинальное произведение, созданное в ... году." style="resize:vertical;margin-bottom:8px"></textarea>
+  <label class="modal-label">Ссылка на доказательство (необязательно)</label>
+  <input class="md-input" id="appealProofUrl" placeholder="https://soundcloud.com/... или другой источник" style="margin-bottom:4px">
+  <div class="modal-actions">
+    <button class="btn-outlined" onclick="closeModal('copyrightAppealModal')">Отмена</button>
+    <button class="btn-primary" id="submitAppealBtn" onclick="submitCopyrightAppeal()"><span class="material-symbols-rounded">send</span> Отправить</button>
+  </div>
 </div></div>
 
 <div class="modal-overlay" id="settingsModal"><div class="modal" style="max-width:520px">
@@ -1547,6 +1578,21 @@ body[data-ui-style="glass"]{display:contents}
         <button class="btn-text" type="button" onclick="document.getElementById('editTrackLyrics').value='';document.getElementById('editAiLyricsStatus').textContent=''"><span class="material-symbols-rounded">ink_eraser</span> Очистить текст</button>
       </div>
       <div id="editAiLyricsStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant)"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--md-outline-variant)">
+        <button class="btn-tonal" type="button" onclick="rerunModerationForEdit()"><span class="material-symbols-rounded">policy</span> Перезапустить модерацию</button>
+        <button class="btn-tonal" type="button" id="editExplicitToggleBtn" onclick="toggleEditExplicitManual()"><span class="material-symbols-rounded">explicit</span> Explicit</button>
+        <button class="btn-tonal" type="button" onclick="toggleEditCopyrightFields()"><span class="material-symbols-rounded">copyright</span> Нарушение прав</button>
+      </div>
+      <div id="editCopyrightFields" style="display:none;margin-top:10px;padding:12px;background:var(--md-surface-container-high);border-radius:var(--md-shape-md)">
+        <label class="modal-label">Причина нарушения авторских прав</label>
+        <input class="md-input" id="editCopyrightReason" placeholder="Описание нарушения" style="margin-bottom:8px">
+        <label class="modal-label">Компания / правообладатель</label>
+        <input class="md-input" id="editCopyrightCompany" placeholder="Название компании или правообладателя" style="margin-bottom:8px">
+        <label class="modal-label">Ссылка на оригинал</label>
+        <input class="md-input" id="editCopyrightLink" placeholder="https://..." style="margin-bottom:8px">
+        <button class="btn-outlined" style="margin-top:4px" onclick="saveEditCopyrightViolation()"><span class="material-symbols-rounded">save</span> Сохранить нарушение</button>
+      </div>
+      <div id="editModerationStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:8px"></div>
     </div>
   </div>
   <div class="modal-actions"><button class="btn-outlined" onclick="closeModal('editTrackModal')">Отмена</button><button class="btn-primary" onclick="saveTrackEdits()">Сохранить</button></div>
@@ -1778,6 +1824,7 @@ let notificationsMap={};
 let partyQrScannerStream=null;
 let partyQrDetector=null;
 let adminEditingTrackId=null;
+let copyrightAppealTrackId=null;
 let loadedTrackEntries=[];
 let trackPageSize=24;
 let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"compactTrackList":false,"glass":false}');
@@ -1996,7 +2043,7 @@ async function analyzeAudioSafetyWithPollinations({title='',lyrics='',genre='',d
     {role:'system',content:'Ты модератор музыкальной платформы для детей и подростков. Тебе дали название трека, текст, расшифровку слов, жанр, длительность и автора музыки. Ответь только JSON без пояснений. Формат: {"explicit": boolean, "lowQuality": boolean, "reason": string, "confidence": number, "detectedLyrics": string}. explicit=true если в тексте есть мат, сексуальные темы, жесть, наркотики, токсичные оскорбления или другой неприятный детям контент. lowQuality=true если это спам, мусор, бессмысленная нарезка или фейковый трек. Ничего не выдумывай сверх текста.'},
     {role:'user',content:JSON.stringify({title,lyrics,genre,duration,fileName,musicAuthor,transcript})}
   ];
-  const models=['qwen-safety','openai-fast','mistral'];
+  const models=['openai','mistral','qwen-coder'];
   for(const model of models){
     try{
       const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
@@ -2028,7 +2075,7 @@ async function analyzeSongStructureWithPollinations({title='',lyrics='',genre=''
     {role:'system',content:'Ты анализируешь уже готовую транскрипцию песни. Ответь только JSON без пояснений. Формат: {"hasVocals": boolean, "normalizedLyrics": string, "chorus": string, "sections": [{"type": string, "label": string, "text": string}], "summary": string}. Найди припев, куплеты, бридж, интро/аутро если они различимы. Не выдумывай строки, которых нет в тексте. Если текст слабый, просто структурируй то, что есть.'},
     {role:'user',content:JSON.stringify({title,lyrics,genre,duration,musicAuthor,transcript:rawText})}
   ];
-  const models=['openai-fast','mistral','gemini-fast'];
+  const models=['openai','mistral','gemini'];
   for(const model of models){
     try{
       const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
@@ -2066,7 +2113,7 @@ async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor=''
     {role:'system',content:'Ты ищешь в интернете возможные совпадения текста песни и признаки авторских прав. Используй веб-поиск. Ответь только JSON без пояснений. Формат: {"possibleCopyright": boolean, "confidence": number, "reason": string, "matchedSource": string, "matchedArtist": string}. possibleCopyright=true если вероятно, что текст уже опубликован и принадлежит другому артисту/правообладателю. Если musicAuthor соответствует найденному правообладателю или источнику, снижай риск.'},
     {role:'user',content:JSON.stringify({title,artistName,musicAuthor,lyricsSample:snippet})}
   ];
-  const models=['gemini-search','perplexity-fast','openai-fast'];
+  const models=['perplexity','openai','gemini'];
   for(const model of models){
     try{
       const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
@@ -2286,13 +2333,41 @@ document.getElementById('uploadGenre').addEventListener('change',function(){
 });
 
 /* ===== COVER HANDLING ===== */
+function compressImageFile(file,maxW,maxH,quality){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    const tid=setTimeout(()=>reject(new Error('compress-timeout')),10000);
+    r.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        clearTimeout(tid);
+        let w=img.width,h=img.height;
+        if(w>maxW||h>maxH){const s=Math.min(maxW/w,maxH/h);w=Math.round(w*s);h=Math.round(h*s)}
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(c.toDataURL('image/jpeg',quality||0.85));
+      };
+      img.onerror=()=>{clearTimeout(tid);reject(new Error('image-load-error'))};
+      img.src=ev.target.result;
+    };
+    r.onerror=()=>{clearTimeout(tid);reject(new Error('filereader-error'))};
+    r.readAsDataURL(file);
+  });
+}
 function handleCoverSelect(e){
   const f=e.target.files[0];if(!f)return;
   if(!f.type.startsWith('image/')){showSnackbar('Выберите изображение');return}
-  if(f.size>5*1024*1024){showSnackbar('Обложка макс. 5 МБ');return}
-  const r=new FileReader();
-  r.onload=ev=>{selectedCoverDataURL=ev.target.result;document.getElementById('coverUploadZone').innerHTML='<img src="'+selectedCoverDataURL+'" alt="">';document.getElementById('uploadCover').value=''};
-  r.readAsDataURL(f);
+  if(f.size>10*1024*1024){showSnackbar('Обложка макс. 10 МБ');return}
+  document.getElementById('coverUploadZone').innerHTML='<span class="material-symbols-rounded">hourglass</span>';
+  compressImageFile(f,400,400,0.85).then(dataUrl=>{
+    selectedCoverDataURL=dataUrl;
+    document.getElementById('coverUploadZone').innerHTML='<img src="'+dataUrl+'" alt="">';
+    document.getElementById('uploadCover').value='';
+  }).catch(()=>{
+    const r=new FileReader();
+    r.onload=ev=>{selectedCoverDataURL=ev.target.result;document.getElementById('coverUploadZone').innerHTML='<img src="'+selectedCoverDataURL+'" alt="">';document.getElementById('uploadCover').value=''};
+    r.readAsDataURL(f);
+  });
 }
 
 function bytesToBase64(uint8){let binary='';const chunk=0x8000;for(let i=0;i<uint8.length;i+=chunk){binary+=String.fromCharCode(...uint8.subarray(i,i+chunk))}return btoa(binary)}
@@ -2488,7 +2563,29 @@ function loginUser(ud){
   updateAuthUI();loadUserData();setupDevicePresence();listenRemoteCommands();
 }
 function signOutUser(){teardownDevicePresence();currentUser=null;localStorage.removeItem('mp_user');favorites={};subscriptions={};userPlaylists={};listeningHistory=[];playedTracks={};activeReceiverId=null;updateAuthUI();showSnackbar('Вы вышли');navigate('home')}
-function restoreSession(){const s=localStorage.getItem('mp_user');if(s){try{currentUser=JSON.parse(s);playedTracks=JSON.parse(localStorage.getItem('mp_played_'+currentUser.uid)||'{}');updateAuthUI();loadUserData();setupDevicePresence();listenRemoteCommands()}catch(e){localStorage.removeItem('mp_user')}}}
+function restoreSession(){
+  const s=localStorage.getItem('mp_user');
+  if(!s)return;
+  try{currentUser=JSON.parse(s)}catch(e){localStorage.removeItem('mp_user');return}
+  try{playedTracks=JSON.parse(localStorage.getItem('mp_played_'+currentUser.uid)||'{}')}catch(e){playedTracks={}}
+  try{updateAuthUI()}catch(e){}
+  try{loadUserData()}catch(e){}
+  try{setupDevicePresence()}catch(e){}
+  try{listenRemoteCommands()}catch(e){}
+  db.ref('users/'+currentUser.uid).once('value').then(snap=>{
+    const fresh=snap.val();
+    if(fresh&&fresh.uid){
+      currentUser=Object.assign({},currentUser,{
+        displayName:fresh.displayName||currentUser.displayName,
+        photo:fresh.photo||currentUser.photo||'',
+        bio:fresh.bio||currentUser.bio||'',
+        username:fresh.username||currentUser.username||''
+      });
+      localStorage.setItem('mp_user',JSON.stringify(currentUser));
+      updateAuthUI();
+    }
+  }).catch(()=>{});
+}
 
 /* ===== TELEGRAM AUTH ===== */
 window.onTelegramAuth=async function(tg){
@@ -2639,8 +2736,13 @@ function openEditProfile(){
 }
 function handleAvatarSelect(e){
   const f=e.target.files[0];if(!f||!f.type.startsWith('image/'))return;
-  if(f.size>2*1024*1024){showSnackbar('Аватар макс. 2 МБ');return}
-  const r=new FileReader();r.onload=ev=>{document.getElementById('editAvatarZone').innerHTML='<img src="'+ev.target.result+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';document.getElementById('editAvatarUrl').value=ev.target.result};r.readAsDataURL(f);
+  if(f.size>10*1024*1024){showSnackbar('Аватар макс. 10 МБ');return}
+  compressImageFile(f,400,400,0.85).then(dataUrl=>{
+    document.getElementById('editAvatarZone').innerHTML='<img src="'+dataUrl+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    document.getElementById('editAvatarUrl').value=dataUrl;
+  }).catch(()=>{
+    const r=new FileReader();r.onload=ev=>{document.getElementById('editAvatarZone').innerHTML='<img src="'+ev.target.result+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';document.getElementById('editAvatarUrl').value=ev.target.result};r.readAsDataURL(f);
+  });
 }
 async function saveProfileEdits(){
   if(!currentUser)return;
@@ -2786,7 +2888,7 @@ function renderTrackItem(id,track,num,showDel){
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
     '<div class="track-num">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
     '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
-    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+featuredChip+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'copyright\')">©?</span>':'')+'</div>'+ 
+    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+featuredChip+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав — нажмите для подробностей" onclick="event.stopPropagation();openCopyrightDetails(\''+id+'\')">©?</span>':'')+'</div>'+ 
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
     '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Автор музыки: '+esc(track.musicAuthor||track.artistName||'Не указан')+creatorChip+'</div></div>'+
     '<div class="track-plays"><span class="material-symbols-rounded">play_arrow</span>'+formatPlays(plays)+'</div>'+
@@ -2867,9 +2969,231 @@ function openEditTrack(tid){
 }
 function handleEditTrackCoverSelect(e){
   const f=e.target.files[0];if(!f||!f.type.startsWith('image/')){showSnackbar('Выберите изображение');return}
-  if(f.size>2*1024*1024){showSnackbar('Обложка макс. 2 МБ');return}
-  const r=new FileReader();r.onload=ev=>{editTrackCoverData=ev.target.result;document.getElementById('editTrackCoverUrl').value='';document.getElementById('editTrackCoverPreview').innerHTML='<img src="'+editTrackCoverData+'" alt="">'};r.readAsDataURL(f);
+  if(f.size>10*1024*1024){showSnackbar('Обложка макс. 10 МБ');return}
+  document.getElementById('editTrackCoverPreview').innerHTML='<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">hourglass</span>';
+  compressImageFile(f,400,400,0.85).then(dataUrl=>{
+    editTrackCoverData=dataUrl;
+    document.getElementById('editTrackCoverUrl').value='';
+    document.getElementById('editTrackCoverPreview').innerHTML='<img src="'+dataUrl+'" alt="">';
+  }).catch(()=>{
+    const r=new FileReader();r.onload=ev=>{editTrackCoverData=ev.target.result;document.getElementById('editTrackCoverUrl').value='';document.getElementById('editTrackCoverPreview').innerHTML='<img src="'+editTrackCoverData+'" alt="">'};r.readAsDataURL(f);
+  });
 }
+function toggleEditCopyrightFields(){
+  const el=document.getElementById('editCopyrightFields');
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+function toggleEditExplicitManual(){
+  if(!editTrackId){showSnackbar('Трек не выбран');return}
+  const track=allTracks[editTrackId];if(!track)return;
+  const newVal=!track.explicit;
+  db.ref('tracks/'+editTrackId).update({explicit:newVal,userForcedExplicit:true});
+  if(allTracks[editTrackId]){allTracks[editTrackId].explicit=newVal;allTracks[editTrackId].userForcedExplicit=true}
+  const btn=document.getElementById('editExplicitToggleBtn');
+  if(btn) btn.style.background=newVal?'var(--md-error-container)':'';
+  const status=document.getElementById('editModerationStatus');
+  if(status) status.textContent=newVal?'Трек помечен Explicit.':'Отметка Explicit снята.';
+  showSnackbar(newVal?'Отмечен как Explicit':'Отметка Explicit снята');
+}
+async function saveEditCopyrightViolation(){
+  if(!editTrackId){showSnackbar('Трек не выбран');return}
+  const reason=(document.getElementById('editCopyrightReason')?.value||'').trim();
+  const company=(document.getElementById('editCopyrightCompany')?.value||'').trim();
+  const link=(document.getElementById('editCopyrightLink')?.value||'').trim();
+  if(!reason&&!company){showSnackbar('Укажите причину или правообладателя');return}
+  await db.ref('tracks/'+editTrackId).update(sanitizeFirebaseValue({
+    'moderationMeta/copyrightPossible':true,
+    'moderationMeta/copyrightReason':reason,
+    'moderationMeta/copyrightCompany':company,
+    'moderationMeta/copyrightLink':link,
+    'moderationMeta/copyrightManualFlag':true,
+    'moderationMeta/copyrightFlaggedAt':Date.now()
+  }));
+  if(allTracks[editTrackId]){
+    const mm=allTracks[editTrackId].moderationMeta||{};
+    mm.copyrightPossible=true;mm.copyrightReason=reason;mm.copyrightCompany=company;mm.copyrightLink=link;mm.copyrightManualFlag=true;
+    allTracks[editTrackId].moderationMeta=mm;
+  }
+  const status=document.getElementById('editModerationStatus');
+  if(status) status.textContent='Нарушение авторских прав сохранено: '+reason+(company?' ('+company+')':'');
+  showSnackbar('Информация о нарушении прав сохранена');
+}
+async function rerunModerationForEdit(){
+  if(!editTrackId){showSnackbar('Трек не выбран');return}
+  const track=allTracks[editTrackId];if(!track){showSnackbar('Трек не найден');return}
+  const btn=document.querySelector('#editTrackModal [onclick*="rerunModerationForEdit"]');
+  const status=document.getElementById('editModerationStatus');
+  if(btn) btn.disabled=true;
+  if(status) status.textContent='Запускаем модерацию...';
+  try{
+    const title=(document.getElementById('editTrackTitle')?.value||track.title||'').trim();
+    const genre=(document.getElementById('editTrackGenre')?.value||track.genre||'').trim();
+    const lyrics=(document.getElementById('editTrackLyrics')?.value||'').trim();
+    const musicAuthor=(document.getElementById('editTrackMusicAuthor')?.value||track.musicAuthor||'').trim();
+    const audioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
+    const moderation=await runWithTimeout(
+      ()=>moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile,artistName:track.artistName||currentUser?.displayName||''}),
+      20000,null
+    );
+    if(!moderation){if(status) status.textContent='Таймаут модерации.';return}
+    const finalLyrics=(moderation.displayLyrics||moderation.detectedLyrics||lyrics||'').trim();
+    await db.ref('tracks/'+editTrackId).update(sanitizeFirebaseValue({
+      explicit:!!moderation.explicit,
+      lyrics:finalLyrics,
+      moderated:true,
+      'moderationMeta/transcript':moderation.transcript||'',
+      'moderationMeta/hasVocals':moderation.hasVocals!==false,
+      'moderationMeta/detectedLyrics':moderation.detectedLyrics||finalLyrics,
+      'moderationMeta/displayLyrics':finalLyrics,
+      'moderationMeta/chorus':moderation.chorus||'',
+      'moderationMeta/songStructure':moderation.songStructure||[],
+      'moderationMeta/structureSummary':moderation.structureSummary||'',
+      'moderationMeta/moderationModel':moderation.moderationModel||'openai',
+      'moderationMeta/copyrightModel':moderation.copyrightModel||'gemini',
+      'moderationMeta/copyrightPossible':!!moderation?.copyright?.possibleCopyright,
+      'moderationMeta/copyrightConfidence':Number(moderation?.copyright?.confidence||0),
+      'moderationMeta/copyrightReason':moderation?.copyright?.reason||'',
+      'moderationMeta/copyrightMatchedSource':moderation?.copyright?.matchedSource||'',
+      'moderationMeta/copyrightMatchedArtist':moderation?.copyright?.matchedArtist||'',
+      'moderationMeta/pending':false,
+      'moderationMeta/analysisStatus':'done'
+    }));
+    if(finalLyrics){const lf=document.getElementById('editTrackLyrics');if(lf)lf.value=finalLyrics}
+    if(status) status.textContent='Модерация завершена. Explicit: '+(moderation.explicit?'Да':'Нет')+(moderation?.copyright?.possibleCopyright?' • Возможное нарушение прав':'');
+    showSnackbar('Модерация обновлена');
+  }catch(e){
+    if(status) status.textContent='Ошибка модерации: '+(e?.message||e);
+    showSnackbar('Ошибка модерации');
+  }finally{
+    if(btn) btn.disabled=false;
+  }
+}
+/* ===== COPYRIGHT APPEALS ===== */
+function openCopyrightDetails(trackId){
+  const t=allTracks[trackId];
+  if(!t){showSnackbar('Трек не найден');return}
+  const m=t.moderationMeta||{};
+  const modal=document.getElementById('moderationDetailsModal');
+  const titleEl=document.getElementById('moderationDetailsTitle');
+  const bodyEl=document.getElementById('moderationDetailsBody');
+  if(!modal||!titleEl||!bodyEl){openModerationDetails(trackId,'copyright');return}
+  titleEl.textContent='Проверка авторских прав';
+  const isOwner=!!(currentUser&&t.artistId===currentUser.uid);
+  const appealBtn=isOwner
+    ?'<button class="btn-tonal" style="margin-top:12px;width:100%" onclick="closeModal(\'moderationDetailsModal\');openCopyrightAppeal(\''+trackId+'\')"><span class="material-symbols-rounded">balance</span> Оспорить нарушение</button>'
+    :'';
+  bodyEl.innerHTML=
+    '<div class="effect-card"><div class="effect-name">Статус</div><div class="effect-sub">'+(m.copyrightManualFlag?'Помечено вручную создателем':(m.copyrightPossible?'Возможное совпадение с чужим правообладателем':'Совпадений не обнаружено'))+'</div></div>'+
+    (m.copyrightReason?'<div class="effect-card"><div class="effect-name">Причина</div><div class="effect-sub">'+esc(m.copyrightReason)+'</div></div>':'')+
+    (m.copyrightMatchedSource?'<div class="effect-card"><div class="effect-name">Источник</div><div class="effect-sub">'+esc(m.copyrightMatchedSource)+'</div></div>':'')+
+    (m.copyrightMatchedArtist?'<div class="effect-card"><div class="effect-name">Совпадение с артистом</div><div class="effect-sub">'+esc(m.copyrightMatchedArtist)+'</div></div>':'')+
+    (m.copyrightCompany?'<div class="effect-card"><div class="effect-name">Правообладатель</div><div class="effect-sub">'+esc(m.copyrightCompany)+'</div></div>':'')+
+    '<div class="effect-card"><div class="effect-name">Время проверки</div><div class="effect-sub">'+(m.copyrightFlaggedAt?new Date(m.copyrightFlaggedAt).toLocaleString('ru-RU'):(m.updatedAt?new Date(m.updatedAt).toLocaleString('ru-RU'):'Неизвестно'))+'</div></div>'+
+    appealBtn;
+  modal.classList.add('open');
+}
+function openCopyrightAppeal(trackId){
+  if(!currentUser){showSnackbar('Войдите, чтобы оспорить нарушение');return}
+  const t=allTracks[trackId];
+  if(!t){showSnackbar('Трек не найден');return}
+  if(t.artistId!==currentUser.uid){showSnackbar('Вы можете оспаривать только свои треки');return}
+  copyrightAppealTrackId=trackId;
+  const m=t.moderationMeta||{};
+  document.getElementById('copyrightAppealTrackName').textContent=t.title||'Трек';
+  document.getElementById('copyrightAppealViolationInfo').textContent=
+    m.copyrightReason?('Причина: '+m.copyrightReason):
+    (m.copyrightMatchedSource?('Совпадение: '+m.copyrightMatchedSource):
+    'Авторское право поставлено под сомнение системой модерации');
+  document.getElementById('appealOwnershipText').value='';
+  document.getElementById('appealProofUrl').value='';
+  const statusEl=document.getElementById('copyrightAppealExistingStatus');
+  statusEl.style.display='none';
+  const btn=document.getElementById('submitAppealBtn');
+  if(btn){btn.disabled=false;btn.innerHTML='<span class="material-symbols-rounded">send</span> Отправить'}
+  db.ref('copyrightAppeals/'+trackId).orderByChild('userId').equalTo(currentUser.uid).limitToLast(1).once('value').then(s=>{
+    const ap=s.val();
+    if(ap){
+      const last=Object.values(ap)[0];
+      const statusText=last.status==='approved'?'✓ Одобрено':last.status==='rejected'?'✕ Отклонено':'⏳ На рассмотрении';
+      statusEl.style.display='block';
+      statusEl.innerHTML='<b>Предыдущее оспаривание:</b> '+statusText+(last.submittedAt?' • '+new Date(last.submittedAt).toLocaleDateString('ru-RU'):'')+(last.adminNote?'<br>Примечание: '+esc(last.adminNote):'');
+      if(last.status==='pending'&&btn){btn.disabled=true;btn.innerHTML='<span class="material-symbols-rounded">hourglass</span> Уже отправлено'}
+    }
+  }).catch(()=>{});
+  document.getElementById('copyrightAppealModal').classList.add('open');
+}
+async function submitCopyrightAppeal(){
+  if(!copyrightAppealTrackId||!currentUser)return;
+  const text=(document.getElementById('appealOwnershipText')?.value||'').trim();
+  if(!text){showSnackbar('Опишите ваши права на трек');return}
+  const proof=(document.getElementById('appealProofUrl')?.value||'').trim();
+  const btn=document.getElementById('submitAppealBtn');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="material-symbols-rounded">hourglass</span> Отправка...'}
+  try{
+    const appealId='appeal_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+    await db.ref('copyrightAppeals/'+copyrightAppealTrackId+'/'+appealId).set({
+      trackId:copyrightAppealTrackId,
+      trackTitle:allTracks[copyrightAppealTrackId]?.title||'',
+      userId:currentUser.uid,
+      userName:currentUser.displayName||currentUser.username||'',
+      ownershipText:text,
+      proofUrl:proof||'',
+      status:'pending',
+      submittedAt:Date.now()
+    });
+    showSnackbar('Оспаривание отправлено! Создатель сервиса рассмотрит запрос.');
+    closeModal('copyrightAppealModal');
+    pushCreatorLog('info','Оспаривание авт. прав: трек '+copyrightAppealTrackId+' от '+currentUser.uid);
+  }catch(e){
+    showSnackbar('Ошибка отправки: '+(e?.message||e));
+    if(btn){btn.disabled=false;btn.innerHTML='<span class="material-symbols-rounded">send</span> Отправить'}
+  }
+}
+async function openCreatorAppeals(){
+  const snap=await db.ref('copyrightAppeals').once('value');
+  const all=snap.val()||{};
+  const list=[];
+  Object.entries(all).forEach(([trackId,appeals])=>{
+    Object.entries(appeals||{}).forEach(([id,ap])=>list.push({...ap,appealId:id,trackId}));
+  });
+  list.sort((a,b)=>(b.submittedAt||0)-(a.submittedAt||0));
+  const serverBadge='<span style="font:600 12px/16px \'Inter\',sans-serif;color:var(--md-primary);background:var(--md-primary-container);border-radius:8px;padding:3px 10px;flex-shrink:0">СЕРВЕР</span>';
+  const headerHtml='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+serverBadge
+    +'<button class="btn-tonal" onclick="openCreatorAppeals()"><span class="material-symbols-rounded">refresh</span> Обновить</button></div>';
+  const STATUS_COLORS={pending:'color:var(--md-tertiary)',approved:'color:#18a957',rejected:'color:var(--md-error)'};
+  const STATUS_LABELS={pending:'На рассмотрении',approved:'Одобрено',rejected:'Отклонено'};
+  const body=list.length
+    ? list.map(ap=>'<div class="settings-item" id="appeal-row-'+ap.appealId+'">'
+        +'<span class="material-symbols-rounded" style="'+(STATUS_COLORS[ap.status]||'')+'">balance</span>'
+        +'<div class="settings-item-info">'
+        +'<div class="settings-item-title">'+esc(ap.trackTitle||ap.trackId)+'</div>'
+        +'<div class="settings-item-sub">'+esc(ap.userName||ap.userId)+' • '+(STATUS_LABELS[ap.status]||ap.status)+(ap.submittedAt?' • '+new Date(ap.submittedAt).toLocaleDateString('ru-RU'):'')+'</div>'
+        +'</div>'
+        +(ap.status==='pending'
+          ?'<button class="btn-tonal" style="min-width:0;padding:4px 10px;font-size:12px" onclick="resolveAppeal(\''+ap.trackId+'\',\''+ap.appealId+'\',\'approved\')">✓</button>'
+          +'<button class="btn-outlined" style="min-width:0;padding:4px 10px;font-size:12px;color:var(--md-error);border-color:var(--md-error)" onclick="resolveAppeal(\''+ap.trackId+'\',\''+ap.appealId+'\',\'rejected\')">✕</button>'
+          :'')
+        +'</div>').join('')
+    : '<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">gavel</span><h3>Нет оспариваний</h3></div>';
+  creatorPanelWrap('Оспаривания авт. прав', headerHtml+body);
+}
+async function resolveAppeal(trackId,appealId,verdict){
+  const note=verdict==='approved'?prompt('Примечание (необязательно):','Нарушение снято')||'':prompt('Причина отклонения:','')||'';
+  await db.ref('copyrightAppeals/'+trackId+'/'+appealId).update({status:verdict,adminNote:note,resolvedAt:Date.now()});
+  if(verdict==='approved'){
+    await db.ref('tracks/'+trackId).update({'moderationMeta/copyrightPossible':false,'moderationMeta/copyrightManualFlag':false});
+    if(allTracks[trackId]&&allTracks[trackId].moderationMeta){allTracks[trackId].moderationMeta.copyrightPossible=false;allTracks[trackId].moderationMeta.copyrightManualFlag=false}
+    const uid=allTracks[trackId]?.artistId;
+    if(uid){await db.ref('notifications/'+uid+'/'+appealId+'_resolved').set({type:'copyright',title:'Оспаривание одобрено',body:'Нарушение авторских прав для трека «'+(allTracks[trackId]?.title||trackId)+'» снято.',ts:Date.now(),read:false})}
+  }else{
+    const uid=allTracks[trackId]?.artistId;
+    if(uid){await db.ref('notifications/'+uid+'/'+appealId+'_rejected').set({type:'copyright',title:'Оспаривание отклонено',body:'Ваш запрос по треку «'+(allTracks[trackId]?.title||trackId)+'» отклонён.'+(note?' Причина: '+note:''),ts:Date.now(),read:false})}
+  }
+  const row=document.getElementById('appeal-row-'+appealId);if(row)row.remove();
+  showSnackbar(verdict==='approved'?'Оспаривание одобрено, нарушение снято':'Оспаривание отклонено');
+  pushCreatorLog('info','Оспаривание '+verdict+': '+trackId+'/'+appealId);
+}
+
 function sanitizeFirebaseValue(value){
   if(value===undefined) return null;
   if(value===null) return null;
@@ -3721,7 +4045,7 @@ function applyFxState(){
   fxNodes.master.gain.setTargetAtTime(Number(fxState.gain||1),audioCtx.currentTime,.08);
   fxNodes.drivePre.gain.setTargetAtTime(fxState.drive ? 1.7 : 1,audioCtx.currentTime,.08);
   fxNodes.drivePost.gain.setTargetAtTime(fxState.drive ? .78 : .92,audioCtx.currentTime,.08);
- 
+
   const width=Number(fxState.width||1);
   fxNodes.leftGain.gain.setTargetAtTime(fxState.spatial?Math.min(1.45,width):1,audioCtx.currentTime,.08);
   fxNodes.rightGain.gain.setTargetAtTime(fxState.spatial?Math.min(1.45,width):1,audioCtx.currentTime,.08);
@@ -3772,15 +4096,20 @@ function animateBeatCover(){
   const pulse=Math.max(0,Math.min(1,((sub*0.52+bass*0.28+mids*0.14+highs*0.06)/255)));
   const transient=Math.max(0,Math.min(1,((sub-bass*0.35)+40)/180));
   const energy=Math.max(pulse, transient*0.92);
-  const bounce=(energy*30).toFixed(2)+'px';
-  const scale=(energy*0.085).toFixed(4);
-  const tilt=((mids-highs)/255*1.8).toFixed(2)+'deg';
-  const sat=(energy*0.22).toFixed(3);
+  const LF=0.22;
+  animateBeatCover._b=animateBeatCover._b||0;
+  animateBeatCover._s=animateBeatCover._s||0;
+  animateBeatCover._t=animateBeatCover._t||0;
+  animateBeatCover._r=animateBeatCover._r||0;
+  animateBeatCover._b+=(energy*30-animateBeatCover._b)*LF;
+  animateBeatCover._s+=((energy*0.085)-animateBeatCover._s)*LF;
+  animateBeatCover._t+=(((mids-highs)/255*1.8)-animateBeatCover._t)*LF;
+  animateBeatCover._r+=((energy*0.22)-animateBeatCover._r)*LF;
   cover.classList.add('beat');
-  cover.style.setProperty('--beat-bounce', bounce);
-  cover.style.setProperty('--beat-scale', scale);
-  cover.style.setProperty('--beat-tilt', tilt);
-  cover.style.setProperty('--beat-sat', sat);
+  cover.style.setProperty('--beat-bounce', animateBeatCover._b.toFixed(2)+'px');
+  cover.style.setProperty('--beat-scale', animateBeatCover._s.toFixed(4));
+  cover.style.setProperty('--beat-tilt', animateBeatCover._t.toFixed(2)+'deg');
+  cover.style.setProperty('--beat-sat', animateBeatCover._r.toFixed(3));
 }
 let eightDLoopHandle=null;
 function start8DLoop(){
@@ -3966,6 +4295,18 @@ const roleBadges=(isCreatorUser(u)?'<span class="public-role-chip" onclick="show
         h.innerHTML='<div class="artist-page-avatar">'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>')+'</div><div style="flex:1"><div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Артист')+(isCreatorUser(u)?' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>':'')+'</div>'+(u.username?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>':'')+(roleBadges?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">'+roleBadges+'</div>':'')+(u.bio?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>':'')+'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);display:flex;gap:16px;flex-wrap:wrap"><span>'+currentArtistTracks.length+' треков</span><span>'+sc+' подписчиков</span><span>'+formatPlays(totalPlays)+' прослушиваний</span></div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'+(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')+(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')+(isCreatorUser(currentUser)&&currentUser.uid!==aid?'<button class="btn-outlined" onclick="adminOpenUserActions(\''+aid+'\')"><span class="material-symbols-rounded">gavel</span> Действия создателя</button>':'')+'</div></div>';
       document.getElementById('artistTabs').style.display='flex';
       tl.innerHTML=currentArtistTracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+      const existingPin=document.getElementById('artistPinnedWrap');if(existingPin)existingPin.remove();
+      db.ref('pinnedTracks/'+aid).once('value').then(ps=>{
+        const pins=ps.val()||{};
+        const pinnedIds=Object.keys(pins).filter(id=>allTracks[id]&&id!==currentUser?.uid);
+        if(!pinnedIds.length)return;
+        pinnedIds.sort((a,b)=>(pins[a]||0)-(pins[b]||0));
+        const wrap=document.createElement('div');wrap.id='artistPinnedWrap';
+        wrap.innerHTML='<div style="display:flex;align-items:center;gap:6px;padding:8px 16px 4px;font:600 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant)"><span class="material-symbols-rounded" style="font-size:18px">push_pin</span>Закреплённые</div>'
+          +'<div class="track-list">'+pinnedIds.map((id,i)=>renderTrackItem(id,allTracks[id],i+1)).join('')+'</div>';
+        const tlEl=document.getElementById('artistTracks');
+        if(tlEl&&tlEl.parentNode)tlEl.parentNode.insertBefore(wrap,tlEl);
+      });
     });
   });
 }
@@ -4007,7 +4348,7 @@ const RADIO_FALLBACK_STATIONS={
     {name:'Дорожное радио',country:'Россия',language:'ru',tags:'road,pop,retro,russian,дорожное',bitrate:128,favicon:'https://dorognoe.ru/favicon.ico',url_resolved:'https://dorognoe.hostingradio.ru:8000/dorognoe',url:'https://dorognoe.hostingradio.ru/dorognoe',homepage:'https://dorognoe.ru'},
     {name:'Русское Радио',country:'Россия',language:'ru',tags:'pop,russian,русское',bitrate:128,favicon:'https://rusradio.ru/favicon.ico',url_resolved:'https://rusradio.hostingradio.ru/rusradio128.mp3',homepage:'https://rusradio.ru'},
     {name:'Авторадио',country:'Россия',language:'ru',tags:'pop,russian,auto,авторадио',bitrate:128,favicon:'https://www.avtoradio.ru/favicon.ico',url_resolved:'https://pub0302.101.ru:8443/stream/trust/mp3/128/3',homepage:'https://avtoradio.ru'},
-    {name:'Ретро FM',country:'Россия',language:'ru',tags:'retro,pop,80s,90s,ретро',bitrate:128,favicon:'https://retrofm.ru/favicon.ico',url_resolved:'http://hls-01-retro.emgsound.ru/12/128/playlist.m3u8',homepage:'https://retrofm.ru'},
+    {name:'Ретро FM',country:'Россия',language:'ru',tags:'retro,pop,80s,90s,ретро',bitrate:128,favicon:'https://retrofm.ru/favicon.ico',url_resolved:'https://retro-high.emgsound.ru/12/128/stream.mp3',url:'https://retrofm.hostingradio.ru/retrofm128.mp3',homepage:'https://retrofm.ru'},
     {name:'Наше Радио',country:'Россия',language:'ru',tags:'rock,russian,наше',bitrate:128,favicon:'https://nashe.ru/favicon.ico',url_resolved:'https://nashe1.hostingradio.ru/nashe-128.mp3',homepage:'https://nashe.ru'},
     {name:'Maximum',country:'Россия',language:'ru',tags:'rock,pop,maximum',bitrate:128,favicon:'https://maximum.ru/favicon.ico',url_resolved:'https://maximum.hostingradio.ru/maximum96.aacp',homepage:'https://maximum.ru'},
     {name:'Вести FM',country:'Россия',language:'ru',tags:'news,talk,вести',bitrate:128,favicon:'',url_resolved:'http://icecast.vgtrk.cdnvideo.ru/vestifm_mp3_128kbps',homepage:'https://radiovesti.ru'},
@@ -4621,13 +4962,24 @@ async function publishTrack(){
   }
 }
 
-function deleteTrack(id){deleteTrackId=id;document.getElementById('deleteModal').classList.add('open')}
+function deleteTrack(id){
+  deleteTrackId=id;
+  const sel=document.getElementById('deleteTrackReason');
+  if(sel) sel.value='';
+  document.getElementById('deleteModal').classList.add('open');
+}
 function confirmDeleteTrack(){
   if(!deleteTrackId||!currentUser)return;const t=allTracks[deleteTrackId];
   if(!t||t.artistId!==currentUser.uid){showSnackbar('Нет доступа');closeModal('deleteModal');return}
-  db.ref('tracks/'+deleteTrackId).remove();
-  if(currentTrackId===deleteTrackId){audio.pause();audio.src='';playerVisible=false;document.getElementById('playerBar').classList.remove('visible');currentTrackId=null;activeRadioStation=null;document.body.classList.remove('radio-mode');isPlaying=false;updatePlayButton()}
-  closeModal('deleteModal');showSnackbar('Трек удалён');deleteTrackId=null;
+  const reason=document.getElementById('deleteTrackReason')?.value||'';
+  const delId=deleteTrackId;
+  db.ref('tracks/'+delId).remove();
+  if(reason){db.ref('deletedTracks/'+delId).set({title:t.title||'',artistId:t.artistId,reason,deletedBy:currentUser.uid,deletedAt:Date.now()}).catch(()=>{})}
+  document.querySelectorAll('.track-item[data-id="'+delId+'"]').forEach(el=>el.remove());
+  if(currentTrackId===delId){audio.pause();audio.src='';playerVisible=false;document.getElementById('playerBar').classList.remove('visible');currentTrackId=null;activeRadioStation=null;document.body.classList.remove('radio-mode');isPlaying=false;updatePlayButton()}
+  closeModal('deleteModal');
+  showSnackbar('Трек удалён'+(reason?' ('+reason+')':''));
+  deleteTrackId=null;
 }
 
 /* ===== PROFILE TABS ===== */
@@ -4762,6 +5114,7 @@ function openAdminTools(){
     '<div class="modal-title" style="margin-bottom:12px">Меню создателя</div>'+
     '<div class="settings-item" onclick="openCreatorLogs()"><span class="material-symbols-rounded">receipt_long</span><div class="settings-item-info"><div class="settings-item-title">Логи</div><div class="settings-item-sub">Последние сервисные события и действия</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorReports()"><span class="material-symbols-rounded">flag</span><div class="settings-item-info"><div class="settings-item-title">Жалобы на треки</div><div class="settings-item-sub">Просмотр жалоб и удаление треков с подтверждением</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorAppeals()"><span class="material-symbols-rounded">balance</span><div class="settings-item-info"><div class="settings-item-title">Оспаривания</div><div class="settings-item-sub">Запросы на снятие пометки авторских прав</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorStats()"><span class="material-symbols-rounded">monitoring</span><div class="settings-item-info"><div class="settings-item-title">Статистика</div><div class="settings-item-sub">Треки, пользователи, прослушивания, жалобы</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorTrackManager()"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Управление треками</div><div class="settings-item-sub">Поиск, рекомендации сервиса, удаление</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorModuleCheck()"><span class="material-symbols-rounded">checklist</span><div class="settings-item-info"><div class="settings-item-title">Проверка модулей</div><div class="settings-item-sub">Плеер, БД, party mode, модерация и видео</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
@@ -5009,7 +5362,8 @@ function getFilteredCreatorLogs(){
   });
 }
 function openCreatorLogs(){
-  creatorPanelWrap('Логи', '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-bottom:12px"><input class="md-input" id="creatorLogFromDate" type="date" style="max-width:180px;margin:0;border-radius:14px"><input class="md-input" id="creatorLogToDate" type="date" style="max-width:180px;margin:0;border-radius:14px"><button class="btn-tonal" onclick="renderCreatorRealtimeConsole()"><span class="material-symbols-rounded">filter_alt</span> Фильтр</button><button class="btn-tonal" onclick="loadAllCreatorLogs().then(renderCreatorRealtimeConsole)"><span class="material-symbols-rounded">sync</span> Все логи</button><button class="btn-tonal" onclick="creatorLogs=[];globalCreatorLogs=[];renderCreatorRealtimeConsole();pushCreatorLog(\'info\',\'Логи очищены локально\')"><span class="material-symbols-rounded">delete_sweep</span> Очистить локально</button></div><div class="creator-console" id="creatorRealtimeConsole"></div>');
+  const serverBadge='<span style="font:600 12px/16px \'Inter\',sans-serif;color:var(--md-primary);background:var(--md-primary-container);border-radius:8px;padding:3px 10px;flex-shrink:0">СЕРВЕР</span>';
+  creatorPanelWrap('Логи', '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">'+serverBadge+'<input class="md-input" id="creatorLogFromDate" type="date" style="max-width:150px;margin:0;border-radius:14px"><input class="md-input" id="creatorLogToDate" type="date" style="max-width:150px;margin:0;border-radius:14px"><button class="btn-tonal" onclick="renderCreatorRealtimeConsole()"><span class="material-symbols-rounded">filter_alt</span> Фильтр</button><button class="btn-tonal" onclick="loadAllCreatorLogs().then(renderCreatorRealtimeConsole)"><span class="material-symbols-rounded">sync</span> Обновить</button><button class="btn-tonal" onclick="creatorLogs=[];globalCreatorLogs=[];renderCreatorRealtimeConsole();pushCreatorLog(\'info\',\'Логи очищены локально\')"><span class="material-symbols-rounded">delete_sweep</span> Очистить</button></div><div class="creator-console" id="creatorRealtimeConsole"></div>');
   pushCreatorLog('info','Открыта realtime-консоль создателя');
   loadAllCreatorLogs().then(renderCreatorRealtimeConsole);
 }
@@ -5017,14 +5371,47 @@ async function openCreatorReports(){
   const snap=await db.ref('reports').once('value');
   const reports=snap.val()||{};
   const grouped={};
-  Object.values(reports).forEach(r=>{if(!r?.trackId)return;grouped[r.trackId]=(grouped[r.trackId]||0)+1});
+  const reasonMap={};
+  Object.values(reports).forEach(r=>{
+    if(!r?.trackId)return;
+    grouped[r.trackId]=(grouped[r.trackId]||0)+1;
+    if(r.reason){
+      if(!reasonMap[r.trackId])reasonMap[r.trackId]={};
+      reasonMap[r.trackId][r.reason]=(reasonMap[r.trackId][r.reason]||0)+1;
+    }
+  });
   const rows=Object.entries(grouped).sort((a,b)=>b[1]-a[1]);
-  creatorPanelWrap('Жалобы на треки', rows.length?rows.map(([tid,count])=>{const t=allTracks[tid];return '<div class="settings-item"><span class="material-symbols-rounded">flag</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t?.title||('Трек '+tid))+'</div><div class="settings-item-sub">Жалоб: '+count+' • Автор: '+esc(t?.artistName||'—')+'</div></div><button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+tid+'\')">Удалить</button></div>'}).join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">done_all</span><h3>Жалоб нет</h3></div>');
+  const REASON_LABELS={copyright:'Авт. права',explicit:'Explicit',spam:'Спам',hate:'Ненависть',violence:'Насилие',other:'Другое'};
+  const getTopReason=tid=>{const rm=reasonMap[tid]||{};const top=Object.entries(rm).sort((a,b)=>b[1]-a[1])[0];return top?REASON_LABELS[top[0]]||top[0]:null};
+  const headerHtml='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'
+    +'<span style="font:600 12px/16px \'Inter\',sans-serif;color:var(--md-primary);background:var(--md-primary-container);border-radius:8px;padding:3px 10px">СЕРВЕР</span>'
+    +'<button class="btn-tonal" onclick="openCreatorReports()"><span class="material-symbols-rounded">refresh</span> Обновить</button>'
+    +'<button class="btn-tonal" onclick="db.ref(\'reports\').remove().then(()=>{showSnackbar(\'Все жалобы удалены\');openCreatorReports()})"><span class="material-symbols-rounded">delete_sweep</span> Очистить жалобы</button>'
+    +'</div>';
+  creatorPanelWrap('Жалобы на треки', headerHtml+(rows.length?rows.map(([tid,count])=>{
+    const t=allTracks[tid];
+    const topR=getTopReason(tid);
+    const sub='Жалоб: '+count+(topR?' • Чаще всего: '+topR:'')+' • '+esc(t?.artistName||'—');
+    return '<div class="settings-item" id="report-row-'+tid+'">'
+      +'<span class="material-symbols-rounded" style="color:var(--md-error)">flag</span>'
+      +'<div class="settings-item-info"><div class="settings-item-title">'+esc(t?.title||('Трек '+tid))+'</div>'
+      +'<div class="settings-item-sub">'+sub+'</div></div>'
+      +'<button class="btn-text" onclick="playTrackById(\''+tid+'\')">Слушать</button>'
+      +'<button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+tid+'\',\'report-row-'+tid+'\')">Удалить</button>'
+      +'</div>';
+  }).join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">done_all</span><h3>Жалоб нет</h3></div>'));
 }
-function creatorDeleteTrackConfirm(tid){
+function creatorDeleteTrackConfirm(tid,rowId){
   const t=allTracks[tid];
   if(!t){showSnackbar('Трек не найден');return}
-  if(confirm('Удалить трек "'+(t.title||'Без названия')+'"?')){db.ref('tracks/'+tid).remove().then(()=>showSnackbar('Трек удалён')).catch(e=>showSnackbar('Ошибка удаления: '+e.message))}
+  if(confirm('Удалить трек "'+(t.title||'Без названия')+'"?')){
+    db.ref('tracks/'+tid).remove().then(()=>{
+      showSnackbar('Трек удалён');
+      document.querySelectorAll('.track-item[data-id="'+tid+'"]').forEach(el=>el.remove());
+      if(rowId){const row=document.getElementById(rowId);if(row)row.remove()}
+      if(currentTrackId===tid){audio.pause();audio.src='';playerVisible=false;document.getElementById('playerBar').classList.remove('visible');currentTrackId=null;isPlaying=false;updatePlayButton()}
+    }).catch(e=>showSnackbar('Ошибка: '+e.message))
+  }
 }
 function openCreatorStats(){
   const tracks=Object.values(allTracks);
@@ -5050,32 +5437,50 @@ function openCreatorTrackManager(){
 }
 async function toggleServiceFeatured(tid){
   const t=allTracks[tid];
-  if(!t)return;
-  await db.ref('tracks/'+tid+'/serviceFeatured').set(!t.serviceFeatured);
-  if(!t.serviceFeatured) await db.ref('tracks/'+tid+'/serviceFeaturedAt').set(Date.now());
-  showSnackbar(!t.serviceFeatured?'Трек рекомендован':'Рекомендация убрана');
+  if(!t||!t.title)return;
+  const newFeatured=!t.serviceFeatured;
+  const updates={serviceFeatured:newFeatured};
+  if(newFeatured) updates.serviceFeaturedAt=Date.now();
+  await db.ref('tracks/'+tid).update(updates);
+  if(allTracks[tid]){allTracks[tid].serviceFeatured=newFeatured;if(newFeatured)allTracks[tid].serviceFeaturedAt=Date.now()}
+  showSnackbar(newFeatured?'Трек рекомендован':'Рекомендация убрана');
   openCreatorTrackManager();
 }
-function openCreatorModuleCheck(){
-  const checks=[
-    ['Realtime Database','ok'],
-    ['Плеер','ok'],
-    ['Видео к треку','ok'],
-    ['Party mode', partySessionId?'active':'ready'],
-    ['Модерация','ready'],
-    ['Поиск','ok']
-  ];
-  const html=checks.map(([name,state])=>{
-    const icon=state==='ok' ? 'check_circle' : state==='active' ? 'radio_button_checked' : 'hourglass';
-    return '<div class="settings-item">'
-      + '<span class="material-symbols-rounded">'+icon+'</span>'
-      + '<div class="settings-item-info">'
-      +   '<div class="settings-item-title">'+esc(name)+'</div>'
-      +   '<div class="settings-item-sub">Состояние: '+esc(state)+'</div>'
-      + '</div>'
-      + '</div>';
+async function openCreatorModuleCheck(){
+  const headerHtml='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'
+    +'<span style="font:600 12px/16px \'Inter\',sans-serif;color:var(--md-primary);background:var(--md-primary-container);border-radius:8px;padding:3px 10px">СЕРВЕР</span>'
+    +'<button class="btn-tonal" onclick="openCreatorModuleCheck()"><span class="material-symbols-rounded">refresh</span> Обновить</button>'
+    +'</div>';
+  creatorPanelWrap('Проверка модулей', headerHtml+'<div id="moduleCheckList"><div class="loading-spinner"></div></div>');
+  const list=document.getElementById('moduleCheckList');
+  if(!list)return;
+  const rows=[];
+  try{
+    const t0=Date.now();
+    await db.ref('.info/connected').once('value');
+    rows.push(['Realtime Database','ok','Подключён за '+(Date.now()-t0)+' мс','cloud']);
+  }catch(e){rows.push(['Realtime Database','error','Недоступен: '+(e?.message||e),'cloud_off'])}
+  rows.push(['Плеер',audio.src?'ok':'ready',audio.src?'Воспроизводит: '+(allTracks[currentTrackId]?.title||activeRadioStation?.name||'Радио'):'Готов к воспроизведению','play_circle']);
+  try{
+    const r=await Promise.race([
+      fetch('https://gen.pollinations.ai/v1/models',{headers:{'Authorization':'Bearer '+POLLINATIONS_API_KEY}}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),6000))
+    ]);
+    rows.push(['Модерация AI',r.ok?'ok':'warn',r.ok?'Pollinations API доступен':'HTTP '+r.status,'policy']);
+  }catch(e){rows.push(['Модерация AI','error','Недоступен: '+(e?.message||e),'policy'])}
+  rows.push(['Party mode',partySessionId?'active':'ready',partySessionId?'Активна: '+partySessionId:'Нет активных сессий','celebration']);
+  const tc=Object.keys(allTracks).length;
+  rows.push(['Треки','ok',tc+' треков в памяти','library_music']);
+  rows.push(['Аудио-движок',fxNodes?.context?'ok':'ready',fxNodes?.context?'AudioContext: '+fxNodes.context.state:'Не инициализирован','graphic_eq']);
+  const radioApiOk=radioStations.length>0;
+  rows.push(['Радиостанции',radioApiOk?'ok':'ready',radioApiOk?radioStations.length+' станций загружено':'Не загружены (откройте Радио)','radio']);
+  list.innerHTML=rows.map(([name,state,sub,icon])=>{
+    const color=state==='ok'?'color:var(--md-primary)':state==='active'?'color:#18a957':state==='error'?'color:var(--md-error)':'color:var(--md-outline)';
+    const stateIcon=state==='ok'?'check_circle':state==='active'?'radio_button_checked':state==='error'?'error':'hourglass';
+    return '<div class="settings-item"><span class="material-symbols-rounded" style="'+color+'">'+stateIcon+'</span>'
+      +'<div class="settings-item-info"><div class="settings-item-title">'+esc(name)+'</div><div class="settings-item-sub">'+esc(sub)+'</div></div>'
+      +'<span style="font:500 12px/16px \'Inter\',sans-serif;'+color+'">'+esc(state)+'</span></div>';
   }).join('');
-  creatorPanelWrap('Проверка модулей', html);
 }
 function openCreatorUsers(){
   db.ref('users').once('value').then(s=>{
@@ -5106,12 +5511,19 @@ function openCreatorUserDetail(uid){
             + '</div>';
         }).join('')
       : '<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">library_music</span><h3>У пользователя нет треков</h3></div>';
+    const hasTg=u.telegramId||uid.startsWith('tg_');
+    const hasEmail=!!(u.email);
+    const authMethods=(hasTg?'<span style="display:inline-flex;align-items:center;gap:4px;background:var(--md-secondary-container);border-radius:8px;padding:2px 8px;font:500 12px/16px \'Inter\',sans-serif"><span class="material-symbols-rounded" style="font-size:14px">send</span>Telegram</span>':'')
+      +(hasEmail?'<span style="display:inline-flex;align-items:center;gap:4px;background:var(--md-secondary-container);border-radius:8px;padding:2px 8px;font:500 12px/16px \'Inter\',sans-serif;margin-left:4px"><span class="material-symbols-rounded" style="font-size:14px">email</span>Email</span>':'');
+    const accountMergeNote=(hasTg&&hasEmail)?'<div style="margin-top:6px;padding:8px 12px;background:var(--md-surface-container-high);border-radius:12px;font:400 12px/18px \'Inter\',sans-serif;color:var(--md-on-surface-variant)"><span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle">link</span> Telegram и Email привязаны к одному аккаунту.</div>':'';
     const html=''
       + '<div class="settings-item">'
       +   '<span class="material-symbols-rounded">badge</span>'
       +   '<div class="settings-item-info">'
       +     '<div class="settings-item-title">'+esc(u.displayName||'Пользователь')+'</div>'
-      +     '<div class="settings-item-sub">@'+esc(u.username||'')+' • '+esc(u.email||'без email')+'</div>'
+      +     '<div class="settings-item-sub">@'+esc(u.username||'')+' • '+esc(u.email||'без email')+(u.banned?' • <span style="color:var(--md-error)">ЗАБАНЕН</span>':'')+'</div>'
+      +     (authMethods?'<div style="margin-top:4px">Способы входа: '+authMethods+'</div>':'')
+      +     accountMergeNote
       +   '</div>'
       +   banButton
       + '</div>'
@@ -5176,6 +5588,7 @@ function openAdminTools(){
     '<div class="modal-title" style="margin-bottom:12px">Меню создателя</div>'+
     '<div class="settings-item" onclick="openCreatorLogs()"><span class="material-symbols-rounded">receipt_long</span><div class="settings-item-info"><div class="settings-item-title">Логи</div><div class="settings-item-sub">Все логи, live и архив, с фильтрами по датам</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorReports()"><span class="material-symbols-rounded">flag</span><div class="settings-item-info"><div class="settings-item-title">Жалобы на треки</div><div class="settings-item-sub">Жалобы, причины, удаление треков</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorAppeals()"><span class="material-symbols-rounded">balance</span><div class="settings-item-info"><div class="settings-item-title">Оспаривания</div><div class="settings-item-sub">Запросы на снятие пометки авторских прав</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorStats()"><span class="material-symbols-rounded">monitoring</span><div class="settings-item-info"><div class="settings-item-title">Статистика</div><div class="settings-item-sub">Треки, пользователи, прослушивания, жалобы</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorTrackManager()"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Управление треками</div><div class="settings-item-sub">Чужие треки, редактирование, удаление</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorModuleCheck()"><span class="material-symbols-rounded">checklist</span><div class="settings-item-info"><div class="settings-item-title">Проверка модулей</div><div class="settings-item-sub">Сервисы модерации, party mode, видео, радио</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
@@ -5246,8 +5659,7 @@ restoreSession();
 updateUserMenu();
 updateUploadExplicitUI();
 updateEditExplicitUI();
-window.addEventListener('load',()=>{try{restoreSession()}catch(e){}});
-if(typeof updateFxSummary==='function') updateFxSummary();
+window.addEventListener('load',()=>{if(typeof updateFxSummary==='function')updateFxSummary()});
 </script>
 </body>
 </html>
