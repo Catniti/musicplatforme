@@ -879,6 +879,7 @@ body.radio-mode .player-artist-name{font-size:11px}
   .progress-time{display:none}
   .artist-page-header{flex-direction:column;align-items:center;text-align:center}
   .artist-page-avatar{width:120px;height:120px}
+  .artist-page-info>div[style]{justify-content:center!important}
   .wave-circle{width:150px;height:150px}
   .wave-circle .material-symbols-rounded{font-size:48px}
   .modal{padding:20px;max-width:100%}
@@ -1029,8 +1030,6 @@ body[data-ui-style="glass"]{display:contents}
     <div class="track-list" id="homeNewTracks"><div class="loading-spinner"></div></div>
     <div class="section-title">🏆 Популярное</div>
     <div class="cards-grid" id="homePopular"><div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:220px"></div></div>
-    <div class="section-title">⭐ Рекомендации сервиса</div>
-    <div class="cards-grid" id="homeFeatured"></div>
     <div class="section-title">🎤 Артисты</div>
     <div class="cards-grid" id="homeArtists" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))"></div>
   </div>
@@ -2359,14 +2358,16 @@ function handleCoverSelect(e){
   if(!f.type.startsWith('image/')){showSnackbar('Выберите изображение');return}
   if(f.size>10*1024*1024){showSnackbar('Обложка макс. 10 МБ');return}
   document.getElementById('coverUploadZone').innerHTML='<span class="material-symbols-rounded">hourglass</span>';
-  compressImageFile(f,400,400,0.85).then(dataUrl=>{
+  compressImageFile(f,320,320,0.75).then(dataUrl=>{
     selectedCoverDataURL=dataUrl;
     document.getElementById('coverUploadZone').innerHTML='<img src="'+dataUrl+'" alt="">';
     document.getElementById('uploadCover').value='';
   }).catch(()=>{
-    const r=new FileReader();
-    r.onload=ev=>{selectedCoverDataURL=ev.target.result;document.getElementById('coverUploadZone').innerHTML='<img src="'+selectedCoverDataURL+'" alt="">';document.getElementById('uploadCover').value=''};
-    r.readAsDataURL(f);
+    compressImageFile(f,200,200,0.65).then(dataUrl=>{
+      selectedCoverDataURL=dataUrl;
+      document.getElementById('coverUploadZone').innerHTML='<img src="'+dataUrl+'" alt="">';
+      document.getElementById('uploadCover').value='';
+    }).catch(()=>{showSnackbar('Не удалось сжать обложку');});
   });
 }
 
@@ -2737,11 +2738,14 @@ function openEditProfile(){
 function handleAvatarSelect(e){
   const f=e.target.files[0];if(!f||!f.type.startsWith('image/'))return;
   if(f.size>10*1024*1024){showSnackbar('Аватар макс. 10 МБ');return}
-  compressImageFile(f,400,400,0.85).then(dataUrl=>{
+  compressImageFile(f,150,150,0.72).then(dataUrl=>{
     document.getElementById('editAvatarZone').innerHTML='<img src="'+dataUrl+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
     document.getElementById('editAvatarUrl').value=dataUrl;
   }).catch(()=>{
-    const r=new FileReader();r.onload=ev=>{document.getElementById('editAvatarZone').innerHTML='<img src="'+ev.target.result+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';document.getElementById('editAvatarUrl').value=ev.target.result};r.readAsDataURL(f);
+    compressImageFile(f,120,120,0.6).then(dataUrl=>{
+      document.getElementById('editAvatarZone').innerHTML='<img src="'+dataUrl+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+      document.getElementById('editAvatarUrl').value=dataUrl;
+    }).catch(()=>{showSnackbar('Не удалось сжать изображение');});
   });
 }
 async function saveProfileEdits(){
@@ -2840,10 +2844,10 @@ function renderPinnedTracks(){
   const wrap=document.getElementById('profilePinnedWrap');
   const list=document.getElementById('profilePinnedTracks');
   if(!wrap||!list||!currentUser) return;
-  const ids=Object.keys(pinnedTracks||{}).sort((a,b)=>(pinnedTracks[a]||0)-(pinnedTracks[b]||0)).filter(id=>allTracks[id]);
+  const ids=Object.keys(pinnedTracks||{}).sort((a,b)=>(pinnedTracks[a]||0)-(pinnedTracks[b]||0)).filter(id=>allTracks[id]&&allTracks[id].title);
   if(!ids.length){wrap.style.display='none';list.innerHTML='';return}
   wrap.style.display='block';
-  list.innerHTML=ids.map((id,i)=>renderTrackItem(id,allTracks[id],i+1,false)).join('');
+  list.innerHTML=ids.map((id,i)=>renderTrackItem(id,allTracks[id],i+1,false,true)).join('');
 }
 async function togglePinTrack(trackId){
   if(!currentUser){showSnackbar('Войдите');return}
@@ -2879,16 +2883,16 @@ db.ref('tracks').on('value',snap=>{
 });
 
 /* ===== RENDER TRACK ITEM ===== */
-function renderTrackItem(id,track,num,showDel){
+function renderTrackItem(id,track,num,showDel,hidePinBadge){
   const isExp=track.explicit,isFav=favorites[id],isNP=currentTrackId===id,dur=track.duration?formatTime(track.duration):'—';
   const plays=track.plays||0;
-  const isPinned=!!(currentUser&&track.artistId===currentUser.uid&&pinnedTracks[id]);
+  const isPinned=!hidePinBadge&&!!(currentUser&&track.artistId===currentUser.uid&&pinnedTracks[id]);
   const creatorChip='';
-  const featuredChip=track.serviceFeatured?'<span class="badge" title="Рекомендация MusicPlatforme">★ MusicPlatforme</span>':'';
+  const featuredChip='';
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
     '<div class="track-num">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
     '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
-    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+featuredChip+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав — нажмите для подробностей" onclick="event.stopPropagation();openCopyrightDetails(\''+id+'\')">©?</span>':'')+'</div>'+ 
+    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав — нажмите для подробностей" onclick="event.stopPropagation();openCopyrightDetails(\''+id+'\')">©?</span>':'')+'</div>'+ 
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
     '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Автор музыки: '+esc(track.musicAuthor||track.artistName||'Не указан')+creatorChip+'</div></div>'+
     '<div class="track-plays"><span class="material-symbols-rounded">play_arrow</span>'+formatPlays(plays)+'</div>'+
@@ -3337,26 +3341,30 @@ function buildTrackShareUrl(tid){
   const base=(location.origin+location.pathname).replace(/\/?$/,'');
   return base+'#track='+encodeURIComponent(tid);
 }
+let _openTrackFromHashDone=false;
 function openTrackFromHash(){
   const hash=String(location.hash||'');
   const match=hash.match(/track=([^&]+)/i);
   if(!match)return false;
   const tid=decodeURIComponent(match[1]||'');
   if(!tid)return false;
+  if(_openTrackFromHashDone&&currentTrackId===tid)return true;
   if(!allTracks[tid]){
-    setTimeout(()=>{ if(allTracks[tid]) openTrackFromHash(); }, 500);
+    let retries=0;
+    const tryOpen=()=>{
+      if(_openTrackFromHashDone&&currentTrackId===tid)return;
+      if(allTracks[tid]){openTrackFromHash();return}
+      if(++retries<20) setTimeout(tryOpen,300);
+    };
+    setTimeout(tryOpen,300);
     return false;
   }
-  navigate('home');
-  setTimeout(()=>{
-    playTrackById(tid);
-    openFullscreenPlayer();
-    const el=document.querySelector('.track-item[data-id="'+CSS.escape(tid)+'"]');
-    if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
-  },160);
+  _openTrackFromHashDone=true;
+  playTrackById(tid);
+  setTimeout(()=>openFullscreenPlayer(),80);
   return true;
 }
-window.addEventListener('hashchange',openTrackFromHash);
+window.addEventListener('hashchange',()=>{_openTrackFromHashDone=false;openTrackFromHash();});
 function shareTrackById(tid){
   const t=allTracks[tid];if(!t)return;
   const url=buildTrackShareUrl(tid);
@@ -3380,7 +3388,13 @@ function renderHome(){
   const popular=[...entries].sort((a,b)=>(b[1].plays||0)-(a[1].plays||0)).slice(0,8);
   document.getElementById('homePopular').innerHTML=popular.length===0?'':popular.map(([id,t])=>'<div class="md-card" onclick="playTrackById(\''+id+'\')"><div class="card-img">'+(t.cover?'<img src="'+t.cover+'" alt="" loading="lazy">':'<span class="material-symbols-rounded">music_note</span>')+'<div class="card-play-fab"><span class="material-symbols-rounded filled">play_arrow</span></div></div><div class="card-body"><div class="card-title" style="display:flex;align-items:center;gap:4px">'+esc(t.title||'')+(t.explicit?'<span class="explicit-badge" style="font-size:10px;width:16px;height:16px">!</span>':'')+'</div><div class="card-sub">'+esc(t.artistName||'')+'</div><div class="card-sub" style="display:flex;align-items:center;gap:4px;margin-top:2px"><span class="material-symbols-rounded" style="font-size:14px">play_arrow</span>'+formatPlays(t.plays||0)+'</div></div></div>').join('');
   const am={};entries.slice(0,trackPageSize*2).forEach(([id,t])=>{if(t.artistId&&!am[t.artistId])am[t.artistId]={name:t.artistName,photo:t.artistPhoto||'',id:t.artistId}});
-  document.getElementById('homeArtists').innerHTML=Object.values(am).slice(0,12).map(a=>'<div class="artist-card" onclick="viewArtist(\''+a.id+'\')"><div class="artist-img">'+(a.photo?'<img src="'+a.photo+'" alt="" loading="lazy">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">person</span>')+'</div><div class="card-title" style="font-size:13px">'+esc(a.name||'Артист')+'</div></div>').join('');
+  const allArtists=Object.values(am);
+  const artistPageSize=8;
+  function renderArtistCards(list){return list.map(a=>'<div class="artist-card" onclick="viewArtist(\''+a.id+'\')"><div class="artist-img">'+(a.photo?'<img src="'+a.photo+'" alt="" loading="lazy">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">person</span>')+'</div><div class="card-title" style="font-size:13px">'+esc(a.name||'Артист')+'</div></div>').join('')}
+  let shownArtists=artistPageSize;
+  const artistsEl=document.getElementById('homeArtists');
+  function refreshArtists(){artistsEl.innerHTML=renderArtistCards(allArtists.slice(0,shownArtists))+(allArtists.length>shownArtists?'<div style="grid-column:1/-1;display:flex;justify-content:center;margin-top:4px"><button class="btn-tonal" onclick="shownArtists+=8;refreshArtists()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');}
+  refreshArtists();
 }
 
 let currentGenre='all';
@@ -3502,7 +3516,7 @@ function doLoad(track){
   const source=getCachedAudioData(currentTrackId)||track.audioData;
   if(currentTrackId&&source) touchAudioCache(currentTrackId);
   audio.src=source;
-  startAudioEngine();
+  if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
   audio.play().then(()=>{
     isPlaying=true;
     updatePlayButton();
@@ -3513,7 +3527,7 @@ function doLoad(track){
   }).catch(err=>{showSnackbar('Ошибка воспроизведения')})
 }
 
-function togglePlay(){if(!audio.src)return;startAudioEngine();if(isPlaying){audio.pause();document.getElementById('fsCover').classList.remove('playing')}else{audio.play();document.getElementById('fsCover').classList.add('playing')}isPlaying=!isPlaying;updatePlayButton();broadcastPlaybackState();broadcastPartyState()}
+function togglePlay(){if(!audio.src)return;if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});if(isPlaying){audio.pause();document.getElementById('fsCover').classList.remove('playing')}else{audio.play();document.getElementById('fsCover').classList.add('playing')}isPlaying=!isPlaying;updatePlayButton();broadcastPlaybackState();broadcastPartyState()}
 function updatePlayButton(){const ic=isPlaying?'pause':'play_arrow';document.getElementById('playIcon').textContent=ic;document.getElementById('fsPlayIcon').textContent=ic;document.getElementById('waveCircle').classList.toggle('playing-anim',isPlaying)}
 function prevTrack(){if(!playlist.length)return;if(audio.currentTime>3){audio.currentTime=0;broadcastPlaybackState();broadcastPartyState();return}playlistIndex=(playlistIndex-1+playlist.length)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
 function nextTrack(){if(!playlist.length)return;if(isShuffle)playlistIndex=Math.floor(Math.random()*playlist.length);else playlistIndex=(playlistIndex+1)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
@@ -4117,7 +4131,7 @@ function start8DLoop(){
   const loop=()=>{animate8D();animateBeatCover();eightDLoopHandle=requestAnimationFrame(loop)};
   loop();
 }
-function openAudioEffectsModal(){startAudioEngine();syncFxUi();document.getElementById('audioEffectsModal').classList.add('open')}
+function openAudioEffectsModal(){syncFxUi();document.getElementById('audioEffectsModal').classList.add('open')}
 function syncFxUi(){
   const map={fxBass:fxState.bass,fxPresence:fxState.presence,fxGain:fxState.gain,fxSpeed:fxState.speed,fx8dRate:fxState.eightDRate,fxAir:fxState.air,fxWarmth:fxState.warmth,fxWidth:fxState.width,fxEcho:fxState.echo};
   Object.entries(map).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val});
@@ -4281,18 +4295,33 @@ function deletePlaylist(plId){if(!currentUser)return;db.ref('playlists/'+current
 
 /* ===== VIEW ARTIST ===== */
 function viewArtist(aid){
-  navigate('artist');currentArtistId=aid;
+  navigate('artist');
+  const freshNav=currentArtistId!==aid;
+  currentArtistId=aid;
   const h=document.getElementById('artistHeader'),tl=document.getElementById('artistTracks');
-  h.innerHTML='<div class="loading-spinner"></div>';tl.innerHTML='';
-  document.getElementById('artistTabs').style.display='none';
+  if(freshNav){h.innerHTML='<div class="loading-spinner"></div>';tl.innerHTML='';document.getElementById('artistTabs').style.display='none';}
+  const _aid=aid;
   db.ref('users/'+aid).once('value').then(s=>{
+    if(currentArtistId!==_aid)return;
     const u=s.val()||{};const isSub=subscriptions[aid];
-const roleBadges=(isCreatorUser(u)?'<span class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель сервиса</span>':'');
-      db.ref('subscribers/'+aid).once('value').then(ss=>{
-        const sc=Object.keys(ss.val()||{}).length;
-        currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===aid).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-        const totalPlays=currentArtistTracks.reduce((s,[id,t])=>s+(t.plays||0),0);
-        h.innerHTML='<div class="artist-page-avatar">'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>')+'</div><div style="flex:1"><div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Артист')+(isCreatorUser(u)?' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>':'')+'</div>'+(u.username?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>':'')+(roleBadges?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">'+roleBadges+'</div>':'')+(u.bio?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>':'')+'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);display:flex;gap:16px;flex-wrap:wrap"><span>'+currentArtistTracks.length+' треков</span><span>'+sc+' подписчиков</span><span>'+formatPlays(totalPlays)+' прослушиваний</span></div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'+(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')+(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')+(isCreatorUser(currentUser)&&currentUser.uid!==aid?'<button class="btn-outlined" onclick="adminOpenUserActions(\''+aid+'\')"><span class="material-symbols-rounded">gavel</span> Действия создателя</button>':'')+'</div></div>';
+    const roleBadges=(isCreatorUser(u)?'<span class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель сервиса</span>':'');
+    db.ref('subscribers/'+aid).once('value').then(ss=>{
+      if(currentArtistId!==_aid)return;
+      const sc=Object.keys(ss.val()||{}).length;
+      currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===aid).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+      const totalPlays=currentArtistTracks.reduce((s,[id,t])=>s+(t.plays||0),0);
+      h.innerHTML='<div class="artist-page-avatar">'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>')+'</div>'
+        +'<div class="artist-page-info" style="flex:1">'
+        +'<div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Артист')+(isCreatorUser(u)?' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>':'')+'</div>'
+        +(u.username?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>':'')
+        +(roleBadges?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">'+roleBadges+'</div>':'')
+        +(u.bio?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>':'')
+        +'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);display:flex;gap:16px;flex-wrap:wrap"><span>'+currentArtistTracks.length+' треков</span><span>'+sc+' подписчиков</span><span>'+formatPlays(totalPlays)+' прослушиваний</span></div>'
+        +'<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">'
+        +(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')
+        +(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')
+        +(isCreatorUser(currentUser)&&currentUser.uid!==aid?'<button class="btn-outlined" onclick="adminOpenUserActions(\''+aid+'\')"><span class="material-symbols-rounded">gavel</span> Действия создателя</button>':'')
+        +'</div></div>';
       document.getElementById('artistTabs').style.display='flex';
       tl.innerHTML=currentArtistTracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
       const existingPin=document.getElementById('artistPinnedWrap');if(existingPin)existingPin.remove();
@@ -4306,7 +4335,7 @@ const roleBadges=(isCreatorUser(u)?'<span class="public-role-chip" onclick="show
         pinnedIds.sort((a,b)=>(pins[a]||0)-(pins[b]||0));
         const wrap=document.createElement('div');wrap.id='artistPinnedWrap';
         wrap.innerHTML='<div style="display:flex;align-items:center;gap:6px;padding:8px 16px 4px;font:600 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant)"><span class="material-symbols-rounded" style="font-size:18px">push_pin</span>Закреплённые</div>'
-          +'<div class="track-list">'+pinnedIds.map((id,i)=>renderTrackItem(id,allTracks[id],i+1)).join('')+'</div>';
+          +'<div class="track-list">'+pinnedIds.map((id,i)=>renderTrackItem(id,allTracks[id],i+1,false,true)).join('')+'</div>';
         const tlEl=document.getElementById('artistTracks');
         if(tlEl&&tlEl.parentNode)tlEl.parentNode.insertBefore(wrap,tlEl);
       }).catch(()=>{});
@@ -4743,21 +4772,28 @@ async function handleVideoSelect(e){
   const f=e.target.files?.[0];
   if(!f) return;
   if(!String(f.type||'').startsWith('video/')){showSnackbar('Выберите видеофайл');return}
-  if(f.size>30*1024*1024){showSnackbar('Видео макс. 30 МБ');return}
+  if(f.size>5*1024*1024){showSnackbar('Видеофайлы не поддерживаются — используй ссылку на YouTube или прямую ссылку на видео');document.getElementById('videoFileInput').value='';return}
   selectedVideoFile=f;
-  selectedVideoDataURL=await fileToDataURL(f);
   document.getElementById('uploadVideoUrl').value='';
-  document.getElementById('uploadVideoStatus').textContent='Выбрано видео: '+f.name;
-  document.getElementById('videoUploadZone').innerHTML='<span class="material-symbols-rounded">check_circle</span><span style="font:400 11px/14px \'Inter\',sans-serif;color:var(--md-on-surface-variant);text-align:center;padding:0 4px">'+esc(f.name.slice(0,22))+'</span>';
+  document.getElementById('uploadVideoStatus').textContent='Выбрано видео: '+f.name+' (загрузка...)';
+  document.getElementById('videoUploadZone').innerHTML='<span class="material-symbols-rounded">hourglass_empty</span><span style="font:400 11px/14px \'Inter\',sans-serif;color:var(--md-on-surface-variant);text-align:center;padding:0 4px">Чтение...</span>';
+  try{
+    selectedVideoDataURL=await fileToDataURL(f);
+    document.getElementById('uploadVideoStatus').textContent='Выбрано видео: '+f.name;
+    document.getElementById('videoUploadZone').innerHTML='<span class="material-symbols-rounded">check_circle</span><span style="font:400 11px/14px \'Inter\',sans-serif;color:var(--md-on-surface-variant);text-align:center;padding:0 4px">'+esc(f.name.slice(0,22))+'</span>';
+  }catch(e){showSnackbar('Ошибка чтения видео');selectedVideoFile=null;selectedVideoDataURL=null;}
 }
 async function handleEditTrackVideoSelect(e){
   const f=e.target.files?.[0];
   if(!f) return;
   if(!String(f.type||'').startsWith('video/')){showSnackbar('Выберите видеофайл');return}
-  if(f.size>30*1024*1024){showSnackbar('Видео макс. 30 МБ');return}
-  editTrackVideoData=await fileToDataURL(f);
-  document.getElementById('editTrackVideoUrl').value='';
-  document.getElementById('editTrackVideoStatus').textContent='Выбрано видео: '+f.name;
+  if(f.size>5*1024*1024){showSnackbar('Видеофайлы не поддерживаются — используй ссылку на YouTube или прямую ссылку на видео');document.getElementById('editTrackVideoFile').value='';return}
+  document.getElementById('editTrackVideoStatus').textContent='Чтение файла...';
+  try{
+    editTrackVideoData=await fileToDataURL(f);
+    document.getElementById('editTrackVideoUrl').value='';
+    document.getElementById('editTrackVideoStatus').textContent='Выбрано видео: '+f.name;
+  }catch(e){showSnackbar('Ошибка чтения видео');}
 }
 function clearEditTrackVideo(){
   editTrackVideoData='__CLEAR__';
