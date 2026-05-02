@@ -2869,17 +2869,29 @@ async function togglePinTrack(trackId){
 db.ref('tracks').on('value',snap=>{
   allTracks=snap.val()||{};
   loadedTrackEntries=Object.entries(allTracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-  renderHome();
-  renderExplore();
-  renderCharts();
-  renderNewReleases();
-  renderFavorites();
-  renderSubscriptions();
-  renderPlaylists();
-  if(currentUser) loadMyTracks();
-  if(document.getElementById('page-search').classList.contains('active'))handleSearch(document.getElementById('searchInput').value);
-  if(document.getElementById('page-artist').classList.contains('active')&&currentArtistId)viewArtist(currentArtistId);
+  const _savedY=window.scrollY;
+  const _pid=document.querySelector('.page.active')?.id||'page-home';
+  switch(_pid){
+    case 'page-home':renderHome();break;
+    case 'page-explore':renderExplore();break;
+    case 'page-charts':renderCharts();break;
+    case 'page-new-releases':renderNewReleases();break;
+    case 'page-favorites':renderFavorites();break;
+    case 'page-subscriptions':renderSubscriptions();renderPlaylists();break;
+    case 'page-playlists':renderPlaylists();renderSubscriptions();break;
+    case 'page-profile':if(currentUser)loadMyTracks();break;
+    case 'page-search':handleSearch(document.getElementById('searchInput').value);break;
+    case 'page-artist':
+      if(currentArtistId){
+        currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===currentArtistId).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+        const _atl=document.getElementById('artistTracks');
+        if(_atl)_atl.innerHTML=currentArtistTracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+      }
+      break;
+    default:renderHome();break;
+  }
   openTrackFromHash();
+  requestAnimationFrame(()=>window.scrollTo(0,_savedY));
 });
 
 /* ===== RENDER TRACK ITEM ===== */
@@ -3524,6 +3536,7 @@ function doLoad(track){
     syncFxUi();
     if(currentTrackId&&track.audioData) setTimeout(()=>cacheAudioData(currentTrackId,track.audioData),80);
     broadcastPlaybackState();
+    setTimeout(()=>{if(isPlaying)startAudioEngine();},4000);
   }).catch(err=>{showSnackbar('Ошибка воспроизведения')})
 }
 
@@ -4333,8 +4346,8 @@ function viewArtist(aid){
         const pinnedIds=Object.keys(pins).filter(id=>allTracks[id]&&allTracks[id].title);
         if(!pinnedIds.length)return;
         pinnedIds.sort((a,b)=>(pins[a]||0)-(pins[b]||0));
-        const wrap=document.createElement('div');wrap.id='artistPinnedWrap';
-        wrap.innerHTML='<div style="display:flex;align-items:center;gap:6px;padding:8px 16px 4px;font:600 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant)"><span class="material-symbols-rounded" style="font-size:18px">push_pin</span>Закреплённые</div>'
+        const wrap=document.createElement('div');wrap.id='artistPinnedWrap';wrap.className='profile-pinned-wrap';
+        wrap.innerHTML='<div class="profile-pinned-title"><span class="material-symbols-rounded">push_pin</span> Закреплённые треки</div>'
           +'<div class="track-list">'+pinnedIds.map((id,i)=>renderTrackItem(id,allTracks[id],i+1,false,true)).join('')+'</div>';
         const tlEl=document.getElementById('artistTracks');
         if(tlEl&&tlEl.parentNode)tlEl.parentNode.insertBefore(wrap,tlEl);
@@ -5236,6 +5249,7 @@ function openAdminTools(){
     '<div class="settings-item" onclick="openCreatorTrackManager()"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Управление треками</div><div class="settings-item-sub">Поиск, рекомендации сервиса, удаление</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorModuleCheck()"><span class="material-symbols-rounded">checklist</span><div class="settings-item-info"><div class="settings-item-title">Проверка модулей</div><div class="settings-item-sub">Плеер, БД, party mode, модерация и видео</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorUsers()"><span class="material-symbols-rounded">group</span><div class="settings-item-info"><div class="settings-item-title">Управление пользователями</div><div class="settings-item-sub">Список пользователей и их контента</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorAlignData()"><span class="material-symbols-rounded">sync</span><div class="settings-item-info"><div class="settings-item-title">Выравнять данные</div><div class="settings-item-sub">Синхронизировать artistName и artistPhoto в треках по данным из профилей</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="modal-actions"><button class="btn-outlined" onclick="openSettings()">Назад</button></div>';
   document.getElementById('settingsModal').classList.add('open');
 }
@@ -5684,6 +5698,57 @@ function creatorEditForeignTrack(tid){
   document.getElementById('editTrackModal').classList.add('open');
 }
 
+/* ===== ALIGN DATA (ADMIN) ===== */
+async function openCreatorAlignData(){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
+  creatorPanelWrap('Выравнять данные',
+    '<div id="alignDataStatus" style="padding:8px 0;font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant)">Нажмите кнопку чтобы синхронизировать имена и фото артистов в треках.</div>'+
+    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button class="btn-primary" onclick="runCreatorAlignData(false)"><span class="material-symbols-rounded">sync</span> Запустить (только имя/фото)</button>'+
+    '<button class="btn-outlined" onclick="runCreatorAlignData(true)"><span class="material-symbols-rounded">preview</span> Превью (без записи)</button>'+
+    '</div>'+
+    '<div id="alignDataLog" style="margin-top:12px;font:400 12px/18px \'Inter\',sans-serif;color:var(--md-on-surface-variant);max-height:300px;overflow:auto"></div>'
+  );
+}
+async function runCreatorAlignData(dryRun){
+  const statusEl=document.getElementById('alignDataStatus');
+  const logEl=document.getElementById('alignDataLog');
+  if(!statusEl||!logEl)return;
+  statusEl.textContent=(dryRun?'[ПРЕВЬЮ] ':'')+'Загрузка пользователей...';
+  logEl.innerHTML='';
+  try{
+    const usersSnap=await db.ref('users').once('value');
+    const users=usersSnap.val()||{};
+    const uids=Object.keys(users);
+    let processed=0,updated=0,skipped=0;
+    const addLog=(msg)=>{logEl.innerHTML+='<div>'+esc(msg)+'</div>';logEl.scrollTop=logEl.scrollHeight};
+    for(let i=0;i<uids.length;i++){
+      const uid=uids[i];
+      const u=users[uid];
+      if(!u||!u.displayName) continue;
+      const userTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===uid);
+      if(!userTracks.length){skipped++;continue}
+      const updates={};
+      userTracks.forEach(([tid,t])=>{
+        const needsName=t.artistName!==u.displayName;
+        const needsPhoto=u.photo&&t.artistPhoto!==u.photo;
+        if(needsName) updates[tid+'/artistName']=u.displayName;
+        if(needsPhoto) updates[tid+'/artistPhoto']=u.photo;
+      });
+      if(Object.keys(updates).length){
+        addLog((dryRun?'[ПРЕВЬЮ] ':'')+'Обновление '+u.displayName+': '+Object.keys(updates).length+' полей');
+        if(!dryRun) await db.ref('tracks').update(updates);
+        updated++;
+      } else skipped++;
+      processed++;
+      statusEl.textContent=(dryRun?'[ПРЕВЬЮ] ':'')+'Обработано: '+processed+'/'+uids.length+' пользователей, обновлено: '+updated;
+      await new Promise(r=>setTimeout(r,150));
+    }
+    statusEl.textContent=(dryRun?'[ПРЕВЬЮ] ':'')+'✓ Готово! Обработано: '+processed+', обновлено: '+updated+', пропущено: '+skipped;
+    addLog('Операция завершена.');
+    if(!dryRun) showSnackbar('Данные выровнены');
+  }catch(e){statusEl.textContent='Ошибка: '+(e.message||e);showSnackbar('Ошибка выравнивания')}
+}
 /* ===== SAFETY SHIMS FOR RECENT FEATURES ===== */
 function updateUploadExplicitUI(){
   const wrap=document.getElementById('uploadExplicitWrap');
@@ -5710,6 +5775,7 @@ function openAdminTools(){
     '<div class="settings-item" onclick="openCreatorTrackManager()"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Управление треками</div><div class="settings-item-sub">Чужие треки, редактирование, удаление</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorModuleCheck()"><span class="material-symbols-rounded">checklist</span><div class="settings-item-info"><div class="settings-item-title">Проверка модулей</div><div class="settings-item-sub">Сервисы модерации, party mode, видео, радио</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorUsers()"><span class="material-symbols-rounded">group</span><div class="settings-item-info"><div class="settings-item-title">Управление пользователями</div><div class="settings-item-sub">Бан, разбан, чужие треки пользователя</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+    '<div class="settings-item" onclick="openCreatorAlignData()"><span class="material-symbols-rounded">sync</span><div class="settings-item-info"><div class="settings-item-title">Выравнять данные</div><div class="settings-item-sub">Синхронизировать artistName и artistPhoto в треках по данным из профилей</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="modal-actions"><button class="btn-outlined" onclick="openSettings()">Назад</button></div>';
 }
 function renderNotificationsModal(){
