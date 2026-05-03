@@ -1271,15 +1271,41 @@
   /* ===== РЕАЛЬНОЕ ПЕРЕКЛЮЧЕНИЕ ИСТОЧНИКА ДАННЫХ ===== */
   function applySourceSwitch(cfg) {
     const src = (cfg || { ...defaultConfig, ...getConfig() }).primarySource;
-    if (src !== 'server') return; // Firebase — стандартное поведение
+    if (src !== 'server') {
+      // Firebase или auto — разблокируем Firebase listener и обновляем чип
+      window._mpServerModeLocked = false;
+      updateDataSourceChip(src || 'firebase');
+      return;
+    }
     // Загружаем треки с сервера и передаём через custom event (window.allTracks — не то же что let allTracks в index.html)
     loadTracksFromServer().then(serverTracks => {
       if (!serverTracks || Object.keys(serverTracks).length === 0) return;
       window._mpServerModeLocked = true; // блокируем Firebase-override allTracks
       window.dispatchEvent(new CustomEvent('mp-source-switch', { detail: { source: 'server', tracks: serverTracks } }));
+      updateDataSourceChip('server');
       console.log('[MusicDB] Source switched to SERVER — loaded', Object.keys(serverTracks).length, 'tracks');
     }).catch(e => console.warn('[MusicDB] applySourceSwitch failed:', e.message));
   }
+
+  /* ===== ИНДИКАТОР ИСТОЧНИКА ДАННЫХ ===== */
+  function updateDataSourceChip(src) {
+    const chip = document.getElementById('dataSourceChip');
+    if (!chip) return;
+    const isServer = src === 'server';
+    chip.style.display = 'inline-flex';
+    chip.style.background = isServer ? 'rgba(25,118,210,.12)' : 'rgba(251,140,0,.12)';
+    chip.style.color = isServer ? '#1565c0' : '#e65100';
+    chip.style.border = isServer ? '1px solid rgba(25,118,210,.25)' : '1px solid rgba(251,140,0,.25)';
+    chip.innerHTML = isServer
+      ? '<span class="material-symbols-rounded" style="font-size:13px">computer</span>Сервер'
+      : '<span class="material-symbols-rounded" style="font-size:13px">local_fire_department</span>Firebase';
+  }
+
+  // Показываем текущий источник при инициализации (через 2.5с после init)
+  setTimeout(() => {
+    const src = ({ ...defaultConfig, ...getConfig() }).primarySource;
+    updateDataSourceChip(src || 'firebase');
+  }, 2500);
 
   /* ===== ПАТЧ ПАНЕЛИ СОЗДАТЕЛЯ ===== */
   function patchCreatorPanel() {
