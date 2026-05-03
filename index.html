@@ -454,7 +454,7 @@
   /* ===== DIFF И ВЫРАВНИВАНИЕ ===== */
   const MIRRORED_COLS = [
     'tracks','users','usernames','emails','favorites','playlists',
-    'pinnedTracks','subscriptions','subscribers','history','notifications',
+    'pinnedTracks','subscriptions','subscribers',
     'reports','trackVideoData',
   ];
   // Коллекции для выравнивания — без огромных creatorLogs/history/notifications
@@ -672,16 +672,16 @@
 
   <div style="background:var(--md-surface-container);border-radius:16px;padding:14px;border:1px solid var(--md-outline-variant)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font:700 13px/18px 'Inter',sans-serif;color:var(--md-on-surface)">📊 Выравнивание данных</div>
-      <button class="btn-tonal" onclick="window.MusicDB.showDiff()" style="padding:4px 10px;font-size:12px;min-width:0">
+      <div style="font:700 13px/18px 'Inter',sans-serif;color:var(--md-on-surface)">📊 Выравнивание данных <span style="font:400 10px 'Inter';color:var(--md-outline)">v2</span></div>
+      <button class="btn-tonal" onclick="if(window._mpAlignRunning){if(typeof window.showSnackbar==='function')window.showSnackbar('⏳ Подожди — выравнивание идёт...');return;}window.MusicDB.showDiff()" style="padding:4px 10px;font-size:12px;min-width:0">
         <span class="material-symbols-rounded" style="font-size:15px">refresh</span>
       </button>
     </div>
     <div style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:10px">
-      Сравни треки сервера и Firebase, найди различия и выровняй все коллекции.
+      Сравни треки сервера и Firebase, найди различия и выровняй только то, что отличается.
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn-tonal" onclick="window.MusicDB.showDiff()" style="padding:8px 14px;font-size:13px">
+      <button class="btn-tonal" onclick="if(window._mpAlignRunning){if(typeof window.showSnackbar==='function')window.showSnackbar('⏳ Подожди — выравнивание идёт...');return;}window.MusicDB.showDiff()" style="padding:8px 14px;font-size:13px">
         <span class="material-symbols-rounded" style="font-size:16px">compare_arrows</span> Показать различия
       </button>
       <button class="btn-primary" onclick="window.MusicDB.alignAll()" style="padding:8px 14px;font-size:13px">
