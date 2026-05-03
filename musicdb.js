@@ -1083,14 +1083,27 @@
   window._mpDeleteGhostTrack = async function(encodedId) {
     const id = decodeURIComponent(encodedId);
     if (!confirm('Удалить пустую запись "' + id + '" из Firebase?')) return;
+    const ref = window.firebase && window.firebase.database().ref('tracks/' + id);
+    if (!ref) { if (typeof window.showSnackbar === 'function') window.showSnackbar('❌ Firebase не загружена'); return; }
     try {
-      if (!window.firebase) throw new Error('Firebase не загружена');
-      await window.firebase.database().ref('tracks/' + id).remove();
-      if (typeof window.showSnackbar === 'function') window.showSnackbar('✅ Удалено из Firebase');
-      window.MusicDB.showDiff();
+      // Пробуем set(null) — эквивалентно remove() но работает через транзакцию
+      await ref.set(null);
     } catch (e) {
       if (typeof window.showSnackbar === 'function') window.showSnackbar('❌ Ошибка: ' + e.message);
+      return;
     }
+    // Верификация — читаем узел снова чтобы убедиться что удалился
+    await new Promise(r => setTimeout(r, 600));
+    try {
+      const snap = await ref.once('value');
+      if (snap.exists()) {
+        // Всё ещё существует — нет прав
+        if (typeof window.showSnackbar === 'function') window.showSnackbar('❌ Не удалось удалить — проверь Firebase Rules');
+        return;
+      }
+    } catch (_) {}
+    if (typeof window.showSnackbar === 'function') window.showSnackbar('✅ Удалено из Firebase');
+    window.MusicDB.showDiff();
   };
 
   /* ===== ПАТЧИМ ФУНКЦИИ ЗАГРУЗКИ ТРЕКОВ ===== */
