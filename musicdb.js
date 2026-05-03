@@ -772,13 +772,25 @@
 
       // --- Карточки названий треков ---
       function trackCard(id, t, kind) {
-        const title = (t && t.title) ? t.title : id;
+        const hasData = t && (t.title || t.audioUrl || t.artistName);
+        const title = hasData ? (t.title || id) : null;
         const artist = (t && t.artistName) ? t.artistName : '';
         const icon = kind === 'firebase' ? '🔥' : '🖥️';
         const bg = kind === 'firebase' ? 'rgba(255,87,34,.07)' : 'rgba(103,80,164,.07)';
+        if (!hasData && kind === 'firebase') {
+          // Сломанный/пустой трек в Firebase — показываем с кнопкой удаления
+          return `<div style="padding:5px 10px;background:rgba(183,28,28,.07);border-radius:8px;font:400 12px 'Inter';display:flex;align-items:center;gap:8px;border:1px solid rgba(183,28,28,.15)">
+            <span>⚠️</span>
+            <div style="flex:1;min-width:0">
+              <b style="color:var(--md-error)">Пустая запись</b>
+              <span style="color:var(--md-on-surface-variant);margin-left:6px;font-size:11px">${id}</span>
+            </div>
+            <button onclick="(async()=>{if(!confirm('Удалить эту запись из Firebase?'))return;try{await window.firebase.database().ref('tracks/'+${JSON.stringify(id)}).remove();if(typeof window.showSnackbar==='function')window.showSnackbar('Удалено из Firebase');window.MusicDB.showDiff();}catch(e){if(typeof window.showSnackbar==='function')window.showSnackbar('Ошибка: '+e.message);}})()" style="padding:3px 8px;border-radius:6px;border:1px solid rgba(183,28,28,.3);background:rgba(183,28,28,.1);color:var(--md-error);font:500 11px 'Inter';cursor:pointer;flex-shrink:0">Удалить</button>
+          </div>`;
+        }
         return `<div style="padding:5px 10px;background:${bg};border-radius:8px;font:400 12px 'Inter';display:flex;align-items:center;gap:8px">
           <span>${icon}</span>
-          <div><b style="color:var(--md-on-surface)">${title}</b>${artist ? `<span style="color:var(--md-on-surface-variant)"> — ${artist}</span>` : ''}</div>
+          <div><b style="color:var(--md-on-surface)">${title || id}</b>${artist ? `<span style="color:var(--md-on-surface-variant)"> — ${artist}</span>` : ''}</div>
         </div>`;
       }
 
@@ -993,7 +1005,9 @@
         startSub(`Треки FB→Сервер: ${missingIds.length} шт...`, 2000);
         const missingTracks = {};
         for (const id of missingIds) {
-          if (tracksData[id]) missingTracks[id] = tracksData[id];
+          const t = tracksData[id];
+          // Пропускаем пустые/сломанные записи без данных
+          if (t && (t.title || t.audioUrl || t.artistName)) missingTracks[id] = t;
         }
         try {
           const res = await serverPost('/sync/import-from-firebase', { tracks: missingTracks });
