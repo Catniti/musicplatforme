@@ -9,7 +9,7 @@
   'use strict';
 
   /* ===== НАСТРОЙКИ ===== */
-  const PROD_BASE = 'https://data-sync-hub--vriskas1.replit.app/api';
+  const PROD_BASE = 'https://data-sync-hub--vriskas.replit.app/api';
   const DEV_BASE  = 'https://a11cc0fd-cb9b-4609-8305-d47f99831b19-00-70ono3xcux3f.riker.replit.dev/api';
 
   function detectServerBase() {
