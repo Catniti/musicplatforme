@@ -417,12 +417,12 @@
   const MIRRORED_COLS = [
     'tracks','users','usernames','emails','favorites','playlists',
     'pinnedTracks','subscriptions','subscribers',
-    'reports','trackVideoData',
+    'history','notifications','reports','trackVideoData',
   ];
-  // Коллекции для выравнивания — без огромных creatorLogs/history/notifications
+  // Коллекции для выравнивания (без creatorLogs — он слишком большой)
   const ALIGN_COLS = [
     'tracks','users','usernames','emails','favorites','playlists',
-    'pinnedTracks','subscriptions','subscribers','reports','trackVideoData',
+    'pinnedTracks','subscriptions','subscribers','history','notifications','reports','trackVideoData',
   ];
 
   async function getDiff(firebaseIds) {
