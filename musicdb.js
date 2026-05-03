@@ -633,23 +633,8 @@
   </div>
 
   <div style="background:var(--md-surface-container);border-radius:16px;padding:14px;border:1px solid var(--md-outline-variant)">
-    <div style="font:700 13px/18px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:8px">🔄 Очередь синхронизации</div>
-    <div style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:10px">
-      Ожидает синхронизации с Firebase: <b>${q.pending}</b> из <b>${q.total}</b>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn-tonal" onclick="window.MusicDB.runSyncNow()" style="padding:8px 14px;font-size:13px">
-        <span class="material-symbols-rounded" style="font-size:16px">sync</span> Синхронизировать сейчас
-      </button>
-      <button class="btn-outlined" onclick="window.MusicDB.clearSyncedItems()" style="padding:8px 14px;font-size:13px">
-        <span class="material-symbols-rounded" style="font-size:16px">delete_sweep</span> Очистить синхронизированные
-      </button>
-    </div>
-  </div>
-
-  <div style="background:var(--md-surface-container);border-radius:16px;padding:14px;border:1px solid var(--md-outline-variant)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font:700 13px/18px 'Inter',sans-serif;color:var(--md-on-surface)">📊 Выравнивание данных (11 коллекций)</div>
+      <div style="font:700 13px/18px 'Inter',sans-serif;color:var(--md-on-surface)">📊 Выравнивание данных</div>
       <button class="btn-tonal" onclick="window.MusicDB.showDiff()" style="padding:4px 10px;font-size:12px;min-width:0">
         <span class="material-symbols-rounded" style="font-size:15px">refresh</span>
       </button>
@@ -876,28 +861,29 @@
       const resultEl = document.getElementById('mpDiffResult');
 
       // --- Двойной прогресс-бар ---
-      const OVERALL_TOTAL = ALIGN_COLS.length + 2; // коллекции + импорт + экспорт
+      // overallTotal определяется динамически после сканирования
+      let overallTotal = 1; // минимум 1 (фаза сканирования)
       let overallStep = 0;
       let subPct = 0;
       let subTimer = null;
-      let overallLabel = 'Начинаем...';
+      let overallLabel = 'Сканирование...';
       let subLabel = '';
-      let doneSteps = []; // список завершённых коллекций
+      let doneSteps = [];
 
       function renderBars() {
         if (!resultEl || !window._mpAlignRunning) return;
-        const overallPct = Math.round((overallStep / OVERALL_TOTAL) * 100);
+        const overallPct = overallTotal > 0 ? Math.round((overallStep / overallTotal) * 100) : 0;
         const subFill = Math.round(subPct);
-        const doneChips = doneSteps.slice(-4).map(s =>
+        const doneChips = doneSteps.slice(-5).map(s =>
           `<span style="padding:2px 8px;border-radius:999px;background:rgba(76,175,80,.12);color:#2e7d32;font:500 11px 'Inter'">${s}</span>`
         ).join(' ');
         resultEl.innerHTML = `
           <div style="padding:10px 4px 4px">
-            <div style="font:600 12px 'Inter';color:var(--md-on-surface);margin-bottom:6px">🔄 Выравнивание данных</div>
+            <div style="font:600 12px 'Inter';color:var(--md-on-surface);margin-bottom:6px">🔄 Умное выравнивание</div>
 
             <div style="margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">
               <span style="font:400 11px 'Inter';color:var(--md-on-surface-variant)">Общий прогресс</span>
-              <span style="font:600 11px 'Inter';color:var(--md-on-surface)">${overallStep} / ${OVERALL_TOTAL}</span>
+              <span style="font:600 11px 'Inter';color:var(--md-on-surface)">${overallStep} / ${overallTotal} шагов</span>
             </div>
             <div style="height:10px;border-radius:999px;background:var(--md-surface-container-high);overflow:hidden;margin-bottom:10px">
               <div style="height:100%;width:${overallPct}%;background:var(--md-primary);border-radius:999px;transition:width .4s cubic-bezier(.4,0,.2,1)"></div>
@@ -916,13 +902,12 @@
           </div>`;
       }
 
-      // Запускает нижний бар от 0 → 90% за expectedMs мс, потом ждёт вызова finishSub()
       function startSub(label, expectedMs) {
         overallLabel = label;
         subLabel = '';
         subPct = 0;
         if (subTimer) clearInterval(subTimer);
-        const tickMs = 120;
+        const tickMs = 100;
         const totalTicks = Math.max(1, expectedMs / tickMs);
         const perTick = 90 / totalTicks;
         subTimer = setInterval(() => {
@@ -941,54 +926,128 @@
 
       renderBars();
 
-      // === Фаза 1: Загрузка коллекций из Firebase ===
-      const allData = {};
-      let fbOk = false;
-      for (const col of ALIGN_COLS) {
-        const expectedMs = col === 'tracks' ? 4000 : 2000;
-        startSub(`Читаем «${col}» из Firebase...`, expectedMs);
+      // ═══ ФАЗА 0: СКАНИРОВАНИЕ — загружаем треки + считаем остальные коллекции параллельно ═══
+      startSub('Сканируем Firebase...', 5000);
+      let tracksData = {};
+      const fbCounts = {};
+      const fbDataCache = {}; // кэш данных коллекций для последующего импорта
+
+      // Треки грузим полностью (нужны ID и данные для diff), остальные — только подсчёт
+      const otherCols = ALIGN_COLS.filter(c => c !== 'tracks');
+      const [tracksResult, ...otherResults] = await Promise.all([
+        getFirebaseCollectionClean('tracks', 8000),
+        ...otherCols.map(col => getFirebaseCollectionClean(col, 4000)),
+      ]);
+      tracksData = tracksResult || {};
+      fbCounts['tracks'] = Object.keys(tracksData).length;
+      fbDataCache['tracks'] = tracksData;
+      otherCols.forEach((col, i) => {
+        const data = otherResults[i] || {};
+        fbCounts[col] = Object.keys(data).length;
+        fbDataCache[col] = data;
+      });
+      setFirebaseAvailable(true);
+      overallStep = 1;
+
+      // ═══ ФАЗА 1: DIFF — сравниваем с сервером, находим только различия ═══
+      finishSub('Сканирование завершено, сравниваем с сервером...');
+      await new Promise(r => setTimeout(r, 150));
+
+      const [diffAll, trackDiff] = await Promise.all([
+        (async () => {
+          try { return await serverPost('/sync/diff-all', { firebaseCounts: fbCounts }); } catch { return null; }
+        })(),
+        getDiff(Object.keys(tracksData)),
+      ]);
+
+      // Определяем какие коллекции реально нуждаются в синхронизации
+      const colsNeedingSync = ALIGN_COLS.filter(col => {
+        if (!diffAll || !diffAll.collections) return true;
+        const info = diffAll.collections[col];
+        return !info || info.diff > 0;
+      });
+
+      const needTrackImport = trackDiff && trackDiff.onlyFirebaseCount > 0;
+      const needTrackExport = trackDiff && trackDiff.onlyServerCount > 0;
+      const nonTrackCols = colsNeedingSync.filter(c => c !== 'tracks');
+
+      // Если всё синхронизировано
+      if (!needTrackImport && !needTrackExport && nonTrackCols.length === 0) {
+        window._mpAlignRunning = false;
+        if (resultEl) resultEl.innerHTML = `<div style="padding:10px;background:rgba(76,175,80,.08);border-radius:10px;font:400 12px 'Inter'">✅ Всё уже синхронизировано! Различий не найдено.</div>`;
+        setTimeout(() => window.MusicDB.showDiff(), 400);
+        return;
+      }
+
+      // Обновляем динамический total: 1 (скан) + кол-во шагов синхронизации
+      const syncSteps = (needTrackImport ? 1 : 0) + (needTrackExport ? 1 : 0) + (nonTrackCols.length > 0 ? 1 : 0);
+      overallTotal = 1 + syncSteps;
+      renderBars();
+
+      let totalImported = 0;
+      let totalSynced = 0;
+
+      // ═══ ФАЗА 2: ТРЕКИ Firebase → Сервер (только недостающие) ═══
+      if (needTrackImport) {
+        const missingIds = trackDiff.onlyFirebase || [];
+        startSub(`Треки FB→Сервер: ${missingIds.length} шт...`, 2000);
+        const missingTracks = {};
+        for (const id of missingIds) {
+          if (tracksData[id]) missingTracks[id] = tracksData[id];
+        }
         try {
-          const data = await getFirebaseCollectionClean(col, 5500);
-          allData[col] = data;
-          fbOk = true;
-          const count = Object.keys(data).length;
-          doneSteps.push(`${col} (${count})`);
-          finishSub(`Получено: ${count} записей`);
+          const res = await serverPost('/sync/import-from-firebase', { tracks: missingTracks });
+          totalImported += res ? (res.imported || 0) : 0;
+          doneSteps.push(`треки FB→S: +${totalImported}`);
+          finishSub(`Импортировано треков: +${totalImported}`);
         } catch {
-          allData[col] = {};
-          doneSteps.push(`${col} ✗`);
-          finishSub('Ошибка / таймаут');
+          finishSub('⚠️ Ошибка импорта треков');
         }
         overallStep++;
-        await new Promise(r => setTimeout(r, 80)); // небольшая пауза для анимации
+        await new Promise(r => setTimeout(r, 100));
       }
-      if (fbOk) setFirebaseAvailable(true);
 
-      // === Фаза 2: Firebase → Сервер ===
-      startSub('Firebase → Сервер: импорт...', 3000);
-      const importResult = await importAllCollectionsToServer(allData);
-      overallStep++;
-      const imported = importResult ? (importResult.totalImported || 0) : 0;
-      finishSub(`Импортировано: +${imported} записей`);
-      await new Promise(r => setTimeout(r, 100));
+      // ═══ ФАЗА 3: ТРЕКИ Сервер → Firebase (только недостающие) ═══
+      if (needTrackExport) {
+        startSub(`Треки Сервер→FB: ${trackDiff.onlyServerCount} шт...`, 3000);
+        try {
+          const res = await exportServerTracksToFirebase();
+          totalSynced = res && !res.error ? (res.synced || 0) : 0;
+          doneSteps.push(`треки S→FB: +${totalSynced}`);
+          finishSub(res && res.error ? '⚠️ Ошибка' : `Отправлено в Firebase: +${totalSynced}`);
+        } catch {
+          finishSub('⚠️ Ошибка экспорта');
+        }
+        overallStep++;
+        await new Promise(r => setTimeout(r, 100));
+      }
 
-      // === Фаза 3: Сервер → Firebase ===
-      startSub('Сервер → Firebase: треки...', 3000);
-      const exportResult = await exportServerTracksToFirebase();
-      overallStep++;
-      const synced = exportResult && !exportResult.error ? (exportResult.synced || 0) : 0;
-      finishSub(exportResult && exportResult.error ? '⚠️ Ошибка экспорта' : `Синхронизировано: ${synced} треков`);
-      await new Promise(r => setTimeout(r, 300));
+      // ═══ ФАЗА 4: ОСТАЛЬНЫЕ КОЛЛЕКЦИИ (только те где есть разница) ═══
+      if (nonTrackCols.length > 0) {
+        startSub(`Другие коллекции: ${nonTrackCols.join(', ')}...`, nonTrackCols.length * 1000);
+        const toImport = {};
+        for (const col of nonTrackCols) {
+          toImport[col] = fbDataCache[col] || {};
+          doneSteps.push(col);
+        }
+        try {
+          const res = await importAllCollectionsToServer(toImport);
+          const cnt = res ? (res.totalImported || 0) : 0;
+          totalImported += cnt;
+          finishSub(`Коллекции синхронизированы: +${cnt} записей`);
+        } catch {
+          finishSub('⚠️ Ошибка синхронизации коллекций');
+        }
+        overallStep++;
+        await new Promise(r => setTimeout(r, 100));
+      }
 
       // === Готово ===
       window._mpAlignRunning = false;
-
-      let msg = '✅ Готово. FB→Сервер: +' + imported + ' зап. Сервер→FB: ' + synced + ' треков.';
+      const msg = `✅ Готово. Импортировано: +${totalImported} зап. Синхронизировано: +${totalSynced} треков.`;
       if (isCreator && typeof window.showSnackbar === 'function') window.showSnackbar(msg);
-      if (resultEl) {
-        resultEl.innerHTML = `<div style="padding:8px;background:rgba(76,175,80,.08);border-radius:10px;font:400 12px 'Inter'">${msg}</div>`;
-      }
-      setTimeout(() => window.MusicDB.showDiff(), 500);
+      if (resultEl) resultEl.innerHTML = `<div style="padding:8px;background:rgba(76,175,80,.08);border-radius:10px;font:400 12px 'Inter'">${msg}</div>`;
+      setTimeout(() => window.MusicDB.showDiff(), 400);
     },
 
     openCreatorServicePanel: async function() {
