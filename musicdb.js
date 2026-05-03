@@ -13,6 +13,11 @@
   const DEV_BASE  = 'https://a11cc0fd-cb9b-4609-8305-d47f99831b19-00-70ono3xcux3f.riker.replit.dev/api';
 
   function detectServerBase() {
+    // Позволяем вручную переопределить URL из панели создателя
+    try {
+      const override = localStorage.getItem('mp_server_url_override');
+      if (override && override.startsWith('http')) return override.replace(/\/$/, '') + (override.includes('/api') ? '' : '/api');
+    } catch { /* ignore */ }
     const host = (window.location.hostname || '').toLowerCase();
     if (host.includes('replit.app') || host.includes('data-sync-hub')) return PROD_BASE;
     if (host.includes('github.io') || host === 'localhost' || host === '') return PROD_BASE;
@@ -633,6 +638,16 @@
       <button class="btn-primary" onclick="window.MusicDB.saveConfig()" style="padding:8px 16px">Сохранить</button>
     </div>
     <div id="mpSourceWarning" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);font:400 12px/17px 'Inter',sans-serif;color:#92400e"></div>
+    <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <div style="flex:1;min-width:0">
+        <div style="font:400 11px 'Inter';color:var(--md-on-surface-variant);margin-bottom:4px">URL сервера (из кода): <code style="font-size:10px;background:var(--md-surface-container-high);padding:1px 5px;border-radius:4px;word-break:break-all">${SERVER_BASE}</code></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="mpServerUrlInput" class="md-input" placeholder="Новый URL (если изменился после republish)" value="${localStorage.getItem('mp_server_url_override')||''}" style="flex:1;font-size:11px;padding:6px 10px;border-radius:8px;margin:0">
+          <button class="btn-tonal" onclick="(function(){const v=document.getElementById('mpServerUrlInput').value.trim();if(v){localStorage.setItem('mp_server_url_override',v);window.showSnackbar&&window.showSnackbar('URL обновлён — перезагрузи страницу');}else{localStorage.removeItem('mp_server_url_override');window.showSnackbar&&window.showSnackbar('URL сброшен');}})()" style="padding:6px 10px;font-size:11px;min-width:0;white-space:nowrap">Сохранить</button>
+        </div>
+      </div>
+      <span id="mpActiveSourceBadge" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font:600 11px 'Inter';flex-shrink:0">⌛ Определяется...</span>
+    </div>
   </div>
 
   <div style="background:var(--md-surface-container);border-radius:16px;padding:14px;border:1px solid var(--md-outline-variant)">
@@ -1287,25 +1302,22 @@
     }).catch(e => console.warn('[MusicDB] applySourceSwitch failed:', e.message));
   }
 
-  /* ===== ИНДИКАТОР ИСТОЧНИКА ДАННЫХ ===== */
-  function updateDataSourceChip(src) {
-    const chip = document.getElementById('dataSourceChip');
-    if (!chip) return;
-    const isServer = src === 'server';
-    chip.style.display = 'inline-flex';
-    chip.style.background = isServer ? 'rgba(25,118,210,.12)' : 'rgba(251,140,0,.12)';
-    chip.style.color = isServer ? '#1565c0' : '#e65100';
-    chip.style.border = isServer ? '1px solid rgba(25,118,210,.25)' : '1px solid rgba(251,140,0,.25)';
-    chip.innerHTML = isServer
-      ? '<span class="material-symbols-rounded" style="font-size:13px">computer</span>Сервер'
-      : '<span class="material-symbols-rounded" style="font-size:13px">local_fire_department</span>Firebase';
-  }
-
-  // Показываем текущий источник при инициализации (через 2.5с после init)
+  // Инициализируем значок при старте
   setTimeout(() => {
     const src = ({ ...defaultConfig, ...getConfig() }).primarySource;
     updateDataSourceChip(src || 'firebase');
-  }, 2500);
+  }, 2600);
+
+  /* ===== ИНДИКАТОР ИСТОЧНИКА ДАННЫХ (в панели источников) ===== */
+  function updateDataSourceChip(src) {
+    const badge = document.getElementById('mpActiveSourceBadge');
+    if (!badge) return;
+    const isServer = src === 'server';
+    const isAuto = src === 'auto';
+    badge.style.background = isServer ? 'rgba(25,118,210,.15)' : isAuto ? 'rgba(76,175,80,.15)' : 'rgba(251,140,0,.15)';
+    badge.style.color = isServer ? '#1565c0' : isAuto ? '#2e7d32' : '#e65100';
+    badge.textContent = isServer ? '🖥 Сервер активен' : isAuto ? '🔄 Авто' : '🔥 Firebase активен';
+  }
 
   /* ===== ПАТЧ ПАНЕЛИ СОЗДАТЕЛЯ ===== */
   function patchCreatorPanel() {
