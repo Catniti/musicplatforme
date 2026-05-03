@@ -1272,24 +1272,11 @@
   function applySourceSwitch(cfg) {
     const src = (cfg || { ...defaultConfig, ...getConfig() }).primarySource;
     if (src !== 'server') return; // Firebase — стандартное поведение
-    // Загружаем треки с сервера и перезаписываем allTracks + перерисовываем страницу
+    // Загружаем треки с сервера и передаём через custom event (window.allTracks — не то же что let allTracks в index.html)
     loadTracksFromServer().then(serverTracks => {
-      if (!serverTracks) return;
-      if (typeof window.allTracks !== 'undefined') {
-        window.allTracks = serverTracks;
-        window.loadedTrackEntries = Object.entries(serverTracks)
-          .sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
-      }
-      // Перерисовываем активную страницу
-      const pid = document.querySelector('.page.active')?.id || 'page-home';
-      switch (pid) {
-        case 'page-home': if (typeof window.renderHome === 'function') window.renderHome(); break;
-        case 'page-explore': if (typeof window.renderExplore === 'function') window.renderExplore(); break;
-        case 'page-charts': if (typeof window.renderCharts === 'function') window.renderCharts(); break;
-        case 'page-new-releases': if (typeof window.renderNewReleases === 'function') window.renderNewReleases(); break;
-        case 'page-favorites': if (typeof window.renderFavorites === 'function') window.renderFavorites(); break;
-        default: if (typeof window.renderHome === 'function') window.renderHome(); break;
-      }
+      if (!serverTracks || Object.keys(serverTracks).length === 0) return;
+      window._mpServerModeLocked = true; // блокируем Firebase-override allTracks
+      window.dispatchEvent(new CustomEvent('mp-source-switch', { detail: { source: 'server', tracks: serverTracks } }));
       console.log('[MusicDB] Source switched to SERVER — loaded', Object.keys(serverTracks).length, 'tracks');
     }).catch(e => console.warn('[MusicDB] applySourceSwitch failed:', e.message));
   }
