@@ -1310,24 +1310,11 @@
   function applySourceSwitch(cfg) {
     const src = (cfg || { ...defaultConfig, ...getConfig() }).primarySource;
     if (src !== 'server') return; // Firebase — стандартное поведение
-    // Загружаем треки с сервера и перезаписываем allTracks + перерисовываем страницу
+    // Загружаем треки с сервера и передаём через custom event (window.allTracks — не то же что let allTracks в index.html)
     loadTracksFromServer().then(serverTracks => {
-      if (!serverTracks) return;
-      if (typeof window.allTracks !== 'undefined') {
-        window.allTracks = serverTracks;
-        window.loadedTrackEntries = Object.entries(serverTracks)
-          .sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
-      }
-      // Перерисовываем активную страницу
-      const pid = document.querySelector('.page.active')?.id || 'page-home';
-      switch (pid) {
-        case 'page-home': if (typeof window.renderHome === 'function') window.renderHome(); break;
-        case 'page-explore': if (typeof window.renderExplore === 'function') window.renderExplore(); break;
-        case 'page-charts': if (typeof window.renderCharts === 'function') window.renderCharts(); break;
-        case 'page-new-releases': if (typeof window.renderNewReleases === 'function') window.renderNewReleases(); break;
-        case 'page-favorites': if (typeof window.renderFavorites === 'function') window.renderFavorites(); break;
-        default: if (typeof window.renderHome === 'function') window.renderHome(); break;
-      }
+      if (!serverTracks || Object.keys(serverTracks).length === 0) return;
+      window._mpServerModeLocked = true; // блокируем Firebase-override allTracks
+      window.dispatchEvent(new CustomEvent('mp-source-switch', { detail: { source: 'server', tracks: serverTracks } }));
       console.log('[MusicDB] Source switched to SERVER — loaded', Object.keys(serverTracks).length, 'tracks');
     }).catch(e => console.warn('[MusicDB] applySourceSwitch failed:', e.message));
   }
@@ -3557,6 +3544,7 @@ const db=firebase.database();
 
 /* ===== STATE ===== */
 let currentUser=null,allTracks={},currentTrackId=null,playlist=[],playlistIndex=-1;
+let bannedUserIds=new Set();
 let isPlaying=false,isShuffle=false,repeatMode=0;
 let favorites={},subscriptions={},userPlaylists={},pinnedTracks={},deleteTrackId=null;
 let selectedAudioFile=null,selectedAudioDataURL=null,playerVisible=false;
@@ -4327,7 +4315,8 @@ function restoreSession(){
         displayName:fresh.displayName||currentUser.displayName,
         photo:fresh.photo||currentUser.photo||'',
         bio:fresh.bio||currentUser.bio||'',
-        username:fresh.username||currentUser.username||''
+        username:fresh.username||currentUser.username||'',
+        banned:!!fresh.banned
       });
       localStorage.setItem('mp_user',JSON.stringify(currentUser));
       updateAuthUI();
@@ -4613,7 +4602,29 @@ async function togglePinTrack(trackId){
 }
 
 /* ===== TRACKS LISTENER ===== */
+// Слушаем забаненных пользователей
+db.ref('users').on('value',snap=>{
+  const users=snap.val()||{};
+  bannedUserIds=new Set(Object.entries(users).filter(([,u])=>u&&u.banned).map(([id])=>id));
+});
+// Слушаем переключение источника на сервер (из musicdb.js)
+window.addEventListener('mp-source-switch',e=>{
+  if(e.detail&&e.detail.source==='server'&&e.detail.tracks){
+    allTracks=e.detail.tracks;
+    loadedTrackEntries=Object.entries(allTracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+    const pid=document.querySelector('.page.active')?.id||'page-home';
+    switch(pid){
+      case 'page-home':renderHome();break;
+      case 'page-explore':renderExplore();break;
+      case 'page-charts':renderCharts();break;
+      case 'page-new-releases':renderNewReleases();break;
+      case 'page-favorites':renderFavorites();break;
+      default:renderHome();
+    }
+  }
+});
 db.ref('tracks').on('value',snap=>{
+  if(window._mpServerModeLocked)return; // server-mode активен — не перезаписываем Firebase данными
   allTracks=snap.val()||{};
   loadedTrackEntries=Object.entries(allTracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   const _savedY=window.scrollY;
@@ -5141,7 +5152,7 @@ function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,c
 
 /* ===== RENDER PAGES ===== */
 function renderHome(){
-  const entries=loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks);
+  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId));
   const sorted=[...entries].sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
   const popular=[...entries].sort((a,b)=>(b[1].plays||0)-(a[1].plays||0)).slice(0,8);
@@ -5159,7 +5170,7 @@ function renderHome(){
 let currentGenre='all';
 function renderExplore(){
   document.getElementById('genrePills').innerHTML=genres.map(g=>'<div class="chip '+(currentGenre===g.id?'active':'')+'" onclick="filterGenre(\''+g.id+'\')"><span class="material-symbols-rounded" style="font-size:16px">'+g.icon+'</span> '+g.label+'</div>').join('');
-  const entries=loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks);
+  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId));
   let filtered=currentGenre==='all'?entries:entries.filter(([id,t])=>t.genre===currentGenre);
   filtered.sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   const gl=genres.find(g=>g.id===currentGenre);
@@ -5169,13 +5180,13 @@ function renderExplore(){
 function filterGenre(g){currentGenre=g;trackPageSize=24;renderExplore()}
 
 function renderCharts(){
-  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0));
+  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId)).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0));
   document.getElementById('chartsTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">trending_up</span><h3>Нет данных</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderCharts()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
 function renderNewReleases(){
   const weekAgo=Date.now()-7*24*60*60*1000;
-  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([id,t])=>(t.timestamp||0)>weekAgo).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId)&&(t.timestamp||0)>weekAgo).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   document.getElementById('newReleasesTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">new_releases</span><h3>Нет новинок за последнюю неделю</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderNewReleases()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
@@ -6662,6 +6673,7 @@ async function importTrackFromUrl(){
 
 async function publishTrack(){
   if(!currentUser){showSnackbar('Войдите');return}
+  if(currentUser.banned){showSnackbar('Ваш аккаунт заблокирован. Публикация недоступна.');return}
   const title=document.getElementById('uploadTitle').value.trim();
   let genre=document.getElementById('uploadGenre').value;
   if(genre==='custom')genre=document.getElementById('uploadCustomGenre').value.trim().toLowerCase()||'other';
