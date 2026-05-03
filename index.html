@@ -412,11 +412,14 @@
       const isCreator = typeof window.isCreatorUser === 'function' && window.isCreatorUser(window.currentUser);
       let synced = 0;
 
-      // Firebase → Сервер: добавляем треки которых нет на сервере
+      // Firebase → Сервер: добавляем треки которых нет на сервере (только реальные, не ghost)
       if (diff.onlyFirebaseCount > 0 && (diff.onlyFirebase || []).length > 0) {
         const toImport = {};
         for (const id of diff.onlyFirebase) {
-          if (tracksData[id]) toImport[id] = tracksData[id];
+          const t = tracksData[id];
+          // Пропускаем ghost-записи (без title, audioUrl и artistName)
+          if (!t || typeof t !== 'object' || (!t.title && !t.audioUrl && !t.artistName)) continue;
+          toImport[id] = t;
         }
         if (Object.keys(toImport).length > 0) {
           await serverPost('/sync/import-from-firebase', { tracks: toImport });
@@ -815,16 +818,27 @@
         const artist = (t && t.artistName) ? t.artistName : '';
         const icon = kind === 'firebase' ? '🔥' : '🖥️';
         const bg = kind === 'firebase' ? 'rgba(255,87,34,.07)' : 'rgba(103,80,164,.07)';
+        const safeId = encodeURIComponent(id);
         if (!hasData && kind === 'firebase') {
-          // Сломанный/пустой трек в Firebase — показываем с кнопкой удаления
-          const safeId = encodeURIComponent(id);
+          // Ghost-запись только в Firebase — удаляем из Firebase
           return `<div style="padding:5px 10px;background:rgba(183,28,28,.07);border-radius:8px;font:400 12px 'Inter';display:flex;align-items:center;gap:8px;border:1px solid rgba(183,28,28,.15)">
             <span>⚠️</span>
             <div style="flex:1;min-width:0">
-              <b style="color:var(--md-error)">Пустая запись</b>
+              <b style="color:var(--md-error)">Пустая запись (FB)</b>
               <span style="color:var(--md-on-surface-variant);margin-left:6px;font-size:11px">${id}</span>
             </div>
             <button onclick="window._mpDeleteGhostTrack('${safeId}')" style="padding:3px 8px;border-radius:6px;border:1px solid rgba(183,28,28,.3);background:rgba(183,28,28,.1);color:var(--md-error);font:500 11px 'Inter';cursor:pointer;flex-shrink:0">Удалить</button>
+          </div>`;
+        }
+        if (kind === 'server') {
+          // Трек только на сервере — показываем ID и кнопку удаления с сервера
+          return `<div style="padding:5px 10px;background:rgba(103,80,164,.07);border-radius:8px;font:400 12px 'Inter';display:flex;align-items:center;gap:8px;border:1px solid rgba(103,80,164,.15)">
+            <span>🖥️</span>
+            <div style="flex:1;min-width:0">
+              <b style="color:var(--md-on-surface)">${title || id}</b>${artist ? `<span style="color:var(--md-on-surface-variant)"> — ${artist}</span>` : ''}
+              ${!hasData ? `<span style="color:var(--md-on-surface-variant);margin-left:4px;font-size:11px">${id}</span>` : ''}
+            </div>
+            <button onclick="window._mpDeleteServerTrack('${safeId}')" style="padding:3px 8px;border-radius:6px;border:1px solid rgba(103,80,164,.3);background:rgba(103,80,164,.1);color:var(--md-primary);font:500 11px 'Inter';cursor:pointer;flex-shrink:0">Удалить</button>
           </div>`;
         }
         return `<div style="padding:5px 10px;background:${bg};border-radius:8px;font:400 12px 'Inter';display:flex;align-items:center;gap:8px">
@@ -1117,17 +1131,18 @@
 
   window.MusicDB = MusicDB;
 
-  // Глобальная функция удаления пустой записи из Firebase (вызывается из кнопки в trackCard)
+  // Глобальная функция удаления ghost-записи из Firebase (и с сервера если есть)
   window._mpDeleteGhostTrack = async function(encodedId) {
     const id = decodeURIComponent(encodedId);
-    if (!confirm('Удалить пустую запись "' + id + '" из Firebase?')) return;
+    if (!confirm('Удалить пустую запись "' + id + '" из Firebase и с сервера?')) return;
     const ref = window.firebase && window.firebase.database().ref('tracks/' + id);
     if (!ref) { if (typeof window.showSnackbar === 'function') window.showSnackbar('❌ Firebase не загружена'); return; }
+    let fbOk = false;
     try {
-      // Пробуем set(null) — эквивалентно remove() но работает через транзакцию
       await ref.set(null);
+      fbOk = true;
     } catch (e) {
-      if (typeof window.showSnackbar === 'function') window.showSnackbar('❌ Ошибка: ' + e.message);
+      if (typeof window.showSnackbar === 'function') window.showSnackbar('❌ Firebase ошибка: ' + e.message);
       return;
     }
     // Верификация — читаем узел снова чтобы убедиться что удалился
@@ -1135,12 +1150,28 @@
     try {
       const snap = await ref.once('value');
       if (snap.exists()) {
-        // Всё ещё существует — нет прав
         if (typeof window.showSnackbar === 'function') window.showSnackbar('❌ Не удалось удалить — проверь Firebase Rules');
         return;
       }
     } catch (_) {}
-    if (typeof window.showSnackbar === 'function') window.showSnackbar('✅ Удалено из Firebase');
+    // Также удаляем с сервера если там тоже есть эта запись
+    try { await serverDelete('/tracks/' + encodeURIComponent(id)); } catch (_) {}
+    if (typeof window.showSnackbar === 'function') window.showSnackbar('✅ Удалено из Firebase' + (fbOk ? ' и сервера' : ''));
+    window.MusicDB.showDiff();
+  };
+
+  // Глобальная функция удаления записи с сервера (для треков только на сервере)
+  window._mpDeleteServerTrack = async function(encodedId) {
+    const id = decodeURIComponent(encodedId);
+    if (!confirm('Удалить "' + id + '" с сервера?\n\nЕсли это реальный трек — сначала выровняй данные чтобы не потерять его.')) return;
+    try {
+      const r = await serverDelete('/tracks/' + encodeURIComponent(id));
+      if (r && r.ok === false) throw new Error(r.error || 'Сервер отказал');
+    } catch (e) {
+      if (typeof window.showSnackbar === 'function') window.showSnackbar('❌ Ошибка: ' + e.message);
+      return;
+    }
+    if (typeof window.showSnackbar === 'function') window.showSnackbar('✅ Удалено с сервера');
     window.MusicDB.showDiff();
   };
 
