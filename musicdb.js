@@ -785,7 +785,7 @@
       // --- Таблица всех коллекций ---
       let collectionRows = '';
       if (diffAll && diffAll.collections) {
-        const colEntries = Object.entries(diffAll.collections);
+        const colEntries = Object.entries(diffAll.collections).filter(([col]) => ALIGN_COLS.includes(col));
         collectionRows = colEntries.map(([col, info]) => {
           const hasDiff = info.firebase >= 0 && info.diff > 0;
           const syncOk = info.firebase >= 0 && info.diff === 0;
