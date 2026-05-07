@@ -1482,106 +1482,13 @@
         sub: 'В полноэкранном плеере вместо обложки показывается видео трека, если оно есть. Экспериментально.'
       },
       {
-        key: 'compactTrackList',
-        icon: 'format_list_bulleted',
-        title: 'Компактный список треков',
-        sub: 'Уменьшенные отступы в списках треков — больше треков на экране без прокрутки.'
-      },
-      {
-        key: 'adaptiveTheme',
-        icon: 'brightness_auto',
-        title: 'Адаптивная тема',
-        sub: 'Автоматически переключается между светлой и тёмной темой по системным настройкам устройства.'
-      },
-      {
-        key: 'crossfadeEnabled',
-        icon: 'swap_horiz',
-        title: 'Плавный переход (Crossfade)',
-        sub: 'Треки плавно перетекают друг в друга — затухание в конце и нарастание в начале следующего.',
+        key: 'customIcons',
+        icon: 'auto_awesome',
+        title: 'Кастомные иконки',
+        sub: 'Переключает иконки платформы в заполненный стиль (filled) — более яркий и насыщенный внешний вид.',
         onToggle: function(val) {
-          if (val) {
-            window.__musicdbCrossfade = true;
-            window.showSnackbar && window.showSnackbar('Crossfade включён — вступит в силу со следующего трека');
-          } else {
-            window.__musicdbCrossfade = false;
-          }
+          if (typeof window.applyLabsCustomIcons === 'function') window.applyLabsCustomIcons(val);
         }
-      },
-      {
-        key: 'normalizationEnabled',
-        icon: 'equalizer',
-        title: 'Нормализация громкости',
-        sub: 'Выравнивает громкость между треками, чтобы не приходилось постоянно крутить регулятор.',
-        onToggle: function(val) {
-          window.__musicdbNormalize = val;
-          if (val) window.showSnackbar && window.showSnackbar('Нормализация включена');
-        }
-      },
-      {
-        key: 'showLyricsAlways',
-        icon: 'lyrics',
-        title: 'Текст всегда виден',
-        sub: 'Показывает транскрибированный текст трека прямо под плеером без необходимости открывать полный экран.'
-      },
-      {
-        key: 'waveformEnabled',
-        icon: 'graphic_eq',
-        title: 'Анимация звуковой волны',
-        sub: 'Пульсирующая визуализация в виде волны рядом с трек-листом пока трек играет.'
-      },
-      {
-        key: 'sleepTimerEnabled',
-        icon: 'bedtime',
-        title: 'Таймер сна',
-        sub: 'Автоматически останавливает воспроизведение через 30 минут. Идеально для засыпания под музыку.',
-        onToggle: function(val) {
-          if (val) {
-            window.__sleepTimer && clearTimeout(window.__sleepTimer);
-            window.__sleepTimer = setTimeout(() => {
-              const audio = document.querySelector('audio') || window._audio;
-              if (audio) audio.pause();
-              window.isPlaying = false;
-              window.showSnackbar && window.showSnackbar('⏰ Таймер сна: воспроизведение остановлено');
-              const ls = JSON.parse(localStorage.getItem('mp_labs_settings') || '{}');
-              ls.sleepTimerEnabled = false;
-              localStorage.setItem('mp_labs_settings', JSON.stringify(ls));
-              window.labsSettings && (window.labsSettings.sleepTimerEnabled = false);
-            }, 30 * 60 * 1000);
-            window.showSnackbar && window.showSnackbar('⏰ Таймер сна: выключится через 30 минут');
-          } else {
-            window.__sleepTimer && clearTimeout(window.__sleepTimer);
-          }
-        }
-      },
-      {
-        key: 'lowDataMode',
-        icon: 'data_saver_on',
-        title: 'Режим экономии трафика',
-        sub: 'Снижает качество изображений обложек и откладывает загрузку нетекущих треков. Для медленного интернета.'
-      },
-      {
-        key: 'keyboardShortcuts',
-        icon: 'keyboard',
-        title: 'Подсказки клавиатурных сокращений',
-        sub: 'Показывает всплывающие подсказки о горячих клавишах: Пробел = пауза, ←/→ = переключение треков.'
-      },
-      {
-        key: 'colorfulAvatars',
-        icon: 'palette',
-        title: 'Цветные аватары',
-        sub: 'Генерирует уникальный цветной градиентный аватар для пользователей без фото профиля.'
-      },
-      {
-        key: 'showModerationBadges',
-        icon: 'verified_user',
-        title: 'Значки модерации на треках',
-        sub: 'Показывает статус модерации (✅ проверен / ⚠️ на проверке) рядом с треками в списке.'
-      },
-      {
-        key: 'autoQueue',
-        icon: 'queue_music',
-        title: 'Авто-очередь похожих треков',
-        sub: 'После окончания очереди автоматически добавляет треки того же жанра или исполнителя.'
       },
     ];
 
