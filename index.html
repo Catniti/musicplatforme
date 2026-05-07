@@ -5129,7 +5129,7 @@ function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,c
 function renderHome(){
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId));
   const sorted=[...entries].sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-  document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
   const popular=[...entries].sort((a,b)=>(b[1].plays||0)-(a[1].plays||0)).slice(0,8);
   document.getElementById('homePopular').innerHTML=popular.length===0?'':popular.map(([id,t])=>'<div class="md-card" onclick="playTrackById(\''+id+'\')"><div class="card-img">'+(t.cover?'<img src="'+t.cover+'" alt="" loading="lazy">':'<span class="material-symbols-rounded">music_note</span>')+'<div class="card-play-fab"><span class="material-symbols-rounded filled">play_arrow</span></div></div><div class="card-body"><div class="card-title" style="display:flex;align-items:center;gap:4px">'+esc(t.title||'')+(t.explicit?'<span class="explicit-badge" style="font-size:10px;width:16px;height:16px">!</span>':'')+'</div><div class="card-sub">'+esc(t.artistName||'')+'</div><div class="card-sub" style="display:flex;align-items:center;gap:4px;margin-top:2px"><span class="material-symbols-rounded" style="font-size:14px">play_arrow</span>'+formatPlays(t.plays||0)+'</div></div></div>').join('');
   const am={};entries.slice(0,trackPageSize*2).forEach(([id,t])=>{if(t.artistId&&!am[t.artistId])am[t.artistId]={name:t.artistName,photo:t.artistPhoto||'',id:t.artistId}});
@@ -5150,26 +5150,26 @@ function renderExplore(){
   filtered.sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   const gl=genres.find(g=>g.id===currentGenre);
   document.getElementById('exploreTitle').textContent=currentGenre==='all'?'Все треки':(gl?gl.label:'Треки');
-  document.getElementById('exploreTracks').innerHTML=filtered.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':filtered.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('')+(filtered.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderExplore()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
+  document.getElementById('exploreTracks').innerHTML=filtered.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':filtered.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(filtered.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderExplore()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 function filterGenre(g){currentGenre=g;trackPageSize=24;renderExplore()}
 
 function renderCharts(){
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId)).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0));
-  document.getElementById('chartsTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">trending_up</span><h3>Нет данных</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderCharts()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
+  document.getElementById('chartsTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">trending_up</span><h3>Нет данных</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderCharts()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
 function renderNewReleases(){
   const weekAgo=Date.now()-7*24*60*60*1000;
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId)&&(t.timestamp||0)>weekAgo).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-  document.getElementById('newReleasesTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">new_releases</span><h3>Нет новинок за последнюю неделю</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderNewReleases()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
+  document.getElementById('newReleasesTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">new_releases</span><h3>Нет новинок за последнюю неделю</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderNewReleases()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
 function renderHistory(){
   const el=document.getElementById('historyTracks'),c=document.getElementById('historyContent');
   if(!listeningHistory.length){c.style.display='';el.innerHTML='';return}
   c.style.display='none';
-  el.innerHTML=listeningHistory.filter(h=>allTracks[h.trackId]).map((h,i)=>{const t=allTracks[h.trackId];return renderTrackItem(h.trackId,t,i+1)}).join('');
+  el.innerHTML=listeningHistory.filter(h=>allTracks[h.trackId]).map((h,i)=>{const t=allTracks[h.trackId];return renderTrackItem(h.trackId,t,i+1,false,true)}).join('');
 }
 function clearHistory(){if(!currentUser)return;db.ref('history/'+currentUser.uid).remove();listeningHistory=[];renderHistory();showSnackbar('История очищена')}
 
@@ -5184,7 +5184,7 @@ function handleSearch(q){
   document.getElementById('searchTitle').textContent='Результаты: «'+q+'»';
   const as=document.getElementById('searchArtistsSection'),ag=document.getElementById('searchArtists');
   if(artistResults.length>0){as.style.display='';ag.innerHTML=artistResults.map(a=>'<div class="artist-card" onclick="viewArtist(\''+a.id+'\')"><div class="artist-img">'+(a.photo?'<img src="'+a.photo+'" alt="" loading="lazy">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">person</span>')+'</div><div class="card-title" style="font-size:13px">'+esc(a.name)+'</div><div class="card-sub">'+a.tracks+' треков</div></div>').join('')}else as.style.display='none';
-  document.getElementById('searchResults').innerHTML=trackResults.length===0?'<div class="empty-state"><span class="material-symbols-rounded">search_off</span><h3>Не найдено</h3></div>':trackResults.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  document.getElementById('searchResults').innerHTML=trackResults.length===0?'<div class="empty-state"><span class="material-symbols-rounded">search_off</span><h3>Не найдено</h3></div>':trackResults.map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
 }
 
 /* ===== PLAYER ===== */
@@ -5995,7 +5995,7 @@ function renderFavorites(){
   const fids=Object.keys(favorites),em=document.getElementById('favEmpty'),list=document.getElementById('favTracks'),btn=document.getElementById('playAllFavBtn'),sbtn=document.getElementById('shuffleFavBtn');
   if(fids.length===0){em.style.display='';list.innerHTML='';btn.style.display='none';sbtn.style.display='none';return}
   em.style.display='none';btn.style.display='';sbtn.style.display='';
-  list.innerHTML=fids.map(id=>[id,allTracks[id]]).filter(([id,t])=>t).map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  list.innerHTML=fids.map(id=>[id,allTracks[id]]).filter(([id,t])=>t).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
   document.getElementById('profileLikes').textContent=fids.length;
 }
 function playAllFavorites(){const f=Object.keys(favorites).filter(id=>allTracks[id]);if(!f.length)return;playlist=f;playlistIndex=0;currentTrackId=playlist[0];loadAndPlay(allTracks[currentTrackId])}
@@ -6016,7 +6016,7 @@ function renderSubscriptions(){
     grid.innerHTML=snaps.map((s,i)=>{const u=s.val()||{};return'<div class="artist-card" onclick="viewArtist(\''+sids[i]+'\')"><div class="artist-img">'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">person</span>')+'</div><div class="card-title" style="font-size:13px">'+esc(u.displayName||'Артист')+'</div></div>'}).join('');
   });
   const feedTracks=Object.entries(allTracks).filter(([id,t])=>sids.includes(t.artistId)).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0)).slice(0,20);
-  if(feedTracks.length>0){document.getElementById('subsFeedTitle').style.display='';document.getElementById('subsFeedTracks').innerHTML=feedTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('')}
+  if(feedTracks.length>0){document.getElementById('subsFeedTitle').style.display='';document.getElementById('subsFeedTracks').innerHTML=feedTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')}
 }
 
 /* ===== PLAYLISTS ===== */
@@ -6034,7 +6034,7 @@ function viewPlaylist(plId){
   const tids=pl.tracks?Object.keys(pl.tracks):[];
   const tracks=tids.map(id=>[id,allTracks[id]]).filter(([id,t])=>t);
   document.getElementById('playlistViewHeader').innerHTML='<div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap"><div style="width:120px;height:120px;border-radius:var(--md-shape-lg);background:var(--md-primary-container);display:flex;align-items:center;justify-content:center"><span class="material-symbols-rounded" style="font-size:48px;color:var(--md-primary)">queue_music</span></div><div><div class="section-title" style="margin:0">'+esc(pl.name)+'</div>'+(pl.description?'<div class="section-sub" style="margin:4px 0 0">'+esc(pl.description)+'</div>':'')+'<div style="font:400 13px/18px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">'+tracks.length+' треков</div><div style="display:flex;gap:8px;margin-top:12px">'+(tracks.length?'<button class="btn-primary" onclick="playPlaylist(\''+plId+'\')"><span class="material-symbols-rounded">play_arrow</span> Слушать</button><button class="btn-tonal" onclick="shufflePlaylist(\''+plId+'\')"><span class="material-symbols-rounded">shuffle</span> Перемешать</button>':'')+'<button class="btn-outlined" onclick="deletePlaylist(\''+plId+'\')"><span class="material-symbols-rounded">delete</span> Удалить</button></div></div></div>';
-  document.getElementById('playlistViewTracks').innerHTML=tracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">queue_music</span><h3>Плейлист пуст</h3></div>':tracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  document.getElementById('playlistViewTracks').innerHTML=tracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">queue_music</span><h3>Плейлист пуст</h3></div>':tracks.map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
 }
 function playPlaylist(plId){const pl=userPlaylists[plId];if(!pl)return;const tids=Object.keys(pl.tracks||{}).filter(id=>allTracks[id]);if(!tids.length){showSnackbar('Плейлист пуст');return}playlist=tids;playlistIndex=0;currentTrackId=playlist[0];loadAndPlay(allTracks[currentTrackId])}
 function shufflePlaylist(plId){const pl=userPlaylists[plId];if(!pl)return;const tids=Object.keys(pl.tracks||{}).filter(id=>allTracks[id]);if(!tids.length)return;shuffleArr(tids);playlist=tids;playlistIndex=0;currentTrackId=playlist[0];loadAndPlay(allTracks[currentTrackId]);showSnackbar('Перемешано')}
@@ -6102,7 +6102,7 @@ function startWave(){
   const entries=Object.entries(allTracks);if(!entries.length){showSnackbar('Нет треков');return}
   const fids=Object.keys(favorites),fe=entries.filter(([id])=>fids.includes(id)),nfe=entries.filter(([id])=>!fids.includes(id));
   shuffleArr(fe);shuffleArr(nfe);let wt=fe.length?[...fe,...nfe]:[...entries];if(!fe.length)shuffleArr(wt);
-  document.getElementById('waveTracks').innerHTML=wt.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+  document.getElementById('waveTracks').innerHTML=wt.map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
   playlist=wt.map(([id])=>id);playlistIndex=0;currentTrackId=playlist[0];loadAndPlay(allTracks[currentTrackId]);
   isShuffle=true;document.getElementById('shuffleBtn').classList.add('active');document.getElementById('fsShuffleBtn').classList.add('active');
   document.getElementById('waveBtn').innerHTML='<span class="material-symbols-rounded">refresh</span> Обновить волну';showSnackbar('Волна запущена!');
@@ -6866,7 +6866,7 @@ function switchProfileTab(tab,el){
   document.querySelectorAll('#page-profile .tab-item').forEach(t=>t.classList.remove('active'));el.classList.add('active');
   const c=document.getElementById('profileTabContent');
   if(tab==='tracks'){c.innerHTML='<div class="track-list" id="profileTrackList"><div class="loading-spinner"></div></div>';loadMyTracks()}
-  else if(tab==='liked'){const fids=Object.keys(favorites),tracks=fids.map(id=>[id,allTracks[id]]).filter(([id,t])=>t);c.innerHTML=tracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">favorite</span><h3>Нет понравившихся</h3></div>':'<div class="track-list">'+tracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('')+'</div>'}
+  else if(tab==='liked'){const fids=Object.keys(favorites),tracks=fids.map(id=>[id,allTracks[id]]).filter(([id,t])=>t);c.innerHTML=tracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">favorite</span><h3>Нет понравившихся</h3></div>':'<div class="track-list">'+tracks.map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+'</div>'}
   else if(tab==='stats'){
     const myT=Object.entries(allTracks).filter(([id,t])=>t.artistId===currentUser?.uid);
     const totalP=myT.reduce((s,[id,t])=>s+(t.plays||0),0),totalL=myT.reduce((s,[id,t])=>s+(t.likes||0),0);
@@ -6878,7 +6878,7 @@ function switchProfileTab(tab,el){
       '<div class="stat-card"><div class="stat-value">'+Object.keys(favorites).length+'</div><div class="stat-label">Треков в любимом</div></div>'+
       '<div class="stat-card"><div class="stat-value">'+Object.keys(subscriptions).length+'</div><div class="stat-label">Подписок</div></div>'+
       '<div class="stat-card"><div class="stat-value">'+Object.keys(userPlaylists).length+'</div><div class="stat-label">Плейлистов</div></div>'+
-      '</div>'+(topTrack?'<div class="section-title" style="margin-top:24px">🏆 Самый популярный трек</div><div class="track-list">'+renderTrackItem(topTrack[0],topTrack[1],1)+'</div>':'');
+      '</div>'+(topTrack?'<div class="section-title" style="margin-top:24px">🏆 Самый популярный трек</div><div class="track-list">'+renderTrackItem(topTrack[0],topTrack[1],1,false,true)+'</div>':'');
   }
 }
 
@@ -7345,7 +7345,7 @@ function openCreatorStats(){
 }
 function openCreatorTrackManager(){
   const rows=Object.entries(allTracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0)).slice(0,100);
-  creatorPanelWrap('Управление треками', rows.length?rows.map(([id,t])=>'<div class="settings-item"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+esc(t.artistName||'—')+' • '+formatPlays(t.plays||0)+' прослушиваний</div></div><button class="btn-text" onclick="playTrackById(\''+id+'\')">Открыть</button><button class="btn-tonal" onclick="toggleServiceFeatured(\''+id+'\')">'+(t.serviceFeatured?'Убрать рекомендацию':'Рекомендовать')+'</button><button class="btn-outlined" onclick="creatorEditForeignTrack(\''+id+'\')">Изменить</button><button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+id+'\')">Удалить</button></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">music_off</span><h3>Нет треков</h3></div>');
+  creatorPanelWrap('Управление треками', rows.length?rows.map(([id,t])=>'<div class="settings-item"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+esc(t.artistName||'—')+' • '+formatPlays(t.plays||0)+' прослушиваний</div></div><button class="btn-text" onclick="playTrackById(\''+id+'\')">Открыть</button><button class="btn-outlined" onclick="creatorEditForeignTrack(\''+id+'\')">Изменить</button><button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+id+'\')">Удалить</button></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">music_off</span><h3>Нет треков</h3></div>');
 }
 async function toggleServiceFeatured(tid){
   const t=allTracks[tid];
