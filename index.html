@@ -3741,14 +3741,17 @@ async function analyzeAudioSafetyWithPollinations({title='',lyrics='',genre='',d
     {role:'system',content:'Ты модератор музыкальной платформы для детей и подростков. Тебе дали название трека, текст, расшифровку слов, жанр, длительность и автора музыки. Ответь только JSON без пояснений. Формат: {"explicit": boolean, "lowQuality": boolean, "reason": string, "confidence": number, "detectedLyrics": string}. explicit=true если в тексте есть мат, сексуальные темы, жесть, наркотики, токсичные оскорбления или другой неприятный детям контент. lowQuality=true если это спам, мусор, бессмысленная нарезка или фейковый трек. Ничего не выдумывай сверх текста.'},
     {role:'user',content:JSON.stringify({title,lyrics,genre,duration,fileName,musicAuthor,transcript})}
   ];
-  const models=['openai','mistral','qwen-coder'];
-  for(const model of models){
+  const modModels=['openai','mistral','qwen-coder'];
+  for(const model of modModels){
     try{
-      const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
+      const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),14000);
+      const res=await fetch('https://text.pollinations.ai/openai',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
-        body:JSON.stringify({model,messages,response_format:{type:'json_object'},temperature:0})
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model,messages,response_format:{type:'json_object'},temperature:0}),
+        signal:ctrl.signal
       });
+      clearTimeout(t);
       if(!res.ok) throw new Error('audio-safety-failed-'+model);
       const json=await res.json();
       const content=json?.choices?.[0]?.message?.content||'{}';
@@ -3776,11 +3779,14 @@ async function analyzeSongStructureWithPollinations({title='',lyrics='',genre=''
   const models=['openai','mistral','gemini'];
   for(const model of models){
     try{
-      const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
+      const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),14000);
+      const res=await fetch('https://text.pollinations.ai/openai',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
-        body:JSON.stringify({model,messages,response_format:{type:'json_object'},temperature:0})
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model,messages,response_format:{type:'json_object'},temperature:0}),
+        signal:ctrl.signal
       });
+      clearTimeout(t);
       if(!res.ok) throw new Error('structure-analysis-failed-'+model);
       const json=await res.json();
       const content=json?.choices?.[0]?.message?.content||'{}';
@@ -3811,14 +3817,17 @@ async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor=''
     {role:'system',content:'Ты ищешь в интернете возможные совпадения текста песни и признаки авторских прав. Используй веб-поиск. Ответь только JSON без пояснений. Формат: {"possibleCopyright": boolean, "confidence": number, "reason": string, "matchedSource": string, "matchedArtist": string}. possibleCopyright=true если вероятно, что текст уже опубликован и принадлежит другому артисту/правообладателю. Если musicAuthor соответствует найденному правообладателю или источнику, снижай риск.'},
     {role:'user',content:JSON.stringify({title,artistName,musicAuthor,lyricsSample:snippet})}
   ];
-  const models=['perplexity','openai','gemini'];
+  const models=['openai','mistral','gemini'];
   for(const model of models){
     try{
-      const res=await fetch('https://gen.pollinations.ai/v1/chat/completions',{
+      const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),14000);
+      const res=await fetch('https://text.pollinations.ai/openai',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+POLLINATIONS_API_KEY},
-        body:JSON.stringify({model,messages,response_format:{type:'json_object'},temperature:0})
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model,messages,response_format:{type:'json_object'},temperature:0}),
+        signal:ctrl.signal
       });
+      clearTimeout(t);
       if(!res.ok) throw new Error('copyright-check-failed-'+model);
       const json=await res.json();
       const content=json?.choices?.[0]?.message?.content||'{}';
@@ -4626,7 +4635,7 @@ function renderTrackItem(id,track,num,showDel,hidePinBadge){
   const creatorChip='';
   const featuredChip='';
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
-    '<div class="track-num">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
+    '<div class="track-num" data-num="'+num+'">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
     '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
     '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав — нажмите для подробностей" onclick="event.stopPropagation();openCopyrightDetails(\''+id+'\')">©?</span>':'')+'</div>'+ 
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
@@ -5243,7 +5252,7 @@ function loadAndPlay(track){
     const origVol=audio.volume;
     const fadeOut=setInterval(()=>{if(audio.volume>0.05){audio.volume=Math.max(0,audio.volume-0.1)}else{clearInterval(fadeOut);audio.volume=origVol;doLoad(track)}},30);
   }else doLoad(track);
-  document.querySelectorAll('.track-item').forEach(el=>{el.classList.toggle('playing',el.dataset.id===currentTrackId);const n=el.querySelector('.track-num');if(el.dataset.id===currentTrackId&&n)n.innerHTML='<div class="now-playing-mark">♪</div>'});
+  document.querySelectorAll('.track-item').forEach(el=>{const isNP=el.dataset.id===currentTrackId;el.classList.toggle('playing',isNP);const n=el.querySelector('.track-num');if(!n)return;if(isNP){n.innerHTML='<div class="now-playing-mark">♪</div>';}else if(n.querySelector('.now-playing-mark')){n.textContent=n.dataset.num||'';}});
   if('mediaSession' in navigator){navigator.mediaSession.metadata=new MediaMetadata({title:track.title||'',artist:track.musicAuthor||track.artistName||'',album:'MusicPlatforme',artwork:track.cover?[{src:track.cover}]:[]});navigator.mediaSession.setActionHandler('play',()=>togglePlay());navigator.mediaSession.setActionHandler('pause',()=>togglePlay());navigator.mediaSession.setActionHandler('previoustrack',()=>prevTrack());navigator.mediaSession.setActionHandler('nexttrack',()=>nextTrack());navigator.mediaSession.playbackState='playing';}
   broadcastPlaybackState();
   broadcastPartyState();
@@ -7366,7 +7375,7 @@ async function openCreatorModuleCheck(){
   rows.push(['Плеер',audio.src?'ok':'ready',audio.src?'Воспроизводит: '+(allTracks[currentTrackId]?.title||activeRadioStation?.name||'Радио'):'Готов к воспроизведению','play_circle']);
   try{
     const r=await Promise.race([
-      fetch('https://gen.pollinations.ai/v1/models',{headers:{'Authorization':'Bearer '+POLLINATIONS_API_KEY}}),
+      fetch('https://text.pollinations.ai/openai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'openai',messages:[{role:'user',content:'ping'}],max_tokens:2})}),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),6000))
     ]);
     rows.push(['Модерация AI',r.ok?'ok':'warn',r.ok?'Pollinations API доступен':'HTTP '+r.status,'policy']);
