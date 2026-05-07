@@ -1532,106 +1532,13 @@
         sub: 'В полноэкранном плеере вместо обложки показывается видео трека, если оно есть. Экспериментально.'
       },
       {
-        key: 'compactTrackList',
-        icon: 'format_list_bulleted',
-        title: 'Компактный список треков',
-        sub: 'Уменьшенные отступы в списках треков — больше треков на экране без прокрутки.'
-      },
-      {
-        key: 'adaptiveTheme',
-        icon: 'brightness_auto',
-        title: 'Адаптивная тема',
-        sub: 'Автоматически переключается между светлой и тёмной темой по системным настройкам устройства.'
-      },
-      {
-        key: 'crossfadeEnabled',
-        icon: 'swap_horiz',
-        title: 'Плавный переход (Crossfade)',
-        sub: 'Треки плавно перетекают друг в друга — затухание в конце и нарастание в начале следующего.',
+        key: 'customIcons',
+        icon: 'auto_awesome',
+        title: 'Кастомные иконки',
+        sub: 'Переключает иконки платформы в заполненный стиль (filled) — более яркий и насыщенный внешний вид.',
         onToggle: function(val) {
-          if (val) {
-            window.__musicdbCrossfade = true;
-            window.showSnackbar && window.showSnackbar('Crossfade включён — вступит в силу со следующего трека');
-          } else {
-            window.__musicdbCrossfade = false;
-          }
+          if (typeof window.applyLabsCustomIcons === 'function') window.applyLabsCustomIcons(val);
         }
-      },
-      {
-        key: 'normalizationEnabled',
-        icon: 'equalizer',
-        title: 'Нормализация громкости',
-        sub: 'Выравнивает громкость между треками, чтобы не приходилось постоянно крутить регулятор.',
-        onToggle: function(val) {
-          window.__musicdbNormalize = val;
-          if (val) window.showSnackbar && window.showSnackbar('Нормализация включена');
-        }
-      },
-      {
-        key: 'showLyricsAlways',
-        icon: 'lyrics',
-        title: 'Текст всегда виден',
-        sub: 'Показывает транскрибированный текст трека прямо под плеером без необходимости открывать полный экран.'
-      },
-      {
-        key: 'waveformEnabled',
-        icon: 'graphic_eq',
-        title: 'Анимация звуковой волны',
-        sub: 'Пульсирующая визуализация в виде волны рядом с трек-листом пока трек играет.'
-      },
-      {
-        key: 'sleepTimerEnabled',
-        icon: 'bedtime',
-        title: 'Таймер сна',
-        sub: 'Автоматически останавливает воспроизведение через 30 минут. Идеально для засыпания под музыку.',
-        onToggle: function(val) {
-          if (val) {
-            window.__sleepTimer && clearTimeout(window.__sleepTimer);
-            window.__sleepTimer = setTimeout(() => {
-              const audio = document.querySelector('audio') || window._audio;
-              if (audio) audio.pause();
-              window.isPlaying = false;
-              window.showSnackbar && window.showSnackbar('⏰ Таймер сна: воспроизведение остановлено');
-              const ls = JSON.parse(localStorage.getItem('mp_labs_settings') || '{}');
-              ls.sleepTimerEnabled = false;
-              localStorage.setItem('mp_labs_settings', JSON.stringify(ls));
-              window.labsSettings && (window.labsSettings.sleepTimerEnabled = false);
-            }, 30 * 60 * 1000);
-            window.showSnackbar && window.showSnackbar('⏰ Таймер сна: выключится через 30 минут');
-          } else {
-            window.__sleepTimer && clearTimeout(window.__sleepTimer);
-          }
-        }
-      },
-      {
-        key: 'lowDataMode',
-        icon: 'data_saver_on',
-        title: 'Режим экономии трафика',
-        sub: 'Снижает качество изображений обложек и откладывает загрузку нетекущих треков. Для медленного интернета.'
-      },
-      {
-        key: 'keyboardShortcuts',
-        icon: 'keyboard',
-        title: 'Подсказки клавиатурных сокращений',
-        sub: 'Показывает всплывающие подсказки о горячих клавишах: Пробел = пауза, ←/→ = переключение треков.'
-      },
-      {
-        key: 'colorfulAvatars',
-        icon: 'palette',
-        title: 'Цветные аватары',
-        sub: 'Генерирует уникальный цветной градиентный аватар для пользователей без фото профиля.'
-      },
-      {
-        key: 'showModerationBadges',
-        icon: 'verified_user',
-        title: 'Значки модерации на треках',
-        sub: 'Показывает статус модерации (✅ проверен / ⚠️ на проверке) рядом с треками в списке.'
-      },
-      {
-        key: 'autoQueue',
-        icon: 'queue_music',
-        title: 'Авто-очередь похожих треков',
-        sub: 'После окончания очереди автоматически добавляет треки того же жанра или исполнителя.'
       },
     ];
 
@@ -1944,7 +1851,10 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 .track-artist:hover{color:var(--md-primary);text-decoration:underline}
 .track-duration{font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);flex-shrink:0}
 .track-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
-@media(hover:hover){.track-actions{opacity:0;transition:opacity .25s}.track-item:hover .track-actions{opacity:1}}
+@media(hover:hover){.track-actions{transition:opacity .25s}.track-item:hover .track-actions{opacity:1}}
+.now-playing-mark{display:flex;align-items:center;justify-content:center;font-size:16px;transform:translateY(calc(var(--doc-beat-bounce,0px)*-1));transition:transform 0.05s linear;will-change:transform}
+.track-item.playing .track-thumb .material-symbols-rounded{transform:translateY(calc(var(--doc-beat-bounce,0px)*-0.45));transition:transform 0.05s linear;will-change:transform}
+#authorSuggestDropdown div:hover{background:var(--md-surface-container-highest)}
 .track-plays{font:400 11px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);display:flex;align-items:center;gap:2px;flex-shrink:0;margin-right:8px}
 .track-plays .material-symbols-rounded{font-size:14px}
 
@@ -2965,7 +2875,10 @@ body[data-ui-style="glass"]{display:contents}
         </div>
       </div>
       <label class="modal-label">Автор музыки / правообладатель *</label>
-      <input class="md-input" id="uploadMusicAuthor" placeholder="Например: Иван Иванов, DJ Example, Original Artist" style="border-radius:var(--md-shape-md);margin-bottom:16px">
+      <div style="position:relative;margin-bottom:16px" id="uploadAuthorWrap">
+      <input class="md-input" id="uploadMusicAuthor" placeholder="Например: @me, Иван Иванов, DJ Example" style="border-radius:var(--md-shape-md)" oninput="handleAuthorMentionInput(this)" autocomplete="off">
+      <div id="authorSuggestDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:300;background:var(--md-surface-container-high);border-radius:var(--md-shape-md);box-shadow:0 4px 20px rgba(0,0,0,.18);max-height:220px;overflow-y:auto;border:1px solid var(--md-outline-variant)"></div>
+      </div>
       <label class="modal-label">Видео к треку (необязательно)</label>
       <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap">
         <div class="cover-upload-zone" id="videoUploadZone" onclick="document.getElementById('videoFileInput').click()">
@@ -3617,6 +3530,7 @@ if(labsSettings && labsSettings.liquidGlass!==undefined && labsSettings.glass===
   delete labsSettings.liquidGlass;
   localStorage.setItem('mp_labs_settings',JSON.stringify(labsSettings));
 }
+if(labsSettings.customIcons){document.addEventListener('DOMContentLoaded',()=>{let el=document.getElementById('mp-custom-icons-style');if(!el){el=document.createElement('style');el.id='mp-custom-icons-style';document.head.appendChild(el);}el.textContent='.material-symbols-rounded{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}';});}
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
 let uploadExplicitManual=false,editExplicitManual=false,editExplicitLockedByAI=false;
@@ -4653,8 +4567,10 @@ async function togglePinTrack(trackId){
 
 /* ===== TRACKS LISTENER ===== */
 // Слушаем забаненных пользователей
+let _mpAllUsers={};
 db.ref('users').on('value',snap=>{
   const users=snap.val()||{};
+  _mpAllUsers=users;
   bannedUserIds=new Set(Object.entries(users).filter(([,u])=>u&&u.banned).map(([id])=>id));
 });
 // Слушаем переключение источника на сервер (из musicdb.js)
@@ -5328,7 +5244,7 @@ function loadAndPlay(track){
     const fadeOut=setInterval(()=>{if(audio.volume>0.05){audio.volume=Math.max(0,audio.volume-0.1)}else{clearInterval(fadeOut);audio.volume=origVol;doLoad(track)}},30);
   }else doLoad(track);
   document.querySelectorAll('.track-item').forEach(el=>{el.classList.toggle('playing',el.dataset.id===currentTrackId);const n=el.querySelector('.track-num');if(el.dataset.id===currentTrackId&&n)n.innerHTML='<div class="now-playing-mark">♪</div>'});
-  if('mediaSession' in navigator){navigator.mediaSession.metadata=new MediaMetadata({title:track.title||'',artist:track.musicAuthor||track.artistName||'',album:'MusicPlatforme',artwork:track.cover?[{src:track.cover}]:[]});navigator.mediaSession.setActionHandler('play',()=>togglePlay());navigator.mediaSession.setActionHandler('pause',()=>togglePlay());navigator.mediaSession.setActionHandler('previoustrack',()=>prevTrack());navigator.mediaSession.setActionHandler('nexttrack',()=>nextTrack())}
+  if('mediaSession' in navigator){navigator.mediaSession.metadata=new MediaMetadata({title:track.title||'',artist:track.musicAuthor||track.artistName||'',album:'MusicPlatforme',artwork:track.cover?[{src:track.cover}]:[]});navigator.mediaSession.setActionHandler('play',()=>togglePlay());navigator.mediaSession.setActionHandler('pause',()=>togglePlay());navigator.mediaSession.setActionHandler('previoustrack',()=>prevTrack());navigator.mediaSession.setActionHandler('nexttrack',()=>nextTrack());navigator.mediaSession.playbackState='playing';}
   broadcastPlaybackState();
   broadcastPartyState();
 }
@@ -5348,7 +5264,7 @@ function doLoad(track){
   }).catch(err=>{showSnackbar('Ошибка воспроизведения')})
 }
 
-function togglePlay(){if(!audio.src)return;if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});if(isPlaying){audio.pause();document.getElementById('fsCover').classList.remove('playing')}else{audio.play();document.getElementById('fsCover').classList.add('playing')}isPlaying=!isPlaying;updatePlayButton();broadcastPlaybackState();broadcastPartyState()}
+function togglePlay(){if(!audio.src)return;if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});if(isPlaying){audio.pause();document.getElementById('fsCover').classList.remove('playing');if('mediaSession' in navigator)navigator.mediaSession.playbackState='paused';}else{audio.play();document.getElementById('fsCover').classList.add('playing');if('mediaSession' in navigator)navigator.mediaSession.playbackState='playing';}isPlaying=!isPlaying;updatePlayButton();broadcastPlaybackState();broadcastPartyState()}
 function updatePlayButton(){const ic=isPlaying?'pause':'play_arrow';document.getElementById('playIcon').textContent=ic;document.getElementById('fsPlayIcon').textContent=ic;document.getElementById('waveCircle').classList.toggle('playing-anim',isPlaying)}
 function prevTrack(){if(!playlist.length)return;if(audio.currentTime>3){audio.currentTime=0;broadcastPlaybackState();broadcastPartyState();return}playlistIndex=(playlistIndex-1+playlist.length)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
 function nextTrack(){if(!playlist.length)return;if(isShuffle)playlistIndex=Math.floor(Math.random()*playlist.length);else playlistIndex=(playlistIndex+1)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
@@ -5910,41 +5826,42 @@ function animateBeatCover(){
     cover.style.setProperty('--beat-scale','0');
     cover.style.setProperty('--beat-tilt','0deg');
     cover.style.setProperty('--beat-sat','0');
+    document.documentElement.style.setProperty('--doc-beat-bounce','0px');
     return;
   }
   const analyser=fxNodes.analyser;
   const data=new Uint8Array(analyser.frequencyBinCount);
   analyser.getByteFrequencyData(data);
-  let sub=0,bass=0,mids=0,highs=0;
   const len=data.length;
   const subEnd=Math.max(3,Math.floor(len*0.06));
-  const bassEnd=Math.max(subEnd+3, Math.floor(len*0.16));
-  const midEnd=Math.max(bassEnd+4, Math.floor(len*0.42));
+  const bassEnd=Math.max(subEnd+3,Math.floor(len*0.18));
+  const midEnd=Math.max(bassEnd+4,Math.floor(len*0.45));
+  let sub=0,bass=0,mids=0,highs=0;
   for(let i=0;i<subEnd;i++) sub+=data[i]||0;
   for(let i=subEnd;i<bassEnd;i++) bass+=data[i]||0;
   for(let i=bassEnd;i<midEnd;i++) mids+=data[i]||0;
   for(let i=midEnd;i<len;i++) highs+=data[i]||0;
-  sub/=subEnd||1;
-  bass/=(bassEnd-subEnd)||1;
-  mids/=(midEnd-bassEnd)||1;
-  highs/=(len-midEnd)||1;
-  const pulse=Math.max(0,Math.min(1,((sub*0.52+bass*0.28+mids*0.14+highs*0.06)/255)));
-  const transient=Math.max(0,Math.min(1,((sub-bass*0.35)+40)/180));
-  const energy=Math.max(pulse, transient*0.92);
-  const LF=0.22;
-  animateBeatCover._b=animateBeatCover._b||0;
-  animateBeatCover._s=animateBeatCover._s||0;
-  animateBeatCover._t=animateBeatCover._t||0;
-  animateBeatCover._r=animateBeatCover._r||0;
-  animateBeatCover._b+=(energy*30-animateBeatCover._b)*LF;
-  animateBeatCover._s+=((energy*0.085)-animateBeatCover._s)*LF;
-  animateBeatCover._t+=(((mids-highs)/255*1.8)-animateBeatCover._t)*LF;
-  animateBeatCover._r+=((energy*0.22)-animateBeatCover._r)*LF;
+  sub/=subEnd||1; bass/=(bassEnd-subEnd)||1; mids/=(midEnd-bassEnd)||1; highs/=(len-midEnd)||1;
+  const energy=Math.max(0,Math.min(1,(sub*0.55+bass*0.30+mids*0.10+highs*0.05)/255));
+  const st=animateBeatCover;
+  st._fast=(st._fast||0)+(energy-(st._fast||0))*0.55;
+  st._avg=(st._avg||0)+(energy-(st._avg||0))*0.04;
+  st._lastBeat=st._lastBeat||0;
+  const now=performance.now();
+  const beatThresh=Math.max(0.10,st._avg*1.32+0.04);
+  const isBeat=energy>beatThresh&&st._fast>beatThresh&&(now-st._lastBeat)>130;
+  if(isBeat){st._peak=1.0;st._lastBeat=now;}
+  st._peak=(st._peak||0)*0.74;
+  st._t=(st._t||0)+((mids-highs)/255*2.4-(st._t||0))*0.16;
+  const bounce=st._peak*24+energy*5;
+  const scale=st._peak*0.076+energy*0.018;
+  const sat=st._peak*0.30+energy*0.07;
   cover.classList.add('beat');
-  cover.style.setProperty('--beat-bounce', animateBeatCover._b.toFixed(2)+'px');
-  cover.style.setProperty('--beat-scale', animateBeatCover._s.toFixed(4));
-  cover.style.setProperty('--beat-tilt', animateBeatCover._t.toFixed(2)+'deg');
-  cover.style.setProperty('--beat-sat', animateBeatCover._r.toFixed(3));
+  cover.style.setProperty('--beat-bounce',bounce.toFixed(2)+'px');
+  cover.style.setProperty('--beat-scale',scale.toFixed(4));
+  cover.style.setProperty('--beat-tilt',st._t.toFixed(2)+'deg');
+  cover.style.setProperty('--beat-sat',sat.toFixed(3));
+  document.documentElement.style.setProperty('--doc-beat-bounce',(bounce*0.38).toFixed(2)+'px');
 }
 let eightDLoopHandle=null;
 function start8DLoop(){
@@ -6462,6 +6379,20 @@ function getSpecialRadioCandidates(station){
   const base=[];
   if(station?.url_resolved) base.push(station.url_resolved);
   if(station?.url && station.url!==station.url_resolved) base.push(station.url);
+  function r101(id){return['https://pub0302.101.ru:8443/stream/trust/mp3/128/'+id,'https://pub0301.101.ru:8443/stream/trust/mp3/128/'+id,'https://pub0202.101.ru:8443/stream/trust/mp3/128/'+id,'https://pub0302.101.ru:8443/stream/pro/aac/64/'+id,'https://pub0301.101.ru:8443/stream/pro/aac/64/'+id]}
+  if(name.includes('европа')){base.push(...r101(41),'https://europaplus.hostingradio.ru/europaplus128.mp3')}
+  if(name.includes('energy')||name.includes('nrj')){base.push(...r101(54),'https://nrj.hostingradio.ru/nrj96.mp3')}
+  if(name.includes('хит')||name.includes('hit fm')){base.push(...r101(133),'https://hitfm.hostingradio.ru/hitfm96.mp3')}
+  if(name.includes('dfm')){base.push(...r101(15),'https://dfm.hostingradio.ru/dfm96.mp3')}
+  if(name.includes('русское')){base.push(...r101(38),'https://rusradio.hostingradio.ru/rusradio96.mp3')}
+  if(name.includes('ретро')){base.push(...r101(28),'https://retrofm.hostingradio.ru/retrofm96.mp3')}
+  if(name.includes('наше')){base.push(...r101(40),'https://nashe1.hostingradio.ru/nashe-128.mp3')}
+  if(name.includes('monte carlo')||name.includes('монте')){base.push(...r101(89),'https://montecarlo.hostingradio.ru/montecarlo96.mp3')}
+  if(name.includes('record')){base.push(...r101(123),'https://radiorecord.hostingradio.ru/rr96.mp3')}
+  if(name.includes('maximum')){base.push(...r101(47),'https://maximum.hostingradio.ru/maximum96.mp3')}
+  if(name.includes('радио 7')||name.includes('radio 7')){base.push(...r101(39),'https://radio7.hostingradio.ru/radio796.mp3')}
+  if(name.includes('relax')){base.push(...r101(200),'https://relax.hostingradio.ru/relax96.mp3')}
+  if(name.includes('comedy')){base.push(...r101(16))}
   if(name.includes('юмор')){
     base.push(
       'https://pub0302.101.ru:8443/stream/trust/mp3/128/11',
@@ -7022,7 +6953,35 @@ function applyLabsSettings(){
   applyThemePreference();
   if(currentTrackId&&allTracks[currentTrackId]) updateFullscreenMediaSurface(allTracks[currentTrackId]);
 }
-function toggleLabsFlag(key){labsSettings[key]=!labsSettings[key];saveLabsSettings();renderLabsModal()}
+function toggleLabsFlag(key){labsSettings[key]=!labsSettings[key];saveLabsSettings();renderLabsModal();if(key==='customIcons')applyLabsCustomIcons(labsSettings[key]);}
+function handleAuthorMentionInput(input){
+  const dd=document.getElementById('authorSuggestDropdown');if(!dd)return;
+  const pos=input.selectionStart;const before=input.value.slice(0,pos);
+  const atMatch=before.match(/@([^\s,@]*)$/);
+  if(!atMatch){dd.style.display='none';return;}
+  const query=atMatch[1].toLowerCase();
+  let candidates=[];
+  if(currentUser)candidates.push({uid:'@me',label:'@me — '+((currentUser.displayName)||'Вы'),insert:'@me'});
+  const usersSource=window._mpAllUsers||{};
+  if(typeof usersSource==='object'){
+    Object.entries(usersSource).forEach(([uid,u])=>{
+      const dn=String(u.displayName||u.name||'').trim();if(!dn)return;
+      if(!query||dn.toLowerCase().includes(query)||uid.toLowerCase().includes(query))candidates.push({uid,label:dn,insert:'@'+dn});
+    });
+  }
+  candidates=candidates.slice(0,8);
+  if(!candidates.length){dd.style.display='none';return;}
+  dd.innerHTML=candidates.map(c=>'<div style="padding:10px 14px;cursor:pointer;font:500 14px/20px Inter,sans-serif;border-radius:8px" onclick="selectAuthorMention(\''+c.uid+'\','+JSON.stringify(c.insert)+')">'+esc(c.label)+'</div>').join('');
+  dd.style.display='block';
+}
+function selectAuthorMention(uid,insert){
+  const input=document.getElementById('uploadMusicAuthor');const dd=document.getElementById('authorSuggestDropdown');if(!input)return;
+  const pos=input.selectionStart;const before=input.value.slice(0,pos);const after=input.value.slice(pos);
+  const newBefore=before.replace(/@([^\s,@]*)$/,insert);
+  input.value=newBefore+after;input.focus();input.setSelectionRange(newBefore.length,newBefore.length);
+  if(dd)dd.style.display='none';
+}
+document.addEventListener('click',function(e){const dd=document.getElementById('authorSuggestDropdown');if(dd&&!dd.contains(e.target)&&e.target.id!=='uploadMusicAuthor')dd.style.display='none';});
 function setAdaptiveThemeMode(mode){localStorage.setItem('mp_theme_mode',mode);applyThemePreference();openSettings()}
 function applyThemePreference(){
 
@@ -7039,9 +6998,15 @@ function renderLabsModal(){
   const grid=document.getElementById('labsGrid');
   if(!grid) return;
   const items=[
-    ['videoInsteadOfCover','smart_display','Видео вместо обложки','Если у трека есть видео, в полноэкранном плеере вместо статичной обложки будет показываться само видео. Экспериментально.']
+    ['videoInsteadOfCover','smart_display','Видео вместо обложки','Если у трека есть видео, в полноэкранном плеере вместо статичной обложки будет показываться само видео. Экспериментально.'],
+    ['customIcons','auto_awesome','Кастомные иконки','Переключает иконки платформы в заполненный стиль (filled) — более яркий и насыщенный внешний вид.']
   ];
   grid.innerHTML=items.map(([key,icon,title,sub])=>'<div class="labs-card"><div class="labs-card-title"><span class="material-symbols-rounded">'+icon+'</span>'+title+'</div><div class="labs-card-sub">'+sub+'</div><div class="effect-row" style="margin:0"><div class="effect-meta"><div class="effect-sub">Состояние</div></div><div class="toggle '+(labsSettings[key]?'on':'')+'" onclick="toggleLabsFlag(\''+key+'\')"></div></div></div>').join('');
+}
+function applyLabsCustomIcons(val){
+  let el=document.getElementById('mp-custom-icons-style');
+  if(val){if(!el){el=document.createElement('style');el.id='mp-custom-icons-style';document.head.appendChild(el)}el.textContent='.material-symbols-rounded{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}'}
+  else if(el){el.remove();}
 }
 function openLabsModal(){renderLabsModal();document.getElementById('labsModal').classList.add('open')}
 
