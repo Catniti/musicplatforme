@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<script src="https://smartcaptcha.yandexcloud.net/captcha.js" defer></script>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
     (function(m,e,t,r,i,k,a){
@@ -2942,6 +2943,7 @@ body[data-ui-style="glass"]{display:contents}
             <div class="auth-error" id="regError"></div>
             <button class="btn-primary" style="width:100%;justify-content:center" onclick="doRegister()"><span class="material-symbols-rounded">person_add</span> Зарегистрироваться</button>
           </div>
+          <div id="captcha-container" class="smart-captcha" data-sitekey="ysc1_K0g77KGPkcpvj5Ogc1UqIfqi76M4yVmf9wbHahhj57daa6fe" data-callback="handleCaptchaSuccess" style="height:100px;margin:8px 0"></div>
           <div class="auth-divider">или</div>
           <div class="telegram-btn-wrap">
             <button class="tg-login-btn" onclick="openTelegramLogin()">
@@ -4279,12 +4281,16 @@ async function probeAudioDuration(source, timeoutMs=12000){
 
 /* ===== AUTH ===== */
 function hashPassword(p){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(p)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''))}
+let _captchaToken='';
+function handleCaptchaSuccess(token){_captchaToken=token;}
+function _resetCaptcha(){_captchaToken='';try{if(window.smartCaptcha)window.smartCaptcha.reset(document.getElementById('captcha-container'))}catch(_){}}
 function switchAuthTab(t){
   document.getElementById('tabLogin').classList.toggle('active',t==='login');
   document.getElementById('tabRegister').classList.toggle('active',t==='register');
   document.getElementById('loginForm').style.display=t==='login'?'':'none';
   document.getElementById('registerForm').style.display=t==='register'?'':'none';
   document.getElementById('loginError').textContent='';document.getElementById('regError').textContent='';
+  _resetCaptcha();
 }
 function togglePasswordVis(id,btn){const i=document.getElementById(id),ic=btn.querySelector('.material-symbols-rounded');if(i.type==='password'){i.type='text';ic.textContent='visibility'}else{i.type='password';ic.textContent='visibility_off'}}
 
@@ -4297,6 +4303,7 @@ async function doRegister(){
   if(!d){err.textContent='Введите отображаемое имя';return}
   if(p.length<6){err.textContent='Пароль минимум 6 символов';return}
   if(p!==p2){err.textContent='Пароли не совпадают';return}
+  if(!_captchaToken){err.textContent='Пройдите проверку CAPTCHA';return}
   err.innerHTML='<div class="loading-spinner" style="width:16px;height:16px;margin:0;border-width:2px;display:inline-block;vertical-align:middle"></div>';
   try{
     const us=await db.ref('usernames/'+u).once('value');if(us.exists()){err.textContent='Логин занят';return}
@@ -4304,13 +4311,14 @@ async function doRegister(){
     const ph=await hashPassword(p),uid='u_'+Date.now()+'_'+Math.random().toString(36).substr(2,8);
     const ud={uid,username:u,email:e,displayName:d,photo:'',bio:'',passwordHash:ph,authMethod:'email',createdAt:Date.now()};
     await db.ref('users/'+uid).set(ud);await db.ref('usernames/'+u).set(uid);await db.ref('emails/'+ek).set(uid);
-    loginUser(ud);showSnackbar('Добро пожаловать, '+d+'!');
+    loginUser(ud);showSnackbar('Добро пожаловать, '+d+'!');_resetCaptcha();
   }catch(x){err.textContent='Ошибка: '+x.message}
 }
 
 async function doLogin(){
   const id=document.getElementById('loginIdentity').value.trim().toLowerCase(),p=document.getElementById('loginPassword').value,err=document.getElementById('loginError');
   err.textContent='';if(!id){err.textContent='Введите логин или Email';return}if(!p){err.textContent='Введите пароль';return}
+  if(!_captchaToken){err.textContent='Пройдите проверку CAPTCHA';return}
   err.innerHTML='<div class="loading-spinner" style="width:16px;height:16px;margin:0;border-width:2px;display:inline-block;vertical-align:middle"></div>';
   try{
     let uid=null;
@@ -4320,7 +4328,7 @@ async function doLogin(){
     const us=await db.ref('users/'+uid).once('value'),ud=us.val();
     if(!ud){err.textContent='Данные не найдены';return}
     const ph=await hashPassword(p);if(ud.passwordHash!==ph){err.textContent='Неверный пароль';return}
-    loginUser(ud);showSnackbar('С возвращением, '+ud.displayName+'!');
+    loginUser(ud);showSnackbar('С возвращением, '+ud.displayName+'!');_resetCaptcha();
   }catch(x){err.textContent='Ошибка: '+x.message}
 }
 
