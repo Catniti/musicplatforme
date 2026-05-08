@@ -2943,7 +2943,7 @@ body[data-ui-style="glass"]{display:contents}
             <div class="auth-error" id="regError"></div>
             <button class="btn-primary" style="width:100%;justify-content:center" onclick="doRegister()"><span class="material-symbols-rounded">person_add</span> Зарегистрироваться</button>
           </div>
-          <div id="captcha-container" class="smart-captcha" data-sitekey="ysc1_K0g77KGPkcpvj5Ogc1UqIfqi76M4yVmf9wbHahhj57daa6fe" data-callback="handleCaptchaSuccess" style="height:100px;margin:8px 0"></div>
+          <div id="captcha-container" style="margin:8px 0;min-height:100px"></div>
           <div class="auth-divider">или</div>
           <div class="telegram-btn-wrap">
             <button class="tg-login-btn" onclick="openTelegramLogin()">
@@ -4281,9 +4281,19 @@ async function probeAudioDuration(source, timeoutMs=12000){
 
 /* ===== AUTH ===== */
 function hashPassword(p){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(p)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''))}
-let _captchaToken='';
+let _captchaToken='',_captchaWidgetId=null,_captchaRendered=false;
 function handleCaptchaSuccess(token){_captchaToken=token;}
-function _resetCaptcha(){_captchaToken='';try{if(window.smartCaptcha)window.smartCaptcha.reset(document.getElementById('captcha-container'))}catch(_){}}
+function _initCaptchaWidget(){
+  if(_captchaRendered||!window.smartCaptcha)return;
+  const el=document.getElementById('captcha-container');
+  if(!el)return;
+  _captchaWidgetId=window.smartCaptcha.render(el,{sitekey:'ysc1_K0g77KGPkcpvj5Ogc1UqIfqi76M4yVmf9wbHahhj57daa6fe',callback:handleCaptchaSuccess});
+  _captchaRendered=true;
+}
+function _resetCaptcha(){
+  _captchaToken='';
+  try{if(window.smartCaptcha&&_captchaWidgetId!=null)window.smartCaptcha.reset(_captchaWidgetId);}catch(_){}
+}
 function switchAuthTab(t){
   document.getElementById('tabLogin').classList.toggle('active',t==='login');
   document.getElementById('tabRegister').classList.toggle('active',t==='register');
@@ -4446,6 +4456,7 @@ function updateAuthUI(){
     document.getElementById('profileAuthMsg').style.display='block';document.getElementById('profileContent').style.display='none';
     document.getElementById('profileContent').classList.remove('creator-profile');
     const meta=document.getElementById('profileCreatorMeta'); if(meta) meta.innerHTML='';
+    setTimeout(_initCaptchaWidget,0);
   }
   updateUserMenu();
 }
@@ -6971,6 +6982,7 @@ function navigate(page){
   if(['favorites','subscriptions','playlists'].includes(page)){if(!currentUser)showSnackbar('Войдите для доступа');else{renderFavorites();renderSubscriptions();renderPlaylists()}}
   if(page==='explore')renderExplore();
   if(page==='profile'&&currentUser)loadMyTracks();
+  if(page==='profile'&&!currentUser)setTimeout(_initCaptchaWidget,50);
   if(page==='history')renderHistory();
   if(page==='charts')renderCharts();
   if(page==='new-releases')renderNewReleases();
