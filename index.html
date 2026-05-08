@@ -1841,6 +1841,8 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 .track-thumb{width:48px;height:48px;border-radius:var(--md-shape-sm);background:var(--md-surface-container-highest);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;transition:transform .2s}
 .track-item:hover .track-thumb{transform:scale(1.05)}
 .track-thumb img{width:100%;height:100%;object-fit:cover}
+.track-thumb img.nsfw-blur{filter:blur(22px) saturate(0)}
+.nsfw-cover-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}
 .track-thumb .play-overlay{position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .25s cubic-bezier(.2,0,0,1);backdrop-filter:blur(2px)}
 .track-item:hover .play-overlay{opacity:1}
 .track-info{flex:1;min-width:0}
@@ -3845,8 +3847,64 @@ async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor=''
   }
   return {possibleCopyright:false,confidence:0,reason:'search-unavailable',matchedSource:'',matchedArtist:'',sourceModel:'fallback'};
 }
-async function moderateTrackWithAI({title='',lyrics='',genre='',duration=0,fileName='',musicAuthor='',audioFile=null,artistName=''}){
-  const transcript=audioFile?await transcribeAudioWithPollinations(audioFile):'';
+async function transcribeWithOpenAIAudio(file){
+  if(!file) return '';
+  try{
+    const MAX_B64=6*1024*1024;
+    const buf=await file.arrayBuffer();
+    if(buf.byteLength>MAX_B64) return '';
+    const bytes=new Uint8Array(buf);
+    let b64='';
+    const chunk=8192;
+    for(let i=0;i<bytes.length;i+=chunk) b64+=String.fromCharCode(...bytes.subarray(i,i+chunk));
+    b64=btoa(b64);
+    const ext=(file.name||'track.mp3').split('.').pop().toLowerCase();
+    const fmtMap={mp3:'mp3',wav:'wav',ogg:'ogg',webm:'webm',m4a:'mp4',aac:'aac',flac:'flac'};
+    const fmt=fmtMap[ext]||'mp3';
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),35000);
+    const res=await fetch('https://text.pollinations.ai/openai',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'openai-audio',messages:[{role:'user',content:[
+        {type:'input_audio',input_audio:{data:b64,format:fmt}},
+        {type:'text',text:'Транскрибируй все слова из этого аудио точно как они звучат. Если вокала нет — напиши только [инструментал]. Отвечай только транскрипцией без пояснений.'}
+      ]}],modalities:['text'],max_tokens:2000}),
+      signal:ctrl.signal
+    });
+    clearTimeout(t);
+    if(!res.ok) return '';
+    const json=await res.json();
+    const text=String(json?.choices?.[0]?.message?.content||'').trim();
+    return text==='[инструментал]'?'':text;
+  }catch(e){return '';}
+}
+async function checkCoverImageNSFW(url){
+  if(!url||!url.startsWith('http')) return false;
+  try{
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),14000);
+    const res=await fetch('https://text.pollinations.ai/openai',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'openai',messages:[{role:'user',content:[
+        {type:'image_url',image_url:{url,detail:'low'}},
+        {type:'text',text:'Это обложка трека на музыкальной платформе для детей. Есть ли на изображении: нагота, сексуальное содержимое, откровенное насилие/кровь, 18+ контент? Отвечай ТОЛЬКО JSON: {"nsfw":boolean,"reason":string}'}
+      ]}],response_format:{type:'json_object'},max_tokens:60}),
+      signal:ctrl.signal
+    });
+    clearTimeout(t);
+    if(!res.ok) return false;
+    const json=await res.json();
+    let parsed={};
+    try{parsed=JSON.parse(json?.choices?.[0]?.message?.content||'{}')}catch(e){}
+    return !!parsed.nsfw;
+  }catch(e){return false;}
+}
+async function moderateTrackWithAI({title='',lyrics='',genre='',duration=0,fileName='',musicAuthor='',audioFile=null,artistName='',coverUrl=''}){
+  let transcript='';
+  if(audioFile){
+    transcript=await transcribeWithOpenAIAudio(audioFile);
+    if(!transcript) transcript=(await transcribeAudioWithPollinations(audioFile))?.text||'';
+  }
   const structure=await analyzeSongStructureWithPollinations({title,lyrics,genre,duration,musicAuthor,transcript});
   const safety=await analyzeAudioSafetyWithPollinations({title,lyrics,genre,duration,fileName,musicAuthor,transcript:structure.hasVocals?(transcript||structure.normalizedLyrics):'[инструментал]'});
   const lyricsForSearch=(lyrics||structure.normalizedLyrics||safety.detectedLyrics||transcript||'').trim();
@@ -3865,7 +3923,8 @@ async function moderateTrackWithAI({title='',lyrics='',genre='',duration=0,fileN
     structureSummary: structure.summary||'',
     copyright: copyright,
     moderationModel:'openai-audio',
-    copyrightModel:'gemini-search'
+    copyrightModel:'gemini-search',
+    coverNSFW: coverUrl ? await checkCoverImageNSFW(coverUrl) : false
   };
 }
 
@@ -4577,16 +4636,20 @@ async function togglePinTrack(trackId){
 /* ===== TRACKS LISTENER ===== */
 // Слушаем забаненных пользователей
 let _mpAllUsers={};
-db.ref('users').on('value',snap=>{
-  const users=snap.val()||{};
-  _mpAllUsers=users;
-  bannedUserIds=new Set(Object.entries(users).filter(([,u])=>u&&u.banned).map(([id])=>id));
-});
+function _loadUsers(){
+  db.ref('users').once('value').then(snap=>{
+    const users=snap.val()||{};
+    _mpAllUsers=users;
+    bannedUserIds=new Set(Object.entries(users).filter(([,u])=>u&&u.banned).map(([id])=>id));
+  });
+}
+_loadUsers();
+setInterval(_loadUsers,5*60*1000);
 // Слушаем переключение источника на сервер (из musicdb.js)
 window.addEventListener('mp-source-switch',e=>{
   if(e.detail&&e.detail.source==='server'&&e.detail.tracks){
     allTracks=e.detail.tracks;
-    loadedTrackEntries=Object.entries(allTracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+    loadedTrackEntries=Object.entries(allTracks).filter(([,t])=>t&&(t.title||t.audioUrl)).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
     const pid=document.querySelector('.page.active')?.id||'page-home';
     switch(pid){
       case 'page-home':renderHome();break;
@@ -4598,10 +4661,13 @@ window.addEventListener('mp-source-switch',e=>{
     }
   }
 });
+let _tracksRenderTimer=null;
 db.ref('tracks').on('value',snap=>{
   if(window._mpServerModeLocked)return; // server-mode активен — не перезаписываем Firebase данными
   allTracks=snap.val()||{};
-  loadedTrackEntries=Object.entries(allTracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+  loadedTrackEntries=Object.entries(allTracks).filter(([,t])=>t&&(t.title||t.audioUrl)).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+  clearTimeout(_tracksRenderTimer);
+  _tracksRenderTimer=setTimeout(()=>{
   const _savedY=window.scrollY;
   const _pid=document.querySelector('.page.active')?.id||'page-home';
   switch(_pid){
@@ -4625,6 +4691,7 @@ db.ref('tracks').on('value',snap=>{
   }
   openTrackFromHash();
   requestAnimationFrame(()=>window.scrollTo(0,_savedY));
+  },200);
 });
 
 /* ===== RENDER TRACK ITEM ===== */
@@ -4636,7 +4703,7 @@ function renderTrackItem(id,track,num,showDel,hidePinBadge){
   const featuredChip='';
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
     '<div class="track-num" data-num="'+num+'">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
-    '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
+    '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" onerror="this.style.display=\'none\'"'+(track.coverNSFW?' class="nsfw-blur"':'')+'>':'')+(track.coverNSFW&&track.cover?'<div class="nsfw-cover-icon"><span class="material-symbols-rounded" style="color:rgba(255,255,255,.8);font-size:16px">visibility_off</span></div>':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
     '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав — нажмите для подробностей" onclick="event.stopPropagation();openCopyrightDetails(\''+id+'\')">©?</span>':'')+'</div>'+ 
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
     '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Автор музыки: '+esc(track.musicAuthor||track.artistName||'Не указан')+creatorChip+'</div></div>'+
@@ -4781,7 +4848,7 @@ async function rerunModerationForEdit(){
     const musicAuthor=(document.getElementById('editTrackMusicAuthor')?.value||track.musicAuthor||'').trim();
     const audioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
     const moderation=await runWithTimeout(
-      ()=>moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile,artistName:track.artistName||currentUser?.displayName||''}),
+      ()=>moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile,artistName:track.artistName||currentUser?.displayName||'',coverUrl:track.cover||''}),
       20000,null
     );
     if(!moderation){if(status) status.textContent='Таймаут модерации.';return}
@@ -4805,7 +4872,8 @@ async function rerunModerationForEdit(){
       'moderationMeta/copyrightMatchedSource':moderation?.copyright?.matchedSource||'',
       'moderationMeta/copyrightMatchedArtist':moderation?.copyright?.matchedArtist||'',
       'moderationMeta/pending':false,
-      'moderationMeta/analysisStatus':'done'
+      'moderationMeta/analysisStatus':'done',
+      ...(moderation.coverNSFW!==undefined?{coverNSFW:!!moderation.coverNSFW}:{})
     }));
     if(finalLyrics){const lf=document.getElementById('editTrackLyrics');if(lf)lf.value=finalLyrics}
     if(status) status.textContent='Модерация завершена. Explicit: '+(moderation.explicit?'Да':'Нет')+(moderation?.copyright?.possibleCopyright?' • Возможное нарушение прав':'');
@@ -5020,7 +5088,7 @@ async function saveTrackEdits(){
       const editAudioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
       if(editAudioFile){
         moderation=await runWithTimeout(
-          ()=>moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile:editAudioFile,artistName:track.artistName||currentUser.displayName||''}),
+          ()=>moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile:editAudioFile,artistName:track.artistName||currentUser.displayName||'',coverUrl:track.cover||''}),
           12000,
           moderation
         );
@@ -5127,7 +5195,7 @@ function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,c
 
 /* ===== RENDER PAGES ===== */
 function renderHome(){
-  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId));
+  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId));
   const sorted=[...entries].sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
   const popular=[...entries].sort((a,b)=>(b[1].plays||0)-(a[1].plays||0)).slice(0,8);
@@ -5145,7 +5213,7 @@ function renderHome(){
 let currentGenre='all';
 function renderExplore(){
   document.getElementById('genrePills').innerHTML=genres.map(g=>'<div class="chip '+(currentGenre===g.id?'active':'')+'" onclick="filterGenre(\''+g.id+'\')"><span class="material-symbols-rounded" style="font-size:16px">'+g.icon+'</span> '+g.label+'</div>').join('');
-  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId));
+  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId));
   let filtered=currentGenre==='all'?entries:entries.filter(([id,t])=>t.genre===currentGenre);
   filtered.sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   const gl=genres.find(g=>g.id===currentGenre);
@@ -5155,13 +5223,13 @@ function renderExplore(){
 function filterGenre(g){currentGenre=g;trackPageSize=24;renderExplore()}
 
 function renderCharts(){
-  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId)).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0));
+  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId)).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0));
   document.getElementById('chartsTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">trending_up</span><h3>Нет данных</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderCharts()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
 function renderNewReleases(){
   const weekAgo=Date.now()-7*24*60*60*1000;
-  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>!bannedUserIds.has(t.artistId)&&(t.timestamp||0)>weekAgo).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+  const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId)&&(t.timestamp||0)>weekAgo).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   document.getElementById('newReleasesTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">new_releases</span><h3>Нет новинок за последнюю неделю</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderNewReleases()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
@@ -6792,7 +6860,8 @@ async function publishTrack(){
             fileName:publishAudioFile?.name||'',
             musicAuthor,
             audioFile:publishAudioFile,
-            artistName:currentUser.displayName||''
+            artistName:currentUser.displayName||'',
+            coverUrl:cover||''
           }),
           18000,
           null
@@ -6821,7 +6890,8 @@ async function publishTrack(){
             copyrightMatchedArtist:moderation?.copyright?.matchedArtist||'',
             pending:false,
             analysisStatus:'done'
-          }
+          },
+          ...(moderation.coverNSFW?{coverNSFW:true}:{})
         });
         await db.ref('tracks/'+trackId).update(moderationUpdate);
       }catch(bgErr){
