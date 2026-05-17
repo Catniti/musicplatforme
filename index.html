@@ -7662,6 +7662,367 @@ updateUploadExplicitUI();
 updateEditExplicitUI();
 window.addEventListener('load',()=>{if(typeof updateFxSummary==='function')updateFxSummary()});
 
+(function applyPerfPatch() {
+  'use strict';
+
+  /* ════════════════════════════════════════════════════
+   * 1. СТРИПАЕМ audioData из allTracks сразу при получении
+   *    Аудио грузится только когда юзер нажимает Play
+   * ════════════════════════════════════════════════════ */
+  const STRIP_FIELDS = ['audioData', 'coverData', 'audioBase64', 'coverBase64'];
+  const _audioCache = new Map(); // trackId → audioData (только текущий + следующий)
+  const MAX_AUDIO_CACHE = 3;     // держим в памяти максимум 3 трека
+
+  function stripHeavyFields(trackObj) {
+    if (!trackObj || typeof trackObj !== 'object') return trackObj;
+    const out = { ...trackObj };
+    for (const f of STRIP_FIELDS) {
+      if (out[f]) {
+        // Сохраняем флаг что аудио есть, но само не храним
+        if (f === 'audioData') out._hasAudio = true;
+        delete out[f];
+      }
+    }
+    return out;
+  }
+
+  function stripAllTracks(tracksObj) {
+    if (!tracksObj) return {};
+    const result = {};
+    for (const [id, t] of Object.entries(tracksObj)) {
+      if (t && typeof t === 'object') result[id] = stripHeavyFields(t);
+    }
+    return result;
+  }
+
+  /* ════════════════════════════════════════════════════
+   * 2. ЛЕНИВАЯ ЗАГРУЗКА АУДИО — грузим только когда Play
+   * ════════════════════════════════════════════════════ */
+  async function fetchAudioForTrack(trackId) {
+    if (_audioCache.has(trackId)) return _audioCache.get(trackId);
+    // Грузим конкретный трек из Firebase (только audioData)
+    const snap = await firebase.database().ref('tracks/' + trackId + '/audioData').once('value');
+    const audioData = snap.val();
+    if (audioData) {
+      // Чистим кэш если > MAX
+      if (_audioCache.size >= MAX_AUDIO_CACHE) {
+        const firstKey = _audioCache.keys().next().value;
+        _audioCache.delete(firstKey);
+      }
+      _audioCache.set(trackId, audioData);
+    }
+    return audioData;
+  }
+
+  /* ════════════════════════════════════════════════════
+   * 3. ПАТЧ db.ref('tracks').on('value') — стрипаем данные
+   * ════════════════════════════════════════════════════ */
+  function patchFirebaseTracksListener() {
+    if (!window.firebase || !window.firebase.database) {
+      setTimeout(patchFirebaseTracksListener, 500);
+      return;
+    }
+    const origDb = window.firebase.database.bind(window.firebase);
+    // Перехватываем только через патч allTracks после получения
+    // (патч самого Firebase SDK сложен, проще патчить после)
+    console.log('[PerfPatch] Firebase patch ready');
+  }
+
+  /* ════════════════════════════════════════════════════
+   * 4. ПАТЧ loadAndPlay — грузит аудио лениво
+   * ════════════════════════════════════════════════════ */
+  function patchLoadAndPlay() {
+    const origLoadAndPlay = window.loadAndPlay;
+    if (!origLoadAndPlay) {
+      setTimeout(patchLoadAndPlay, 200);
+      return;
+    }
+    window.loadAndPlay = async function(track) {
+      const trackId = window.currentTrackId;
+      // Если аудио нет в треке — грузим из Firebase
+      if (!track.audioData && track._hasAudio && trackId) {
+        showSnackbar('⏳ Загрузка аудио...');
+        try {
+          const audioData = await fetchAudioForTrack(trackId);
+          if (audioData) track = { ...track, audioData };
+          else { showSnackbar('❌ Аудио недоступно'); return; }
+        } catch (e) {
+          showSnackbar('❌ Ошибка загрузки аудио');
+          return;
+        }
+      }
+      return origLoadAndPlay.call(this, track);
+    };
+    console.log('[PerfPatch] loadAndPlay patched for lazy audio');
+  }
+
+  /* ════════════════════════════════════════════════════
+   * 5. СКЕЛЕТОНЫ — показываем заглушки ДО загрузки треков
+   * ════════════════════════════════════════════════════ */
+  const SKELETON_TRACK = `
+    <div class="track-item" style="pointer-events:none;opacity:0.6">
+      <div class="track-num" style="color:transparent">0</div>
+      <div class="track-thumb">
+        <div class="skeleton" style="width:48px;height:48px;border-radius:8px"></div>
+      </div>
+      <div class="track-info" style="gap:6px;display:flex;flex-direction:column">
+        <div class="skeleton" style="height:14px;width:60%;border-radius:4px"></div>
+        <div class="skeleton" style="height:11px;width:40%;border-radius:4px"></div>
+      </div>
+    </div>`;
+
+  const SKELETON_CARD = `
+    <div class="md-card" style="pointer-events:none">
+      <div class="card-img">
+        <div class="skeleton" style="width:100%;height:100%;position:absolute;inset:0"></div>
+      </div>
+      <div class="card-body" style="gap:6px;display:flex;flex-direction:column">
+        <div class="skeleton" style="height:14px;width:70%;border-radius:4px"></div>
+        <div class="skeleton" style="height:11px;width:50%;border-radius:4px"></div>
+      </div>
+    </div>`;
+
+  function showSkeletons(containerId, count, type) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    // Показываем скелетоны только если контейнер пустой или имеет спиннер
+    if (el.querySelector('.track-item:not([style*="pointer-events:none"])')) return;
+    const html = type === 'card'
+      ? Array(count).fill(SKELETON_CARD).join('')
+      : Array(count).fill(SKELETON_TRACK).join('');
+    el.innerHTML = html;
+  }
+
+  function injectSkeletons() {
+    // Home page
+    showSkeletons('homeNewTracks', 6, 'track');
+    showSkeletons('homePopular', 4, 'card');
+    // Explore
+    showSkeletons('exploreTracks', 8, 'track');
+    // Charts
+    showSkeletons('chartsTracks', 8, 'track');
+    // New releases
+    showSkeletons('newReleasesTracks', 6, 'track');
+  }
+
+  /* ════════════════════════════════════════════════════
+   * 6. ПОСТЕПЕННЫЙ РЕНДЕР ТРЕКОВ (порциями по 12)
+   *    Чтобы не рендерить 200 треков сразу и не фризить UI
+   * ════════════════════════════════════════════════════ */
+  function renderTracksBatch(container, entries, renderFn, batchSize = 12) {
+    if (!container || !entries.length) return;
+    container.innerHTML = '';
+    let idx = 0;
+
+    function renderNext() {
+      const batch = entries.slice(idx, idx + batchSize);
+      if (!batch.length) return;
+      const frag = document.createDocumentFragment();
+      batch.forEach(([id, t], i) => {
+        const div = document.createElement('div');
+        div.innerHTML = renderFn(id, t, idx + i + 1);
+        while (div.firstChild) frag.appendChild(div.firstChild);
+      });
+      container.appendChild(frag);
+      idx += batchSize;
+      if (idx < entries.length) {
+        requestAnimationFrame(renderNext);
+      }
+    }
+    renderNext();
+  }
+
+  /* ════════════════════════════════════════════════════
+   * 7. ПАТЧ renderHome / renderExplore / renderCharts
+   *    чтобы использовать постепенный рендер
+   * ════════════════════════════════════════════════════ */
+  function patchRenderFunctions() {
+    const origRenderHome = window.renderHome;
+    const origRenderExplore = window.renderExplore;
+    const origRenderCharts = window.renderCharts;
+    const origRenderNewReleases = window.renderNewReleases;
+
+    if (!origRenderHome) {
+      setTimeout(patchRenderFunctions, 300);
+      return;
+    }
+
+    // Патч renderHome
+    window.renderHome = function() {
+      const entries = (window.loadedTrackEntries || Object.entries(window.allTracks || {}))
+        .filter(([, t]) => t && (t.title || t.audioUrl) && !window.bannedUserIds?.has(t.artistId));
+      const sorted = [...entries].sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
+
+      const newTracksEl = document.getElementById('homeNewTracks');
+      const popularEl = document.getElementById('homePopular');
+
+      if (!entries.length) {
+        if (newTracksEl) newTracksEl.innerHTML = '<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>';
+        return;
+      }
+
+      if (newTracksEl) {
+        renderTracksBatch(
+          newTracksEl,
+          sorted.slice(0, 12),
+          (id, t, i) => window.renderTrackItem(id, t, i, false, true)
+        );
+      }
+
+      // Popular cards — рендерим сразу (их мало)
+      if (popularEl) {
+        const popular = [...entries].sort((a, b) => (b[1].plays || 0) - (a[1].plays || 0)).slice(0, 8);
+        origRenderHome.call(this); // fallback для карточек и артистов
+        return;
+      }
+      origRenderHome.call(this);
+    };
+
+    // Патч renderExplore — постепенный рендер
+    window.renderExplore = function() {
+      // Показываем скелетоны мгновенно
+      showSkeletons('exploreTracks', 8, 'track');
+      // Откладываем реальный рендер на след. кадр
+      requestAnimationFrame(() => origRenderExplore.call(this));
+    };
+
+    // Патч renderCharts
+    window.renderCharts = function() {
+      showSkeletons('chartsTracks', 8, 'track');
+      requestAnimationFrame(() => origRenderCharts.call(this));
+    };
+
+    // Патч renderNewReleases
+    window.renderNewReleases = function() {
+      showSkeletons('newReleasesTracks', 6, 'track');
+      requestAnimationFrame(() => origRenderNewReleases.call(this));
+    };
+
+    console.log('[PerfPatch] render functions patched');
+  }
+
+  /* ════════════════════════════════════════════════════
+   * 8. ПАТЧ Firebase listener — стрипаем audioData
+   *    СРАЗУ после получения данных
+   * ════════════════════════════════════════════════════ */
+  function patchAlltracksListener() {
+    // Переопределяем обработчик после инициализации Firebase
+    if (typeof window.db === 'undefined' || !window.db) {
+      setTimeout(patchAlltracksListener, 300);
+      return;
+    }
+    // Снимаем старый listener и вешаем новый с стрипом
+    try {
+      window.db.ref('tracks').off('value');
+      let _renderTimer = null;
+      window.db.ref('tracks').on('value', snap => {
+        if (window._mpServerModeLocked) return;
+        const raw = snap.val() || {};
+        // СТРИПАЕМ audioData — главный пожиратель памяти
+        window.allTracks = stripAllTracks(raw);
+        window.loadedTrackEntries = Object.entries(window.allTracks)
+          .filter(([, t]) => t && (t.title || t.audioUrl))
+          .sort((a, b) => (b[1].timestamp || 0) - (a[1].timestamp || 0));
+
+        clearTimeout(_renderTimer);
+        _renderTimer = setTimeout(() => {
+          const pid = document.querySelector('.page.active')?.id || 'page-home';
+          switch (pid) {
+            case 'page-home': window.renderHome?.(); break;
+            case 'page-explore': window.renderExplore?.(); break;
+            case 'page-charts': window.renderCharts?.(); break;
+            case 'page-new-releases': window.renderNewReleases?.(); break;
+            case 'page-favorites': window.renderFavorites?.(); break;
+            case 'page-search': window.handleSearch?.(document.getElementById('searchInput')?.value); break;
+            case 'page-artist': if (window.currentArtistId) window.viewArtist?.(window.currentArtistId); break;
+            case 'page-profile': if (window.currentUser) window.loadMyTracks?.(); break;
+            default: window.renderHome?.(); break;
+          }
+          window.openTrackFromHash?.();
+        }, 200);
+      });
+      console.log('[PerfPatch] Firebase tracks listener patched — audioData stripped');
+    } catch (e) {
+      console.warn('[PerfPatch] listener patch failed:', e.message);
+    }
+  }
+
+  /* ════════════════════════════════════════════════════
+   * 9. ПАТЧ playTrackById — проверяет кэш / грузит аудио
+   * ════════════════════════════════════════════════════ */
+  function patchPlayTrackById() {
+    const orig = window.playTrackById;
+    if (!orig) { setTimeout(patchPlayTrackById, 300); return; }
+
+    window.playTrackById = async function(id) {
+      const track = window.allTracks?.[id];
+      if (!track) { window.showSnackbar?.('Трек не найден'); return; }
+
+      // Аудио уже в кэше — играем сразу
+      if (_audioCache.has(id)) {
+        track.audioData = _audioCache.get(id);
+        return orig.call(this, id);
+      }
+
+      // Аудио есть в треке (старый формат) — играем сразу
+      if (track.audioData) {
+        return orig.call(this, id);
+      }
+
+      // Нужно загрузить аудио из Firebase
+      if (track._hasAudio) {
+        window.showSnackbar?.('⏳ Загрузка...');
+        try {
+          const audioData = await fetchAudioForTrack(id);
+          if (!audioData) { window.showSnackbar?.('❌ Аудио недоступно'); return; }
+          track.audioData = audioData;
+          // Предзагружаем следующий трек в фоне
+          const playlist = window.playlist || [];
+          const nextIdx = (playlist.indexOf(id) + 1) % playlist.length;
+          if (playlist[nextIdx] && playlist[nextIdx] !== id) {
+            setTimeout(() => fetchAudioForTrack(playlist[nextIdx]), 2000);
+          }
+        } catch (e) {
+          window.showSnackbar?.('❌ Ошибка загрузки'); return;
+        }
+      } else {
+        window.showSnackbar?.('❌ Аудио не найдено'); return;
+      }
+
+      return orig.call(this, id);
+    };
+
+    console.log('[PerfPatch] playTrackById patched for lazy audio load');
+  }
+
+  /* ════════════════════════════════════════════════════
+   * ИНИЦИАЛИЗАЦИЯ
+   * ════════════════════════════════════════════════════ */
+  function init() {
+    // 1. Сразу показываем скелетоны
+    injectSkeletons();
+
+    // 2. Патчим после инициализации приложения
+    setTimeout(() => {
+      patchAlltracksListener();
+      patchPlayTrackById();
+      patchLoadAndPlay();
+      patchRenderFunctions();
+      console.log('[PerfPatch] All patches applied');
+    }, 100);
+  }
+
+  // Запускаем после загрузки страницы
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // Экспорт для отладки
+  window._perfPatch = { fetchAudioForTrack, _audioCache, stripHeavyFields };
+
+})();
 </script>
 </body>
 </html>
