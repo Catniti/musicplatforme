@@ -699,26 +699,7 @@
     </div>
   </div>
 
-  <div style="background:var(--md-surface-container);border-radius:16px;padding:14px;border:1px solid var(--md-outline-variant)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font:700 13px/18px 'Inter',sans-serif;color:var(--md-on-surface)">📊 Выравнивание данных <span style="font:400 10px 'Inter';color:var(--md-outline)">v2</span></div>
-      <button class="btn-tonal" onclick="if(window._mpAlignRunning){if(typeof window.showSnackbar==='function')window.showSnackbar('⏳ Подожди — выравнивание идёт...');return;}window.MusicDB.showDiff()" style="padding:4px 10px;font-size:12px;min-width:0">
-        <span class="material-symbols-rounded" style="font-size:15px">refresh</span>
-      </button>
-    </div>
-    <div style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:10px">
-      Сравни треки сервера и Firebase, найди различия и выровняй только то, что отличается.
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn-tonal" onclick="if(window._mpAlignRunning){if(typeof window.showSnackbar==='function')window.showSnackbar('⏳ Подожди — выравнивание идёт...');return;}window.MusicDB.showDiff()" style="padding:8px 14px;font-size:13px">
-        <span class="material-symbols-rounded" style="font-size:16px">compare_arrows</span> Показать различия
-      </button>
-      <button class="btn-primary" onclick="window.MusicDB.alignAll()" style="padding:8px 14px;font-size:13px">
-        <span class="material-symbols-rounded" style="font-size:16px">sync_alt</span> Выровнять всё
-      </button>
-    </div>
-    <div id="mpDiffResult" style="margin-top:10px;font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant)"></div>
-  </div>
+
 </div>`;
   }
 
@@ -1494,7 +1475,7 @@
             <span class="material-symbols-rounded">storage</span>
             <div class="settings-item-info">
               <div class="settings-item-title">Источники данных</div>
-              <div class="settings-item-sub">Сервер vs Firebase, выравнивание, очередь синхронизации</div>
+              <div class="settings-item-sub">Сервер vs Firebase, очередь синхронизации</div>
             </div>
             <span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span>
           `;
@@ -2688,7 +2669,6 @@ body[data-ui-style="glass"]{display:contents}
     <a class="nav-item" data-page="history" onclick="navigate('history')"><span class="material-symbols-rounded">history</span> История</a>
     <a class="nav-item" data-page="subscriptions" onclick="navigate('subscriptions')"><span class="material-symbols-rounded">people</span> Подписки</a>
     <div class="nav-divider"></div>
-    <a class="nav-item" onclick="playRandomTrack()"><span class="material-symbols-rounded">casino</span> Случайный трек</a>
     <a class="nav-item" data-page="upload" onclick="navigate('upload')"><span class="material-symbols-rounded">upload</span> Загрузить</a>
     <a class="nav-item" data-page="profile" onclick="navigate('profile')"><span class="material-symbols-rounded">person</span> Профиль</a>
   </nav>
@@ -2721,12 +2701,9 @@ body[data-ui-style="glass"]{display:contents}
   <!-- HOME -->
   <div class="page active" id="page-home">
     <div class="hero-banner">
-      <div class="hero-title" id="heroGreeting">Добро пожаловать в MusicPlatforme</div>
+      <div class="hero-title">Добро пожаловать в MusicPlatforme</div>
       <div class="hero-sub">Слушай, открывай и делись музыкой бесплатно</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-primary" onclick="navigate('wave')"><span class="material-symbols-rounded">waves</span> Моя волна</button>
-        <button class="btn-tonal" onclick="playRandomTrack()"><span class="material-symbols-rounded">casino</span> Мне повезёт!</button>
-      </div>
+      <button class="btn-primary" onclick="navigate('wave')"><span class="material-symbols-rounded">waves</span> Моя волна</button>
     </div>
     <div class="section-title">🔥 Новые треки</div>
     <div class="track-list" id="homeNewTracks"><div class="loading-spinner"></div></div>
@@ -4627,6 +4604,8 @@ function openSettings(){
       '<div class="settings-item" onclick="openSleepTimer()"><span class="material-symbols-rounded">bedtime</span><div class="settings-item-info"><div class="settings-item-title">Таймер сна</div><div class="settings-item-sub">'+(sleepTimerId?'Активен':'Не установлен')+'</div></div></div>'+
       '<div class="settings-item" onclick="openPartyMode()"><span class="material-symbols-rounded">celebration</span><div class="settings-item-info"><div class="settings-item-title">Режим вечеринки</div><div class="settings-item-sub">Синхронное воспроизведение до 8 устройств рядом</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div class="settings-item" onclick="navigate(\'radio\');closeModal(\'settingsModal\')"><span class="material-symbols-rounded">radio</span><div class="settings-item-info"><div class="settings-item-title">Радио</div><div class="settings-item-sub">Открыть реальные онлайн-радиостанции</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+      (!isCreatorUser(currentUser)&&!u.verified?'<div class="settings-item" onclick="requestVerification()"><span class="material-symbols-rounded" style="color:#1d9bf0">verified</span><div class="settings-item-info"><div class="settings-item-title">Подтверждение артиста</div><div class="settings-item-sub">Отправить заявку на синюю галочку</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
+      (!isCreatorUser(currentUser)&&u.verified?'<div class="settings-item"><span class="material-symbols-rounded" style="color:#1d9bf0">verified</span><div class="settings-item-info"><div class="settings-item-title">Подтверждённый артист</div><div class="settings-item-sub">Ваш аккаунт подтверждён</div></div><span class="material-symbols-rounded" style="color:#1d9bf0">check_circle</span></div>':'')+
       (isCreatorUser(currentUser)?'<div class="settings-item" onclick="openAdminTools()"><span class="material-symbols-rounded">verified</span><div class="settings-item-info"><div class="settings-item-title">Меню создателя</div><div class="settings-item-sub">Логи, жалобы, статистика и сервисные инструменты</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
       '<div style="margin:16px 0;height:1px;background:var(--md-outline-variant)"></div>'+
       '<div class="settings-item" onclick="signOutUser();closeModal(\'settingsModal\')"><span class="material-symbols-rounded" style="color:var(--md-error)">logout</span><div class="settings-item-info"><div class="settings-item-title" style="color:var(--md-error)">Выйти из аккаунта</div></div></div>';
@@ -5353,7 +5332,6 @@ function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,c
 
 /* ===== RENDER PAGES ===== */
 function renderHome(){
-  if(typeof updateHeroGreeting==='function')updateHeroGreeting();
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId));
   const sorted=[...entries].sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
@@ -6308,7 +6286,6 @@ function viewArtist(aid){
         +(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')
         +(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')
         +(isCreatorUser(currentUser)&&currentUser.uid!==aid?'<button class="btn-outlined" onclick="adminOpenUserActions(\''+aid+'\')"><span class="material-symbols-rounded">gavel</span> Действия создателя</button>':'')
-        +(currentUser&&currentUser.uid===aid&&!u.verified&&!isCreatorUser(u)?'<button class="btn-tonal" onclick="requestVerification()"><span class="material-symbols-rounded">verified</span> Запросить подтверждение</button>':'')
         +(isCreatorUser(currentUser)&&currentUser.uid!==aid&&!u.verified?'<button class="btn-tonal" style="color:#1d9bf0" onclick="grantVerification(\''+aid+'\')"><span class="material-symbols-rounded">verified</span> Подтвердить</button>':'')
         +'</div></div>';
       document.getElementById('artistTabs').style.display='flex';
@@ -7278,7 +7255,6 @@ function _verifyCreatorAccess(){
 }
 function openAdminTools(){
   if(!_verifyCreatorAccess()){showSnackbar('Доступ запрещён');console.warn('[Security] Creator panel access denied for',currentUser?.uid);return}
-  closeModal('settingsModal');
   document.getElementById('settingsContent').innerHTML=
     '<div class="modal-title" style="margin-bottom:12px">Меню создателя</div>'+
     '<div class="settings-item" onclick="openVerificationRequests()"><span class="material-symbols-rounded" style="color:#1d9bf0">verified</span><div class="settings-item-info"><div class="settings-item-title">Заявки на подтверждение</div><div class="settings-item-sub">Просмотр видео-заявок на синюю галочку</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
@@ -7735,35 +7711,6 @@ function creatorEditForeignTrack(tid){
   document.getElementById('editTrackCoverPreview').innerHTML=t.cover?'<img src="'+t.cover+'" alt="">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">music_note</span>';
   document.getElementById('editTrackModal').classList.add('open');
 }
-
-/* ===== FUN: TIME-BASED GREETING ===== */
-function updateHeroGreeting(){
-  const el=document.getElementById('heroGreeting');if(!el)return;
-  const h=new Date().getHours();
-  const name=currentUser?.displayName||'';
-  const nameStr=name?' '+name:'';
-  if(h>=5&&h<12) el.textContent='Доброе утро'+nameStr+'!';
-  else if(h>=12&&h<17) el.textContent='Добрый день'+nameStr+'!';
-  else if(h>=17&&h<22) el.textContent='Добрый вечер'+nameStr+'!';
-  else el.textContent='Доброй ночи'+nameStr+'!';
-}
-setInterval(updateHeroGreeting,60000);
-
-/* ===== FUN: RANDOM TRACK ===== */
-function playRandomTrack(){
-  const ids=Object.keys(allTracks);
-  if(!ids.length){showSnackbar('Нет доступных треков');return}
-  const rndId=ids[Math.floor(Math.random()*ids.length)];
-  playlist=[rndId];playlistIndex=0;currentTrackId=rndId;
-  loadAndPlay(allTracks[rndId]);
-  showSnackbar('Случайный трек: '+esc(allTracks[rndId].title||''));
-}
-
-/* ===== FUN: KEYBOARD SHORTCUTS ===== */
-document.addEventListener('keydown',function(e){
-  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'||e.target.isContentEditable)return;
-  if(e.key==='r'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();playRandomTrack();return}
-});
 
 /* ===== VERIFICATION SYSTEM ===== */
 function requestVerification(){
