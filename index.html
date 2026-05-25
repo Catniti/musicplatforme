@@ -3528,6 +3528,60 @@ let adminEditingTrackId=null;
 let copyrightAppealTrackId=null;
 let loadedTrackEntries=[];
 let trackPageSize=24;
+/* ===== AUDIO DATA MIGRATION & LAZY LOADING =====
+ * audioData (base64 audio ~2MB/track) is moved to trackAudio/{id}
+ * so tracks/ stays lightweight for fast initial page loads.
+ */
+const HEAVY_TRACK_FIELDS=['audioData','coverData','audioBase64','coverBase64'];
+function _stripHeavyFields(tracks){
+  if(!tracks||typeof tracks!=='object') return tracks;
+  for(const id of Object.keys(tracks)){
+    const t=tracks[id];
+    if(!t||typeof t!=='object') continue;
+    for(const f of HEAVY_TRACK_FIELDS){
+      if(t[f]&&typeof t[f]==='string'&&t[f].length>1000){
+        delete t[f];
+        if(f==='audioData') t._hasAudioData=true;
+      }
+    }
+  }
+  return tracks;
+}
+let _audioMigrationDone=false;
+function _migrateAudioData(){
+  if(_audioMigrationDone) return;
+  if(localStorage.getItem('mp_audio_migrated_v1')) return;
+  _audioMigrationDone=true;
+  const _db=firebase.database();
+  _db.ref('tracks').once('value').then(snap=>{
+    const tracks=snap.val()||{};
+    let migrated=0;
+    const ids=Object.keys(tracks).filter(id=>{
+      const t=tracks[id];
+      return t&&t.audioData&&typeof t.audioData==='string'&&t.audioData.length>1000;
+    });
+    if(!ids.length){localStorage.setItem('mp_audio_migrated_v1','1');return}
+    (async()=>{
+      for(const id of ids){
+        try{
+          await _db.ref('trackAudio/'+id).set(tracks[id].audioData);
+          await _db.ref('tracks/'+id+'/audioData').remove();
+          migrated++;
+        }catch(e){console.warn('[Migration] Failed for',id,e.message)}
+      }
+      localStorage.setItem('mp_audio_migrated_v1','1');
+      console.log('[Migration] Moved audioData for',migrated,'tracks to trackAudio/');
+    })();
+  }).catch(e=>console.warn('[Migration] error',e.message));
+}
+async function _fetchTrackAudio(trackId){
+  const _db=firebase.database();
+  const snap=await _db.ref('trackAudio/'+trackId).once('value');
+  const data=snap.val();
+  if(data&&typeof data==='string'&&data.length>100) return data;
+  const snap2=await _db.ref('tracks/'+trackId+'/audioData').once('value');
+  return snap2.val()||null;
+}
 let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"compactTrackList":false,"glass":false}');
 if(labsSettings && labsSettings.liquidGlass!==undefined && labsSettings.glass===undefined){
   labsSettings.glass=!!labsSettings.liquidGlass;
@@ -4066,7 +4120,8 @@ async function analyzeLyricsForEdit(){
   btn.disabled=true;
   status.textContent='Транскрибатор переслушивает трек и распознаёт слова...';
   try{
-    const audioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
+    let _ad=track.audioData;if(!_ad){try{_ad=await _fetchTrackAudio(editTrackId)}catch(e){}}
+    const audioFile=_ad?await dataUrlToAudioFile(_ad,(track.title||'track')+'.audio'):null;
     if(!audioFile) throw new Error('no-audio');
     const result=await runWithTimeout(
       ()=>analyzeTrackLyricsWithAI({audioFile,title,genre,musicAuthor,duration:Number(track.duration||0),seedLyrics}),
@@ -4610,7 +4665,7 @@ function loadUserData(){
 function loadMyTracks(){
   if(!currentUser)return;
   db.ref('tracks').orderByChild('artistId').equalTo(currentUser.uid).on('value',snap=>{
-    const tracks=snap.val()||{},arr=Object.entries(tracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+    const tracks=_stripHeavyFields(snap.val()||{}),arr=Object.entries(tracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
     ['myTracks','profileTrackList'].forEach(elId=>{
       const el=document.getElementById(elId);if(!el)return;
       if(arr.length===0)el.innerHTML='<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет загруженных треков</h3></div>';
@@ -4667,7 +4722,7 @@ setInterval(_loadUsers,5*60*1000);
 // Слушаем переключение источника на сервер (из musicdb.js)
 window.addEventListener('mp-source-switch',e=>{
   if(e.detail&&e.detail.source==='server'&&e.detail.tracks){
-    allTracks=e.detail.tracks;
+    allTracks=_stripHeavyFields(e.detail.tracks);
     loadedTrackEntries=Object.entries(allTracks).filter(([,t])=>t&&(t.title||t.audioUrl)).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
     const pid=document.querySelector('.page.active')?.id||'page-home';
     switch(pid){
@@ -4683,8 +4738,9 @@ window.addEventListener('mp-source-switch',e=>{
 let _tracksRenderTimer=null;
 db.ref('tracks').on('value',snap=>{
   if(window._mpServerModeLocked)return; // server-mode активен — не перезаписываем Firebase данными
-  allTracks=snap.val()||{};
+  allTracks=_stripHeavyFields(snap.val()||{});
   loadedTrackEntries=Object.entries(allTracks).filter(([,t])=>t&&(t.title||t.audioUrl)).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+  setTimeout(_migrateAudioData,3000);
   clearTimeout(_tracksRenderTimer);
   _tracksRenderTimer=setTimeout(()=>{
   const _savedY=window.scrollY;
@@ -4865,7 +4921,8 @@ async function rerunModerationForEdit(){
     const genre=(document.getElementById('editTrackGenre')?.value||track.genre||'').trim();
     const lyrics=(document.getElementById('editTrackLyrics')?.value||'').trim();
     const musicAuthor=(document.getElementById('editTrackMusicAuthor')?.value||track.musicAuthor||'').trim();
-    const audioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
+    let _modAd=track.audioData;if(!_modAd){try{_modAd=await _fetchTrackAudio(editTrackId)}catch(e){}}
+    const audioFile=_modAd?await dataUrlToAudioFile(_modAd,(track.title||'track')+'.audio'):null;
     const moderation=await runWithTimeout(
       ()=>moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile,artistName:track.artistName||currentUser?.displayName||'',coverUrl:track.cover||''}),
       20000,null
@@ -5104,7 +5161,8 @@ async function saveTrackEdits(){
     };
 
     try{
-      const editAudioFile=track.audioData?await dataUrlToAudioFile(track.audioData,(track.title||'track')+'.audio'):null;
+      let _editAd=track.audioData;if(!_editAd){try{_editAd=await _fetchTrackAudio(editTrackId)}catch(e){}}
+      const editAudioFile=_editAd?await dataUrlToAudioFile(_editAd,(track.title||'track')+'.audio'):null;
       if(editAudioFile){
         moderation=await runWithTimeout(
           ()=>moderateTrackWithAI({title,lyrics,genre,duration:Number(track.duration||0),fileName:'edit',musicAuthor,audioFile:editAudioFile,artistName:track.artistName||currentUser.displayName||'',coverUrl:track.cover||''}),
@@ -5120,8 +5178,9 @@ async function saveTrackEdits(){
     const finalExplicit=editExplicitLockedByAI ? true : !!(moderation.explicit || editExplicitManual);
     const effectiveVideoData = clearVideo ? '' : (videoData || track.videoData || '');
     const videoPersist = await persistTrackVideoPayload(editTrackId, effectiveVideoData);
+    const {audioData:_,coverData:__,audioBase64:___,coverBase64:____,...trackMeta}=track;
     const upd=prepareFirebasePayload({
-      ...track,
+      ...trackMeta,
       title,
       genre:genre||'other',
       lyrics:safeLyrics,
@@ -5278,7 +5337,7 @@ function handleSearch(q){
 function showPlayer(){if(!playerVisible){playerVisible=true;document.getElementById('playerBar').classList.add('visible')}}
 
 function playTrackById(id){
-  const track=allTracks[id];if(!track||!track.audioData){showSnackbar('Аудио недоступно');return}
+  const track=allTracks[id];if(!track){showSnackbar('Трек не найден');return}
   if(currentTrackId===id){togglePlay();return}
   currentTrackId=id;
   const ap=document.querySelector('.page.active'),items=ap?ap.querySelectorAll('.track-item'):[];
@@ -5344,8 +5403,12 @@ function loadAndPlay(track){
   broadcastPlaybackState();
   broadcastPartyState();
 }
-function doLoad(track){
-  const source=getCachedAudioData(currentTrackId)||track.audioData;
+async function doLoad(track){
+  let source=getCachedAudioData(currentTrackId)||track.audioData;
+  if(!source&&currentTrackId){
+    try{source=await _fetchTrackAudio(currentTrackId);if(source)track.audioData=source}catch(e){}
+  }
+  if(!source){showSnackbar('Аудио недоступно');return}
   if(currentTrackId&&source) touchAudioCache(currentTrackId);
   audio.src=source;
   if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
@@ -6799,6 +6862,7 @@ async function publishTrack(){
     const trackId=trackRef.key;
     const videoPersist=await persistTrackVideoPayload(trackId, videoData||'');
 
+      await db.ref('trackAudio/'+trackId).set(publishAudioDataURL);
       await trackRef.set(prepareFirebasePayload({
         title,
         genre:genre||'other',
@@ -6808,7 +6872,6 @@ async function publishTrack(){
         artistId:currentUser.uid,
         artistName:currentUser.displayName||'Неизвестен',
         artistPhoto:currentUser.photo||'',
-        audioData:publishAudioDataURL,
         duration:Math.round(duration),
         explicit:!!quickExplicit,
         userForcedExplicit:false,
