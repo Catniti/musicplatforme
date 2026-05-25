@@ -51,28 +51,26 @@
 /* musicdb.js — inlined at build time, do not edit here */
 /**
  * MusicPlatforme Server DB Client
- * Подключи этот файл в index.html ПОСЛЕ Firebase и ПЕРЕД основным скриптом:
- * <script src="https://a11cc0fd-cb9b-4609-8305-d47f99831b19-00-70ono3xcux3f.riker.replit.dev/api/musicdb.js"><\/script>
+ * Подключи этот файл в index.html ПОСЛЕ Firebase и ПЕРЕД основным скриптом.
  *
- * Или скачай файл и подключи локально.
+ * Для подключения своего сервера:
+ * 1. Установите URL сервера в localStorage: localStorage.setItem('mp_server_url', 'https://your-server.com/api')
+ * 2. Или настройте через Панель Создателя → Настройки сервера
  */
 (function () {
   'use strict';
 
   /* ===== НАСТРОЙКИ ===== */
-  const PROD_BASE = 'https://data-sync-hub--vriskas.replit.app/api';
-  const DEV_BASE  = 'https://a11cc0fd-cb9b-4609-8305-d47f99831b19-00-70ono3xcux3f.riker.replit.dev/api';
+  const DEFAULT_SERVER = '';
 
   function detectServerBase() {
-    // Позволяем вручную переопределить URL из панели создателя
     try {
       const override = localStorage.getItem('mp_server_url_override');
       if (override && override.startsWith('http')) return override.replace(/\/$/, '') + (override.includes('/api') ? '' : '/api');
+      const saved = localStorage.getItem('mp_server_url');
+      if (saved && saved.startsWith('http')) return saved.replace(/\/$/, '') + (saved.includes('/api') ? '' : '/api');
     } catch { /* ignore */ }
-    const host = (window.location.hostname || '').toLowerCase();
-    if (host.includes('replit.app') || host.includes('data-sync-hub')) return PROD_BASE;
-    if (host.includes('github.io') || host === 'localhost' || host === '') return PROD_BASE;
-    return DEV_BASE;
+    return DEFAULT_SERVER;
   }
 
   const SERVER_BASE = detectServerBase();
@@ -653,7 +651,7 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div style="background:var(--md-surface-container);border-radius:16px;padding:14px;border:1px solid var(--md-outline-variant)">
       <div style="font:700 13px/18px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:8px;display:flex;align-items:center;gap:6px">
-        ${statusIcon(srv.status)} 🖥️ Сервер (Replit)
+        ${statusIcon(srv.status)} 🖥️ Сервер
       </div>
       <div style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant)">
         Статус: <b>${srv.status === 'ok' ? 'Работает' : srv.status === 'offline' ? 'Не доступен' : 'Ошибка'}</b><br>
@@ -693,7 +691,7 @@
       <div style="flex:1;min-width:0">
         <div style="font:400 11px 'Inter';color:var(--md-on-surface-variant);margin-bottom:4px">URL сервера (из кода): <code style="font-size:10px;background:var(--md-surface-container-high);padding:1px 5px;border-radius:4px;word-break:break-all">${SERVER_BASE}</code></div>
         <div style="display:flex;gap:6px;align-items:center">
-          <input id="mpServerUrlInput" class="md-input" placeholder="Новый URL (если изменился после republish)" value="${localStorage.getItem('mp_server_url_override')||''}" style="flex:1;font-size:11px;padding:6px 10px;border-radius:8px;margin:0">
+          <input id="mpServerUrlInput" class="md-input" placeholder="URL вашего сервера (https://your-server.com/api)" value="${localStorage.getItem('mp_server_url_override')||''}" style="flex:1;font-size:11px;padding:6px 10px;border-radius:8px;margin:0">
           <button class="btn-tonal" onclick="(function(){const v=document.getElementById('mpServerUrlInput').value.trim();if(v){localStorage.setItem('mp_server_url_override',v);window.showSnackbar&&window.showSnackbar('URL обновлён — перезагрузи страницу');}else{localStorage.removeItem('mp_server_url_override');window.showSnackbar&&window.showSnackbar('URL сброшен');}})()" style="padding:6px 10px;font-size:11px;min-width:0;white-space:nowrap">Сохранить</button>
         </div>
       </div>
@@ -1400,7 +1398,7 @@
       const rows = [
         {
           icon: 'dns',
-          name: '🖥️ Сервер (Replit DB)',
+          name: '🖥️ Сервер',
           statusBadge: badge(srv.status),
           latency: latencyBadge(srv.latencyMs),
           extra: [
@@ -1793,6 +1791,8 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 
 /* ===== EXPLICIT BADGE ===== */
 .explicit-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--md-error);color:white;font-size:12px;font-weight:700;flex-shrink:0;line-height:1}
+.ai-badge{display:inline-flex;align-items:center;justify-content:center;height:18px;padding:0 6px;border-radius:9px;background:linear-gradient(135deg,#7c4dff,#448aff);color:white;font:700 10px/18px 'Inter',sans-serif;flex-shrink:0;letter-spacing:.3px;gap:2px}
+.verified-badge{display:inline-flex;align-items:center;justify-content:center;color:#1d9bf0;flex-shrink:0}.verified-badge .material-symbols-rounded{font-size:18px}
 
 /* ===== SIDEBAR ===== */
 .sidebar{width:var(--sidebar-width);background:var(--md-surface-container);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .4s cubic-bezier(.2,0,0,1);overflow-y:auto}
@@ -2136,10 +2136,11 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--md-shape-full);font:500 11px/16px 'Inter',sans-serif;background:var(--md-primary-container);color:var(--md-on-primary-container)}
 
 /* ===== TOGGLE SWITCH ===== */
-.toggle{position:relative;width:52px;height:32px;border-radius:16px;background:var(--md-outline);cursor:pointer;transition:background .3s,opacity .2s,filter .2s;flex-shrink:0}
+.toggle{position:relative;width:52px;height:32px;border-radius:16px;background:var(--md-outline);cursor:pointer;transition:background .3s,opacity .2s,filter .2s;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:pan-y}
 .toggle.on{background:var(--md-primary)}
 .toggle::after{content:'';position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:white;transition:transform .3s cubic-bezier(.2,0,0,1);box-shadow:var(--md-elevation-1)}
 .toggle.on::after{transform:translateX(20px)}
+.toggle.dragging::after{transition:none;width:28px;border-radius:14px}
 .toggle.disabled{opacity:.45;filter:grayscale(.2);cursor:not-allowed;pointer-events:none}
 .toggle.disabled::after{box-shadow:none}
 
@@ -2687,6 +2688,7 @@ body[data-ui-style="glass"]{display:contents}
     <a class="nav-item" data-page="history" onclick="navigate('history')"><span class="material-symbols-rounded">history</span> История</a>
     <a class="nav-item" data-page="subscriptions" onclick="navigate('subscriptions')"><span class="material-symbols-rounded">people</span> Подписки</a>
     <div class="nav-divider"></div>
+    <a class="nav-item" onclick="playRandomTrack()"><span class="material-symbols-rounded">casino</span> Случайный трек</a>
     <a class="nav-item" data-page="upload" onclick="navigate('upload')"><span class="material-symbols-rounded">upload</span> Загрузить</a>
     <a class="nav-item" data-page="profile" onclick="navigate('profile')"><span class="material-symbols-rounded">person</span> Профиль</a>
   </nav>
@@ -2719,15 +2721,18 @@ body[data-ui-style="glass"]{display:contents}
   <!-- HOME -->
   <div class="page active" id="page-home">
     <div class="hero-banner">
-      <div class="hero-title">Добро пожаловать в MusicPlatforme</div>
+      <div class="hero-title" id="heroGreeting">Добро пожаловать в MusicPlatforme</div>
       <div class="hero-sub">Слушай, открывай и делись музыкой бесплатно</div>
-      <button class="btn-primary" onclick="navigate('wave')"><span class="material-symbols-rounded">waves</span> Моя волна</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-primary" onclick="navigate('wave')"><span class="material-symbols-rounded">waves</span> Моя волна</button>
+        <button class="btn-tonal" onclick="playRandomTrack()"><span class="material-symbols-rounded">casino</span> Мне повезёт!</button>
+      </div>
     </div>
     <div class="section-title">🔥 Новые треки</div>
     <div class="track-list" id="homeNewTracks"><div class="loading-spinner"></div></div>
     <div class="section-title">🏆 Популярное</div>
     <div class="cards-grid" id="homePopular"><div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:220px"></div></div>
-    <div class="section-title">🎤 Артисты</div>
+    <div class="section-title">🎤 Пользователи</div>
     <div class="cards-grid" id="homeArtists" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))"></div>
   </div>
 
@@ -2852,6 +2857,10 @@ body[data-ui-style="glass"]{display:contents}
           <button class="btn-icon" onclick="clearSelectedFile()" style="margin-left:auto"><span class="material-symbols-rounded">close</span></button>
         </div>
       </div>
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn-tonal" id="uploadOwnTrackBtn" onclick="setUploadTrackType('own')" style="flex:1;min-width:140px"><span class="material-symbols-rounded">person</span> Свой трек</button>
+        <button class="btn-outlined" id="uploadForeignTrackBtn" onclick="setUploadTrackType('foreign')" style="flex:1;min-width:140px"><span class="material-symbols-rounded">group</span> Чужой трек</button>
+      </div>
       <label class="modal-label">Название трека *</label>
       <input class="md-input" id="uploadTitle" placeholder="Название трека" style="border-radius:var(--md-shape-md);margin-bottom:16px">
       <label class="modal-label">Жанр</label>
@@ -2901,6 +2910,7 @@ body[data-ui-style="glass"]{display:contents}
         <button class="btn-text" type="button" onclick="document.getElementById('uploadLyrics').value='';document.getElementById('uploadAiLyricsStatus').textContent=''"><span class="material-symbols-rounded">ink_eraser</span> Очистить текст</button>
       </div>
       <div id="uploadAiLyricsStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin:-8px 0 16px"></div>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)"><input type="checkbox" id="uploadAiGenerated" style="accent-color:var(--md-primary);width:18px;height:18px"><span class="ai-badge">AI</span> Трек сгенерирован нейросетью</label>
       <div id="uploadProgress" style="display:none;margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <div class="loading-spinner" style="width:20px;height:20px;margin:0;border-width:2px"></div>
@@ -2992,7 +3002,7 @@ body[data-ui-style="glass"]{display:contents}
   <div class="page" id="page-search">
     <div class="section-title" id="searchTitle">Результаты поиска</div>
     <div id="searchArtistsSection" class="search-section" style="display:none">
-      <div class="search-section-title"><span class="material-symbols-rounded">person</span> Артисты</div>
+      <div class="search-section-title"><span class="material-symbols-rounded">person</span> Пользователи</div>
       <div class="cards-grid" id="searchArtists" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))"></div>
     </div>
     <div id="searchTracksSection" class="search-section">
@@ -3067,7 +3077,7 @@ body[data-ui-style="glass"]{display:contents}
     <div class="fs-cover" id="fsCover"><span class="material-symbols-rounded">music_note</span></div>
   </div>
   <div class="fs-info">
-    <div class="fs-title" style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap"><span id="fsTitle">—</span><span class="explicit-badge" id="fsExplicitBadge" style="display:none;cursor:pointer" onclick="if(currentTrackId)showModerationDetails(currentTrackId,'explicit')">!</span><span class="badge" id="fsCopyrightBadge" style="display:none;cursor:pointer" onclick="if(currentTrackId)showModerationDetails(currentTrackId,'copyright')">©?</span></div>
+    <div class="fs-title" style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap"><span id="fsTitle">—</span><span class="ai-badge" id="fsAiBadge" style="display:none">AI</span><span class="explicit-badge" id="fsExplicitBadge" style="display:none;cursor:pointer" onclick="if(currentTrackId)showModerationDetails(currentTrackId,'explicit')">!</span><span class="badge" id="fsCopyrightBadge" style="display:none;cursor:pointer" onclick="if(currentTrackId)showModerationDetails(currentTrackId,'copyright')">©?</span></div>
     <div class="fs-artist" id="fsArtist" onclick="fsGoToArtist()">—</div>
     <div id="fsMusicAuthor" style="font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:6px">Автор музыки: —</div>
   </div>
@@ -3294,6 +3304,8 @@ body[data-ui-style="glass"]{display:contents}
       </div>
       <div id="editModerationStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:8px"></div>
     </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)"><input type="checkbox" id="editAiGenerated" style="accent-color:var(--md-primary);width:18px;height:18px"><span class="ai-badge">AI</span> Трек сгенерирован нейросетью</label>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)"><input type="checkbox" id="editIsOwnTrack" style="accent-color:var(--md-primary);width:18px;height:18px"> Свой трек (автор = загрузивший)</label>
   </div>
   <div class="modal-actions"><button class="btn-outlined" onclick="closeModal('editTrackModal')">Отмена</button><button class="btn-primary" onclick="saveTrackEdits()">Сохранить</button></div>
 </div></div>
@@ -3601,12 +3613,17 @@ function _migrateArtistPhotos(){
 function _loadArtistPhotos(){
   firebase.database().ref('artistPhotos').once('value').then(snap=>{
     const photos=snap.val()||{};
+    let loaded=0;
     for(const [aid,photo] of Object.entries(photos)){
-      if(photo&&typeof photo==='string') _artistPhotoCache[aid]=photo;
+      if(photo&&typeof photo==='string'){_artistPhotoCache[aid]=photo;loaded++}
+    }
+    if(loaded>0){
+      const _pid=document.querySelector('.page.active')?.id||'page-home';
+      if(_pid==='page-home'&&typeof renderHome==='function') renderHome();
     }
   }).catch(()=>{});
 }
-setTimeout(_loadArtistPhotos,500);
+setTimeout(_loadArtistPhotos,200);
 async function _fetchTrackAudio(trackId){
   const _db=firebase.database();
   const snap=await _db.ref('trackAudio/'+trackId).once('value');
@@ -3625,6 +3642,21 @@ if(labsSettings.customIcons){document.addEventListener('DOMContentLoaded',()=>{l
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
 let uploadExplicitManual=false,editExplicitManual=false,editExplicitLockedByAI=false;
+let uploadTrackType='own';
+function setUploadTrackType(type){
+  uploadTrackType=type;
+  const ownBtn=document.getElementById('uploadOwnTrackBtn');
+  const foreignBtn=document.getElementById('uploadForeignTrackBtn');
+  const authorWrap=document.getElementById('uploadAuthorWrap');
+  const authorLabel=authorWrap?.previousElementSibling;
+  if(type==='own'){
+    ownBtn.className='btn-tonal';foreignBtn.className='btn-outlined';
+    if(authorLabel)authorLabel.textContent='Автор музыки / правообладатель *';
+  }else{
+    ownBtn.className='btn-outlined';foreignBtn.className='btn-tonal';
+    if(authorLabel)authorLabel.textContent='Автор / артист трека *';
+  }
+}
 let currentLyricsMap=null;
 let deviceId=localStorage.getItem('mp_device_id')||('dev_'+Math.random().toString(36).slice(2)+'_'+Date.now());
 let deviceName=localStorage.getItem('mp_device_name')||((/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)?'Телефон':'Компьютер')+' • '+navigator.platform);
@@ -3832,10 +3864,10 @@ async function analyzeAudioSafetyWithPollinations({title='',lyrics='',genre='',d
     {role:'system',content:'Ты модератор музыкальной платформы для детей и подростков. Тебе дали название трека, текст, расшифровку слов, жанр, длительность и автора музыки. Ответь только JSON без пояснений. Формат: {"explicit": boolean, "lowQuality": boolean, "reason": string, "confidence": number, "detectedLyrics": string}. explicit=true если в тексте есть мат, сексуальные темы, жесть, наркотики, токсичные оскорбления или другой неприятный детям контент. lowQuality=true если это спам, мусор, бессмысленная нарезка или фейковый трек. Ничего не выдумывай сверх текста.'},
     {role:'user',content:JSON.stringify({title,lyrics,genre,duration,fileName,musicAuthor,transcript})}
   ];
-  const modModels=['openai','mistral','qwen-coder'];
+  const modModels=['openai','mistral','qwen-coder','llama'];
   for(const model of modModels){
     try{
-      const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),14000);
+      const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),20000);
       const res=await fetch('https://text.pollinations.ai/openai',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -3843,11 +3875,11 @@ async function analyzeAudioSafetyWithPollinations({title='',lyrics='',genre='',d
         signal:ctrl.signal
       });
       clearTimeout(t);
-      if(!res.ok) throw new Error('audio-safety-failed-'+model);
+      if(!res.ok){console.warn('[AI Moderation] Safety model',model,'returned',res.status);throw new Error('audio-safety-failed-'+model)}
       const json=await res.json();
       const content=json?.choices?.[0]?.message?.content||'{}';
       let parsed={};
-      try{parsed=JSON.parse(content)}catch(e){parsed={}}
+      try{parsed=JSON.parse(content)}catch(e){const m=content.match(/\{[\s\S]*\}/);if(m)try{parsed=JSON.parse(m[0])}catch(e2){}}
       return {
         explicit: !!(localExplicit||parsed.explicit),
         lowQuality: !!parsed.lowQuality,
@@ -3856,7 +3888,7 @@ async function analyzeAudioSafetyWithPollinations({title='',lyrics='',genre='',d
         detectedLyrics: (parsed.detectedLyrics||transcript||lyrics||'').trim(),
         sourceModel:model
       };
-    }catch(e){}
+    }catch(e){console.warn('[AI Moderation] Safety model',model,'error:',e.message)}
   }
   return {explicit:localExplicit,lowQuality:false,reason:'fallback-local',confidence:localExplicit?0.65:0.3,detectedLyrics:(transcript||lyrics||'').trim(),sourceModel:'local-fallback'};
 }
@@ -3870,7 +3902,7 @@ async function analyzeSongStructureWithPollinations({title='',lyrics='',genre=''
   const models=['openai','mistral','gemini'];
   for(const model of models){
     try{
-      const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),14000);
+      const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),20000);
       const res=await fetch('https://text.pollinations.ai/openai',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -3878,11 +3910,11 @@ async function analyzeSongStructureWithPollinations({title='',lyrics='',genre=''
         signal:ctrl.signal
       });
       clearTimeout(t);
-      if(!res.ok) throw new Error('structure-analysis-failed-'+model);
+      if(!res.ok){console.warn('[AI Moderation] Structure model',model,'returned',res.status);throw new Error('structure-analysis-failed-'+model)}
       const json=await res.json();
       const content=json?.choices?.[0]?.message?.content||'{}';
       let parsed={};
-      try{parsed=JSON.parse(content)}catch(e){parsed={}}
+      try{parsed=JSON.parse(content)}catch(e){const m=content.match(/\{[\s\S]*\}/);if(m)try{parsed=JSON.parse(m[0])}catch(e2){}}
       const normalizedLyrics=String(parsed.normalizedLyrics||rawText||'').trim();
       const hasVocals=normalizedLyrics.replace(/[^a-zA-Zа-яА-ЯёЁ]+/g,'').length>=10;
       const sections=Array.isArray(parsed.sections)?parsed.sections.filter(s=>s&&String(s.text||'').trim()).map(s=>({type:String(s.type||'section'),label:String(s.label||s.type||'Секция').trim(),text:String(s.text||'').trim()})):[];
@@ -3897,7 +3929,7 @@ async function analyzeSongStructureWithPollinations({title='',lyrics='',genre=''
         summary:String(parsed.summary||'').trim()||(hasVocals?'Найдены слова и структура песни':'Текст распознан частично'),
         sourceModel:model
       };
-    }catch(e){}
+    }catch(e){console.warn('[AI Moderation] Structure model',model,'error:',e.message)}
   }
   return fallbackSongStructure({lyrics,transcript});
 }
@@ -3908,10 +3940,10 @@ async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor=''
     {role:'system',content:'Ты ищешь в интернете возможные совпадения текста песни и признаки авторских прав. Используй веб-поиск. Ответь только JSON без пояснений. Формат: {"possibleCopyright": boolean, "confidence": number, "reason": string, "matchedSource": string, "matchedArtist": string}. possibleCopyright=true если вероятно, что текст уже опубликован и принадлежит другому артисту/правообладателю. Если musicAuthor соответствует найденному правообладателю или источнику, снижай риск.'},
     {role:'user',content:JSON.stringify({title,artistName,musicAuthor,lyricsSample:snippet})}
   ];
-  const models=['openai','mistral','gemini'];
+  const models=['openai','mistral','gemini','llama'];
   for(const model of models){
     try{
-      const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),14000);
+      const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),20000);
       const res=await fetch('https://text.pollinations.ai/openai',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -3919,11 +3951,11 @@ async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor=''
         signal:ctrl.signal
       });
       clearTimeout(t);
-      if(!res.ok) throw new Error('copyright-check-failed-'+model);
+      if(!res.ok){console.warn('[AI Moderation] Copyright model',model,'returned',res.status);throw new Error('copyright-check-failed-'+model)}
       const json=await res.json();
       const content=json?.choices?.[0]?.message?.content||'{}';
       let parsed={};
-      try{parsed=JSON.parse(content)}catch(e){parsed={}}
+      try{parsed=JSON.parse(content)}catch(e){const m=content.match(/\{[\s\S]*\}/);if(m)try{parsed=JSON.parse(m[0])}catch(e2){}}
       return {
         possibleCopyright: !!parsed.possibleCopyright,
         confidence: Number(parsed.confidence||0),
@@ -3932,7 +3964,7 @@ async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor=''
         matchedArtist: parsed.matchedArtist||'',
         sourceModel:model
       };
-    }catch(e){}
+    }catch(e){console.warn('[AI Moderation] Copyright model',model,'error:',e.message)}
   }
   return {possibleCopyright:false,confidence:0,reason:'search-unavailable',matchedSource:'',matchedArtist:'',sourceModel:'fallback'};
 }
@@ -4498,6 +4530,7 @@ function isAdminUser(user){
 function buildPublicRoleBadges(user){
   const roles=[];
   if(isCreatorUser(user)) roles.push('<button class="creator-badge" onclick="showCreatorBadgeInfo()" title="Создатель сервиса"><span class="material-symbols-rounded filled">verified</span></button>');
+  else if(user&&user.verified) roles.push('<span class="verified-badge" title="Подтверждённый артист"><span class="material-symbols-rounded filled">verified</span></span>');
   return roles.length?'<span class="inline-profile-badges">'+roles.join('')+'</span>':'';
 }
 function renderPublicRolesForUser(user){
@@ -4516,8 +4549,8 @@ function updateCreatorProfileUi(viewedUser=currentUser){
     nameEl.innerHTML=esc(viewedUser?.displayName||'Пользователь')+buildPublicRoleBadges(viewedUser);
     meta.innerHTML='<div class="creator-chip"><span class="material-symbols-rounded filled" style="font-size:16px">eco</span> Создатель MusicPlatforme</div>';
   }else{
-    nameEl.textContent=viewedUser?.displayName||'Пользователь';
-    meta.innerHTML='';
+    nameEl.innerHTML=esc(viewedUser?.displayName||'Пользователь')+buildPublicRoleBadges(viewedUser);
+    meta.innerHTML=viewedUser&&viewedUser.verified?'<div style="display:flex;align-items:center;gap:4px;font:500 12px/18px \'Inter\',sans-serif;color:#1d9bf0"><span class="material-symbols-rounded filled" style="font-size:14px">verified</span> Подтверждённый артист</div>':'';
   }
   renderPublicRolesForUser(viewedUser);
 }
@@ -4664,6 +4697,10 @@ function setSleepTimer(mins){
 /* ===== USER DATA ===== */
 function loadUserData(){
   if(!currentUser)return;const uid=currentUser.uid;
+  db.ref('users/'+uid+'/fxState').once('value').then(s=>{
+    const saved=s.val();
+    if(saved&&typeof saved==='object'){fxState={...fxState,...saved};localStorage.setItem('mp_fx_state',JSON.stringify(fxState));if(typeof applyFxState==='function'){applyFxState()}if(typeof syncFxUi==='function'){syncFxUi()}}
+  }).catch(()=>{});
   db.ref('favorites/'+uid).on('value',s=>{
     favorites=s.val()||{};
     updateFsLike();
@@ -4816,7 +4853,7 @@ function renderTrackItem(id,track,num,showDel,hidePinBadge){
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
     '<div class="track-num" data-num="'+num+'">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
     '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" decoding="async" onerror="this.style.display=\'none\'"'+(track.coverNSFW?' class="nsfw-blur"':'')+'>':'')+(track.coverNSFW&&track.cover?'<div class="nsfw-cover-icon"><span class="material-symbols-rounded" style="color:rgba(255,255,255,.8);font-size:16px">visibility_off</span></div>':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
-    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав — нажмите для подробностей" onclick="event.stopPropagation();openCopyrightDetails(\''+id+'\')">©?</span>':'')+'</div>'+ 
+    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(track.aiGenerated?'<span class="ai-badge" title="Сгенерировано ИИ">AI</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав — нажмите для подробностей" onclick="event.stopPropagation();openCopyrightDetails(\''+id+'\')">©?</span>':'')+'</div>'+ 
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
     '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Автор музыки: '+esc(track.musicAuthor||track.artistName||'Не указан')+creatorChip+'</div></div>'+
     '<div class="track-plays"><span class="material-symbols-rounded">play_arrow</span>'+formatPlays(plays)+'</div>'+
@@ -4891,6 +4928,8 @@ function openEditTrack(tid){
   editTrackVideoData='';
   editExplicitLockedByAI=!!(t.explicit && !t.userForcedExplicit);
   editExplicitManual=!!t.userForcedExplicit;
+  const _editAiCb=document.getElementById('editAiGenerated');if(_editAiCb)_editAiCb.checked=!!t.aiGenerated;
+  const _editOwnCb=document.getElementById('editIsOwnTrack');if(_editOwnCb)_editOwnCb.checked=t.isOwnTrack!==false;
   updateEditExplicitUI();
   document.getElementById('editTrackCoverPreview').innerHTML=t.cover?'<img src="'+t.cover+'" alt="">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">music_note</span>';
   document.getElementById('editTrackModal').classList.add('open');
@@ -5215,6 +5254,8 @@ async function saveTrackEdits(){
     const finalExplicit=editExplicitLockedByAI ? true : !!(moderation.explicit || editExplicitManual);
     const effectiveVideoData = clearVideo ? '' : (videoData || track.videoData || '');
     const videoPersist = await persistTrackVideoPayload(editTrackId, effectiveVideoData);
+    const editAiGen=!!document.getElementById('editAiGenerated')?.checked;
+    const editIsOwn=!!document.getElementById('editIsOwnTrack')?.checked;
     const {audioData:_,coverData:__,audioBase64:___,coverBase64:____,...trackMeta}=track;
     const upd=prepareFirebasePayload({
       ...trackMeta,
@@ -5222,6 +5263,8 @@ async function saveTrackEdits(){
       genre:genre||'other',
       lyrics:safeLyrics,
       musicAuthor,
+      aiGenerated:editAiGen,
+      isOwnTrack:editIsOwn,
       explicit:!!finalExplicit,
       userForcedExplicit:false,
       cover:cover||'',
@@ -5310,6 +5353,7 @@ function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,c
 
 /* ===== RENDER PAGES ===== */
 function renderHome(){
+  if(typeof updateHeroGreeting==='function')updateHeroGreeting();
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId));
   const sorted=[...entries].sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
@@ -5411,6 +5455,7 @@ function loadAndPlay(track){
   document.getElementById('playerThumb').innerHTML=track.cover?'<img src="'+track.cover+'" alt="">':'<span class="material-symbols-rounded">music_note</span>';
   updateFullscreenMediaSurface(track);
   document.getElementById('fsTitle').textContent=track.title||'';
+  document.getElementById('fsAiBadge').style.display=track.aiGenerated?'inline-flex':'none';
   document.getElementById('fsExplicitBadge').style.display=track.explicit?'inline-flex':'none';
   document.getElementById('fsCopyrightBadge').style.display=(track.moderationMeta&&track.moderationMeta.copyrightPossible)?'inline-flex':'none';
   document.getElementById('fsArtist').textContent=track.artistName||'Неизвестен';
@@ -6004,6 +6049,9 @@ function applyFxState(){
   if(fxNodes.eightDPanner)fxNodes.eightDPanner.pan.setTargetAtTime(0,audioCtx.currentTime,.04);
   audio.playbackRate=Number(fxState.speed||1);
   localStorage.setItem('mp_fx_state',JSON.stringify(fxState));
+  if(typeof currentUser!=='undefined'&&currentUser&&currentUser.uid){
+    try{firebase.database().ref('users/'+currentUser.uid+'/fxState').set(fxState)}catch(e){}
+  }
 }
 function startAudioEngine(){ensureAudioGraph();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{})}
 function animate8D(){
@@ -6029,35 +6077,40 @@ function animateBeatCover(){
   const data=new Uint8Array(analyser.frequencyBinCount);
   analyser.getByteFrequencyData(data);
   const len=data.length;
-  const subEnd=Math.max(3,Math.floor(len*0.06));
-  const bassEnd=Math.max(subEnd+3,Math.floor(len*0.18));
-  const midEnd=Math.max(bassEnd+4,Math.floor(len*0.45));
+  const subEnd=Math.max(4,Math.floor(len*0.08));
+  const bassEnd=Math.max(subEnd+4,Math.floor(len*0.20));
+  const midEnd=Math.max(bassEnd+5,Math.floor(len*0.50));
   let sub=0,bass=0,mids=0,highs=0;
   for(let i=0;i<subEnd;i++) sub+=data[i]||0;
   for(let i=subEnd;i<bassEnd;i++) bass+=data[i]||0;
   for(let i=bassEnd;i<midEnd;i++) mids+=data[i]||0;
   for(let i=midEnd;i<len;i++) highs+=data[i]||0;
   sub/=subEnd||1; bass/=(bassEnd-subEnd)||1; mids/=(midEnd-bassEnd)||1; highs/=(len-midEnd)||1;
-  const energy=Math.max(0,Math.min(1,(sub*0.55+bass*0.30+mids*0.10+highs*0.05)/255));
+  const energy=Math.max(0,Math.min(1,(sub*0.60+bass*0.25+mids*0.10+highs*0.05)/255));
   const st=animateBeatCover;
-  st._fast=(st._fast||0)+(energy-(st._fast||0))*0.55;
-  st._avg=(st._avg||0)+(energy-(st._avg||0))*0.04;
+  st._fast=(st._fast||0)+(energy-(st._fast||0))*0.65;
+  st._avg=(st._avg||0)+(energy-(st._avg||0))*0.03;
   st._lastBeat=st._lastBeat||0;
+  st._beatCount=(st._beatCount||0);
   const now=performance.now();
-  const beatThresh=Math.max(0.10,st._avg*1.32+0.04);
-  const isBeat=energy>beatThresh&&st._fast>beatThresh&&(now-st._lastBeat)>130;
-  if(isBeat){st._peak=1.0;st._lastBeat=now;}
-  st._peak=(st._peak||0)*0.74;
-  st._t=(st._t||0)+((mids-highs)/255*2.4-(st._t||0))*0.16;
-  const bounce=st._peak*24+energy*5;
-  const scale=st._peak*0.076+energy*0.018;
-  const sat=st._peak*0.30+energy*0.07;
+  const beatThresh=Math.max(0.08,st._avg*1.25+0.03);
+  const minBeatInterval=Math.max(90,180-st._beatCount*2);
+  const isBeat=energy>beatThresh&&st._fast>beatThresh&&(now-st._lastBeat)>minBeatInterval;
+  if(isBeat){st._peak=1.0;st._lastBeat=now;st._beatCount=Math.min(30,st._beatCount+1)}
+  if(now-st._lastBeat>2000)st._beatCount=0;
+  st._peak=(st._peak||0)*0.68;
+  const tiltTarget=(mids-highs)/255*3.5;
+  st._t=(st._t||0)+(tiltTarget-(st._t||0))*0.22;
+  const bounce=st._peak*32+energy*8;
+  const scale=st._peak*0.09+energy*0.025;
+  const sat=st._peak*0.40+energy*0.10;
+  const glow=st._peak*0.6;
   cover.classList.add('beat');
   cover.style.setProperty('--beat-bounce',bounce.toFixed(2)+'px');
   cover.style.setProperty('--beat-scale',scale.toFixed(4));
   cover.style.setProperty('--beat-tilt',st._t.toFixed(2)+'deg');
   cover.style.setProperty('--beat-sat',sat.toFixed(3));
-  document.documentElement.style.setProperty('--doc-beat-bounce',(bounce*0.38).toFixed(2)+'px');
+  document.documentElement.style.setProperty('--doc-beat-bounce',(bounce*0.42).toFixed(2)+'px');
 }
 let eightDLoopHandle=null;
 function start8DLoop(){
@@ -6238,7 +6291,7 @@ function viewArtist(aid){
   db.ref('users/'+aid).once('value').then(s=>{
     if(currentArtistId!==_aid)return;
     const u=s.val()||{};const isSub=subscriptions[aid];
-    const roleBadges=(isCreatorUser(u)?'<span class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель сервиса</span>':'');
+    const roleBadges=(isCreatorUser(u)?'<span class="public-role-chip" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span> Создатель сервиса</span>':(u.verified?'<span class="public-role-chip" style="color:#1d9bf0;border-color:#1d9bf0"><span class="material-symbols-rounded filled">verified</span> Подтверждённый артист</span>':''));
     db.ref('subscribers/'+aid).once('value').then(ss=>{
       if(currentArtistId!==_aid)return;
       const sc=Object.keys(ss.val()||{}).length;
@@ -6246,7 +6299,7 @@ function viewArtist(aid){
       const totalPlays=currentArtistTracks.reduce((s,[id,t])=>s+(t.plays||0),0);
       h.innerHTML='<div class="artist-page-avatar">'+(u.photo?'<img src="'+u.photo+'" alt="">':'<span class="material-symbols-rounded" style="font-size:64px;color:var(--md-primary)">person</span>')+'</div>'
         +'<div class="artist-page-info" style="flex:1">'
-        +'<div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Артист')+(isCreatorUser(u)?' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>':'')+'</div>'
+        +'<div style="font:800 28px/36px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(u.displayName||'Пользователь')+(isCreatorUser(u)?' <button class="creator-badge" onclick="showCreatorBadgeInfo()"><span class="material-symbols-rounded filled">verified</span></button>':(u.verified?' <span class="verified-badge" title="Подтверждённый артист"><span class="material-symbols-rounded filled">verified</span></span>':''))+'</div>'
         +(u.username?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">@'+esc(u.username)+'</div>':'')
         +(roleBadges?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">'+roleBadges+'</div>':'')
         +(u.bio?'<div style="font:400 14px/20px \'Inter\',sans-serif;color:var(--md-on-surface-variant);margin:4px 0">'+esc(u.bio)+'</div>':'')
@@ -6255,6 +6308,8 @@ function viewArtist(aid){
         +(currentArtistTracks.length?'<button class="btn-primary" onclick="playArtistAll()"><span class="material-symbols-rounded">play_arrow</span> Слушать</button>':'')
         +(currentUser&&currentUser.uid!==aid?'<button class="'+(isSub?'btn-outlined':'btn-tonal')+'" onclick="toggleSubscription(\''+aid+'\');setTimeout(function(){viewArtist(\''+aid+'\')},500)"><span class="material-symbols-rounded">'+(isSub?'person_remove':'person_add')+'</span>'+(isSub?' Отписаться':' Подписаться')+'</button>':'')
         +(isCreatorUser(currentUser)&&currentUser.uid!==aid?'<button class="btn-outlined" onclick="adminOpenUserActions(\''+aid+'\')"><span class="material-symbols-rounded">gavel</span> Действия создателя</button>':'')
+        +(currentUser&&currentUser.uid===aid&&!u.verified&&!isCreatorUser(u)?'<button class="btn-tonal" onclick="requestVerification()"><span class="material-symbols-rounded">verified</span> Запросить подтверждение</button>':'')
+        +(isCreatorUser(currentUser)&&currentUser.uid!==aid&&!u.verified?'<button class="btn-tonal" style="color:#1d9bf0" onclick="grantVerification(\''+aid+'\')"><span class="material-symbols-rounded">verified</span> Подтвердить</button>':'')
         +'</div></div>';
       document.getElementById('artistTabs').style.display='flex';
       tl.innerHTML=currentArtistTracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
@@ -6895,6 +6950,8 @@ async function publishTrack(){
     const cachedAnalysis=window.__lastUploadLyricsAnalysis||null;
     const quickLyrics=(cachedAnalysis?.displayLyrics||cachedAnalysis?.detectedLyrics||lyrics||'[текст не распознан транскрибатором]').trim();
     const quickExplicit=!!(checkExplicit(title)||checkExplicit(lyrics)||checkExplicit(publishAudioFile?.name||''));
+    const isAiGenerated=!!document.getElementById('uploadAiGenerated')?.checked;
+    const isOwnTrack=uploadTrackType==='own';
     const trackRef=db.ref('tracks').push();
     const trackId=trackRef.key;
     const videoPersist=await persistTrackVideoPayload(trackId, videoData||'');
@@ -6907,8 +6964,11 @@ async function publishTrack(){
         cover,
         lyrics:quickLyrics,
         musicAuthor,
+        aiGenerated:isAiGenerated,
+        isOwnTrack:isOwnTrack,
+        needsModeration:!isOwnTrack,
         artistId:currentUser.uid,
-        artistName:currentUser.displayName||'Неизвестен',
+        artistName:isOwnTrack?(currentUser.displayName||'Неизвестен'):(musicAuthor||currentUser.displayName||'Неизвестен'),
         duration:Math.round(duration),
         explicit:!!quickExplicit,
         userForcedExplicit:false,
@@ -6949,6 +7009,8 @@ async function publishTrack(){
       document.getElementById('uploadLyrics').value='';
       document.getElementById('uploadMusicAuthor').value='';
       uploadExplicitManual=false;
+      const _aiCb=document.getElementById('uploadAiGenerated');if(_aiCb)_aiCb.checked=false;
+      uploadTrackType='own';setUploadTrackType('own');
       updateUploadExplicitUI();
     document.getElementById('uploadAiLyricsStatus').textContent='';
     document.getElementById('uploadCustomGenre').value='';
@@ -7210,11 +7272,16 @@ function applyLabsCustomIcons(val){
 function openLabsModal(){renderLabsModal();document.getElementById('labsModal').classList.add('open')}
 
 /* ===== ADMIN TOOLS ===== */
+function _verifyCreatorAccess(){
+  if(!currentUser||!currentUser.email)return false;
+  return String(currentUser.email).toLowerCase()==='vriskas@catniti.ru';
+}
 function openAdminTools(){
-  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю сервиса');return}
+  if(!_verifyCreatorAccess()){showSnackbar('Доступ запрещён');console.warn('[Security] Creator panel access denied for',currentUser?.uid);return}
   closeModal('settingsModal');
   document.getElementById('settingsContent').innerHTML=
     '<div class="modal-title" style="margin-bottom:12px">Меню создателя</div>'+
+    '<div class="settings-item" onclick="openVerificationRequests()"><span class="material-symbols-rounded" style="color:#1d9bf0">verified</span><div class="settings-item-info"><div class="settings-item-title">Заявки на подтверждение</div><div class="settings-item-sub">Просмотр видео-заявок на синюю галочку</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorReports()"><span class="material-symbols-rounded">flag</span><div class="settings-item-info"><div class="settings-item-title">Жалобы на треки</div><div class="settings-item-sub">Просмотр жалоб и удаление треков с подтверждением</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorAppeals()"><span class="material-symbols-rounded">balance</span><div class="settings-item-info"><div class="settings-item-title">Оспаривания</div><div class="settings-item-sub">Запросы на снятие пометки авторских прав</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorStats()"><span class="material-symbols-rounded">monitoring</span><div class="settings-item-info"><div class="settings-item-title">Статистика</div><div class="settings-item-sub">Треки, пользователи, прослушивания, жалобы</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
@@ -7669,6 +7736,115 @@ function creatorEditForeignTrack(tid){
   document.getElementById('editTrackModal').classList.add('open');
 }
 
+/* ===== FUN: TIME-BASED GREETING ===== */
+function updateHeroGreeting(){
+  const el=document.getElementById('heroGreeting');if(!el)return;
+  const h=new Date().getHours();
+  const name=currentUser?.displayName||'';
+  const nameStr=name?' '+name:'';
+  if(h>=5&&h<12) el.textContent='Доброе утро'+nameStr+'!';
+  else if(h>=12&&h<17) el.textContent='Добрый день'+nameStr+'!';
+  else if(h>=17&&h<22) el.textContent='Добрый вечер'+nameStr+'!';
+  else el.textContent='Доброй ночи'+nameStr+'!';
+}
+setInterval(updateHeroGreeting,60000);
+
+/* ===== FUN: RANDOM TRACK ===== */
+function playRandomTrack(){
+  const ids=Object.keys(allTracks);
+  if(!ids.length){showSnackbar('Нет доступных треков');return}
+  const rndId=ids[Math.floor(Math.random()*ids.length)];
+  playlist=[rndId];playlistIndex=0;currentTrackId=rndId;
+  loadAndPlay(allTracks[rndId]);
+  showSnackbar('Случайный трек: '+esc(allTracks[rndId].title||''));
+}
+
+/* ===== FUN: KEYBOARD SHORTCUTS ===== */
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'||e.target.isContentEditable)return;
+  if(e.key==='r'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();playRandomTrack();return}
+});
+
+/* ===== VERIFICATION SYSTEM ===== */
+function requestVerification(){
+  if(!currentUser)return showSnackbar('Войдите в аккаунт');
+  const videoUrl=prompt('Для подтверждения артиста отправьте ссылку на видео, где вы доказываете что это ваш аккаунт:');
+  if(!videoUrl||!videoUrl.trim())return showSnackbar('Отменено');
+  db.ref('verificationRequests/'+currentUser.uid).set({
+    uid:currentUser.uid,
+    displayName:currentUser.displayName||'',
+    username:currentUser.username||'',
+    videoUrl:videoUrl.trim(),
+    timestamp:Date.now(),
+    status:'pending'
+  }).then(()=>showSnackbar('Заявка отправлена! Создатель рассмотрит её.')).catch(e=>showSnackbar('Ошибка: '+e.message));
+}
+function grantVerification(uid){
+  if(!isCreatorUser(currentUser))return;
+  if(!confirm('Подтвердить этого пользователя как артиста?'))return;
+  db.ref('users/'+uid+'/verified').set(true).then(()=>{
+    db.ref('verificationRequests/'+uid+'/status').set('approved');
+    showSnackbar('Пользователь подтверждён!');
+    viewArtist(uid);
+  }).catch(e=>showSnackbar('Ошибка: '+e.message));
+}
+function revokeVerification(uid){
+  if(!isCreatorUser(currentUser))return;
+  db.ref('users/'+uid+'/verified').set(false).then(()=>{
+    showSnackbar('Подтверждение снято');
+    viewArtist(uid);
+  }).catch(e=>showSnackbar('Ошибка: '+e.message));
+}
+function openVerificationRequests(){
+  db.ref('verificationRequests').orderByChild('status').equalTo('pending').once('value').then(s=>{
+    const reqs=s.val()||{};
+    const entries=Object.entries(reqs);
+    if(!entries.length)return showSnackbar('Нет заявок на подтверждение');
+    let html='<div class="modal-title">Заявки на подтверждение</div><div style="max-height:60vh;overflow-y:auto">';
+    entries.forEach(([uid,r])=>{
+      html+='<div style="padding:12px;border-bottom:1px solid var(--md-outline-variant);display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:150px"><div style="font:500 14px/20px \'Inter\',sans-serif">'+esc(r.displayName||uid)+'</div>'
+        +(r.username?'<div style="font:400 12px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant)">@'+esc(r.username)+'</div>':'')
+        +'<a href="'+esc(r.videoUrl)+'" target="_blank" style="font:400 12px/16px \'Inter\',sans-serif;color:var(--md-primary)">Видео</a></div>'
+        +'<div style="display:flex;gap:4px"><button class="btn-tonal" style="color:#1d9bf0" onclick="grantVerification(\''+uid+'\');closeModal(\'verifyReqModal\')"><span class="material-symbols-rounded">check</span></button>'
+        +'<button class="btn-outlined" onclick="db.ref(\'verificationRequests/'+uid+'/status\').set(\'rejected\');this.closest(\'div[style]\').remove();showSnackbar(\'Отклонено\')"><span class="material-symbols-rounded">close</span></button></div></div>';
+    });
+    html+='</div>';
+    let m=document.getElementById('verifyReqModal');
+    if(!m){m=document.createElement('div');m.id='verifyReqModal';m.className='modal-overlay';m.innerHTML='<div class="modal" style="max-width:500px"></div>';document.body.appendChild(m)}
+    m.querySelector('.modal').innerHTML=html+'<div class="modal-actions"><button class="btn-outlined" onclick="closeModal(\'verifyReqModal\')">Закрыть</button></div>';
+    m.classList.add('open');
+  });
+}
+
+/* ===== SWIPEABLE TOGGLES (Material You) ===== */
+(function(){
+  let startX=0,startOn=false,dragEl=null;
+  document.addEventListener('touchstart',function(e){
+    const t=e.target.closest('.toggle');
+    if(!t||t.classList.contains('disabled'))return;
+    dragEl=t;startX=e.touches[0].clientX;startOn=t.classList.contains('on');
+    t.classList.add('dragging');
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(!dragEl)return;
+    const dx=e.touches[0].clientX-startX;
+    if(Math.abs(dx)>8){
+      const shouldBeOn=startOn?dx>-12:dx>12;
+      if(shouldBeOn!==dragEl.classList.contains('on')){
+        dragEl.classList.toggle('on',shouldBeOn);
+      }
+    }
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(!dragEl)return;
+    const el=dragEl;el.classList.remove('dragging');
+    const nowOn=el.classList.contains('on');
+    if(nowOn!==startOn&&el.onclick){el.onclick(e)}
+    dragEl=null;
+  },{passive:true});
+})();
+
 /* ===== SAFETY SHIMS FOR RECENT FEATURES ===== */
 function updateUploadExplicitUI(){
   const wrap=document.getElementById('uploadExplicitWrap');
@@ -7682,20 +7858,7 @@ function updateEditExplicitUI(){
   if(wrap) wrap.style.display='none';
   if(badge) badge.style.display='none';
 }
-function openAdminTools(){
-  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю сервиса');return}
-  const settingsModal=document.getElementById('settingsModal');
-  if(settingsModal) settingsModal.classList.add('open');
-  document.getElementById('settingsContent').innerHTML=
-    '<div class="modal-title" style="margin-bottom:12px">Меню создателя</div>'+
-    '<div class="settings-item" onclick="openCreatorReports()"><span class="material-symbols-rounded">flag</span><div class="settings-item-info"><div class="settings-item-title">Жалобы на треки</div><div class="settings-item-sub">Жалобы, причины, удаление треков</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
-    '<div class="settings-item" onclick="openCreatorAppeals()"><span class="material-symbols-rounded">balance</span><div class="settings-item-info"><div class="settings-item-title">Оспаривания</div><div class="settings-item-sub">Запросы на снятие пометки авторских прав</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
-    '<div class="settings-item" onclick="openCreatorStats()"><span class="material-symbols-rounded">monitoring</span><div class="settings-item-info"><div class="settings-item-title">Статистика</div><div class="settings-item-sub">Треки, пользователи, прослушивания, жалобы</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
-    '<div class="settings-item" onclick="openCreatorTrackManager()"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Управление треками</div><div class="settings-item-sub">Чужие треки, редактирование, удаление</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
-    '<div class="settings-item" onclick="openCreatorModuleCheck()"><span class="material-symbols-rounded">checklist</span><div class="settings-item-info"><div class="settings-item-title">Проверка модулей</div><div class="settings-item-sub">Сервисы модерации, party mode, видео, радио</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
-    '<div class="settings-item" onclick="openCreatorUsers()"><span class="material-symbols-rounded">group</span><div class="settings-item-info"><div class="settings-item-title">Управление пользователями</div><div class="settings-item-sub">Бан, разбан, чужие треки пользователя</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
-    '<div class="modal-actions"><button class="btn-outlined" onclick="openSettings()">Назад</button></div>';
-}
+/* safety shim — calls the real openAdminTools above */
 function renderNotificationsModal(){
   const list=document.getElementById('notificationsList');
   const countEl=document.getElementById('notificationCount');
