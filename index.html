@@ -1456,51 +1456,7 @@
       window.creatorPanelWrap('Проверка сервисов', html);
     };
 
-    // Добавляем пункт "Источники данных" в меню создателя
-    const origOpenAdminTools = window.openAdminTools;
-    if (origOpenAdminTools) {
-      window.openAdminTools = function() {
-        origOpenAdminTools.call(this);
-        // Добавляем новый пункт в settingsContent
-        setTimeout(() => {
-          const content = document.getElementById('settingsContent');
-          if (!content) return;
-          const actions = content.querySelector('.modal-actions');
-          if (!actions) return;
-          const newItem = document.createElement('div');
-          newItem.className = 'settings-item';
-          newItem.style.cursor = 'pointer';
-          newItem.onclick = window.MusicDB.openCreatorDataSourcePanel;
-          newItem.innerHTML = `
-            <span class="material-symbols-rounded">storage</span>
-            <div class="settings-item-info">
-              <div class="settings-item-title">Источники данных</div>
-              <div class="settings-item-sub">Сервер vs Firebase, очередь синхронизации</div>
-            </div>
-            <span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span>
-          `;
-          content.insertBefore(newItem, actions);
-        }, 50);
-      };
-    }
   }
-
-  /* ===== ПАНЕЛЬ ИСТОЧНИКОВ ДАННЫХ ===== */
-  MusicDB.openCreatorDataSourcePanel = async function() {
-    if (typeof window.creatorPanelWrap !== 'function') {
-      alert('Функция доступна только в панели создателя');
-      return;
-    }
-    window.creatorPanelWrap('Источники данных', '<div class="loading-spinner" style="margin:20px auto"></div>');
-    const status = await getServicesStatus();
-    const refreshBtn = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-      <button class="btn-tonal" onclick="window.MusicDB.openCreatorDataSourcePanel()" style="padding:6px 14px;font-size:13px">
-        <span class="material-symbols-rounded" style="font-size:15px">refresh</span> Обновить
-      </button>
-    </div>`;
-    const html = refreshBtn + buildServiceStatusHtml(status);
-    window.creatorPanelWrap('Источники данных', html);
-  };
 
   /* ===== РАСШИРЕННЫЕ LABS ФУНКЦИИ ===== */
   function patchLabsModal() {
@@ -1772,7 +1728,7 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 
 /* ===== EXPLICIT BADGE ===== */
 .explicit-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--md-error);color:white;font-size:12px;font-weight:700;flex-shrink:0;line-height:1}
-.ai-badge{display:inline-flex;align-items:center;justify-content:center;height:18px;padding:0 6px;border-radius:9px;background:linear-gradient(135deg,#7c4dff,#448aff);color:white;font:700 10px/18px 'Inter',sans-serif;flex-shrink:0;letter-spacing:.3px;gap:2px}
+
 .verified-badge{display:inline-flex;align-items:center;justify-content:center;color:#1d9bf0;flex-shrink:0}.verified-badge .material-symbols-rounded{font-size:18px}
 
 /* ===== SIDEBAR ===== */
@@ -2834,10 +2790,6 @@ body[data-ui-style="glass"]{display:contents}
           <button class="btn-icon" onclick="clearSelectedFile()" style="margin-left:auto"><span class="material-symbols-rounded">close</span></button>
         </div>
       </div>
-      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-        <button class="btn-tonal" id="uploadOwnTrackBtn" onclick="setUploadTrackType('own')" style="flex:1;min-width:140px"><span class="material-symbols-rounded">person</span> Свой трек</button>
-        <button class="btn-outlined" id="uploadForeignTrackBtn" onclick="setUploadTrackType('foreign')" style="flex:1;min-width:140px"><span class="material-symbols-rounded">group</span> Чужой трек</button>
-      </div>
       <label class="modal-label">Название трека *</label>
       <input class="md-input" id="uploadTitle" placeholder="Название трека" style="border-radius:var(--md-shape-md);margin-bottom:16px">
       <label class="modal-label">Жанр</label>
@@ -2887,7 +2839,6 @@ body[data-ui-style="glass"]{display:contents}
         <button class="btn-text" type="button" onclick="document.getElementById('uploadLyrics').value='';document.getElementById('uploadAiLyricsStatus').textContent=''"><span class="material-symbols-rounded">ink_eraser</span> Очистить текст</button>
       </div>
       <div id="uploadAiLyricsStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin:-8px 0 16px"></div>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)"><input type="checkbox" id="uploadAiGenerated" style="accent-color:var(--md-primary);width:18px;height:18px"><span class="ai-badge">AI</span> Трек сгенерирован нейросетью</label>
       <div id="uploadProgress" style="display:none;margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <div class="loading-spinner" style="width:20px;height:20px;margin:0;border-width:2px"></div>
@@ -3054,7 +3005,7 @@ body[data-ui-style="glass"]{display:contents}
     <div class="fs-cover" id="fsCover"><span class="material-symbols-rounded">music_note</span></div>
   </div>
   <div class="fs-info">
-    <div class="fs-title" style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap"><span id="fsTitle">—</span><span class="ai-badge" id="fsAiBadge" style="display:none">AI</span><span class="explicit-badge" id="fsExplicitBadge" style="display:none;cursor:pointer" onclick="if(currentTrackId)showModerationDetails(currentTrackId,'explicit')">!</span><span class="badge" id="fsCopyrightBadge" style="display:none;cursor:pointer" onclick="if(currentTrackId)showModerationDetails(currentTrackId,'copyright')">©?</span></div>
+    <div class="fs-title" style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap"><span id="fsTitle">—</span><span class="explicit-badge" id="fsExplicitBadge" style="display:none;cursor:pointer" onclick="if(currentTrackId)showModerationDetails(currentTrackId,'explicit')">!</span><span class="badge" id="fsCopyrightBadge" style="display:none;cursor:pointer" onclick="if(currentTrackId)showModerationDetails(currentTrackId,'copyright')">©?</span></div>
     <div class="fs-artist" id="fsArtist" onclick="fsGoToArtist()">—</div>
     <div id="fsMusicAuthor" style="font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:6px">Автор музыки: —</div>
   </div>
@@ -3281,8 +3232,7 @@ body[data-ui-style="glass"]{display:contents}
       </div>
       <div id="editModerationStatus" style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:8px"></div>
     </div>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)"><input type="checkbox" id="editAiGenerated" style="accent-color:var(--md-primary);width:18px;height:18px"><span class="ai-badge">AI</span> Трек сгенерирован нейросетью</label>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)"><input type="checkbox" id="editIsOwnTrack" style="accent-color:var(--md-primary);width:18px;height:18px"> Свой трек (автор = загрузивший)</label>
+
   </div>
   <div class="modal-actions"><button class="btn-outlined" onclick="closeModal('editTrackModal')">Отмена</button><button class="btn-primary" onclick="saveTrackEdits()">Сохранить</button></div>
 </div></div>
@@ -3619,21 +3569,6 @@ if(labsSettings.customIcons){document.addEventListener('DOMContentLoaded',()=>{l
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
 let uploadExplicitManual=false,editExplicitManual=false,editExplicitLockedByAI=false;
-let uploadTrackType='own';
-function setUploadTrackType(type){
-  uploadTrackType=type;
-  const ownBtn=document.getElementById('uploadOwnTrackBtn');
-  const foreignBtn=document.getElementById('uploadForeignTrackBtn');
-  const authorWrap=document.getElementById('uploadAuthorWrap');
-  const authorLabel=authorWrap?.previousElementSibling;
-  if(type==='own'){
-    ownBtn.className='btn-tonal';foreignBtn.className='btn-outlined';
-    if(authorLabel)authorLabel.textContent='Автор музыки / правообладатель *';
-  }else{
-    ownBtn.className='btn-outlined';foreignBtn.className='btn-tonal';
-    if(authorLabel)authorLabel.textContent='Автор / артист трека *';
-  }
-}
 let currentLyricsMap=null;
 let deviceId=localStorage.getItem('mp_device_id')||('dev_'+Math.random().toString(36).slice(2)+'_'+Date.now());
 let deviceName=localStorage.getItem('mp_device_name')||((/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)?'Телефон':'Компьютер')+' • '+navigator.platform);
@@ -4830,7 +4765,7 @@ function renderTrackItem(id,track,num,showDel,hidePinBadge){
   return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
     '<div class="track-num" data-num="'+num+'">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
     '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" decoding="async" onerror="this.style.display=\'none\'"'+(track.coverNSFW?' class="nsfw-blur"':'')+'>':'')+(track.coverNSFW&&track.cover?'<div class="nsfw-cover-icon"><span class="material-symbols-rounded" style="color:rgba(255,255,255,.8);font-size:16px">visibility_off</span></div>':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
-    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(track.aiGenerated?'<span class="ai-badge" title="Сгенерировано ИИ">AI</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав — нажмите для подробностей" onclick="event.stopPropagation();openCopyrightDetails(\''+id+'\')">©?</span>':'')+'</div>'+ 
+    '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав — нажмите для подробностей" onclick="event.stopPropagation();openCopyrightDetails(\''+id+'\')">©?</span>':'')+'</div>'+ 
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
     '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Автор музыки: '+esc(track.musicAuthor||track.artistName||'Не указан')+creatorChip+'</div></div>'+
     '<div class="track-plays"><span class="material-symbols-rounded">play_arrow</span>'+formatPlays(plays)+'</div>'+
@@ -4905,8 +4840,7 @@ function openEditTrack(tid){
   editTrackVideoData='';
   editExplicitLockedByAI=!!(t.explicit && !t.userForcedExplicit);
   editExplicitManual=!!t.userForcedExplicit;
-  const _editAiCb=document.getElementById('editAiGenerated');if(_editAiCb)_editAiCb.checked=!!t.aiGenerated;
-  const _editOwnCb=document.getElementById('editIsOwnTrack');if(_editOwnCb)_editOwnCb.checked=t.isOwnTrack!==false;
+
   updateEditExplicitUI();
   document.getElementById('editTrackCoverPreview').innerHTML=t.cover?'<img src="'+t.cover+'" alt="">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">music_note</span>';
   document.getElementById('editTrackModal').classList.add('open');
@@ -5231,8 +5165,6 @@ async function saveTrackEdits(){
     const finalExplicit=editExplicitLockedByAI ? true : !!(moderation.explicit || editExplicitManual);
     const effectiveVideoData = clearVideo ? '' : (videoData || track.videoData || '');
     const videoPersist = await persistTrackVideoPayload(editTrackId, effectiveVideoData);
-    const editAiGen=!!document.getElementById('editAiGenerated')?.checked;
-    const editIsOwn=!!document.getElementById('editIsOwnTrack')?.checked;
     const {audioData:_,coverData:__,audioBase64:___,coverBase64:____,...trackMeta}=track;
     const upd=prepareFirebasePayload({
       ...trackMeta,
@@ -5240,8 +5172,6 @@ async function saveTrackEdits(){
       genre:genre||'other',
       lyrics:safeLyrics,
       musicAuthor,
-      aiGenerated:editAiGen,
-      isOwnTrack:editIsOwn,
       explicit:!!finalExplicit,
       userForcedExplicit:false,
       cover:cover||'',
@@ -5431,7 +5361,7 @@ function loadAndPlay(track){
   document.getElementById('playerThumb').innerHTML=track.cover?'<img src="'+track.cover+'" alt="">':'<span class="material-symbols-rounded">music_note</span>';
   updateFullscreenMediaSurface(track);
   document.getElementById('fsTitle').textContent=track.title||'';
-  document.getElementById('fsAiBadge').style.display=track.aiGenerated?'inline-flex':'none';
+
   document.getElementById('fsExplicitBadge').style.display=track.explicit?'inline-flex':'none';
   document.getElementById('fsCopyrightBadge').style.display=(track.moderationMeta&&track.moderationMeta.copyrightPossible)?'inline-flex':'none';
   document.getElementById('fsArtist').textContent=track.artistName||'Неизвестен';
@@ -6925,8 +6855,6 @@ async function publishTrack(){
     const cachedAnalysis=window.__lastUploadLyricsAnalysis||null;
     const quickLyrics=(cachedAnalysis?.displayLyrics||cachedAnalysis?.detectedLyrics||lyrics||'[текст не распознан транскрибатором]').trim();
     const quickExplicit=!!(checkExplicit(title)||checkExplicit(lyrics)||checkExplicit(publishAudioFile?.name||''));
-    const isAiGenerated=!!document.getElementById('uploadAiGenerated')?.checked;
-    const isOwnTrack=uploadTrackType==='own';
     const trackRef=db.ref('tracks').push();
     const trackId=trackRef.key;
     const videoPersist=await persistTrackVideoPayload(trackId, videoData||'');
@@ -6939,11 +6867,8 @@ async function publishTrack(){
         cover,
         lyrics:quickLyrics,
         musicAuthor,
-        aiGenerated:isAiGenerated,
-        isOwnTrack:isOwnTrack,
-        needsModeration:!isOwnTrack,
         artistId:currentUser.uid,
-        artistName:isOwnTrack?(currentUser.displayName||'Неизвестен'):(musicAuthor||currentUser.displayName||'Неизвестен'),
+        artistName:musicAuthor||currentUser.displayName||'Неизвестен',
         duration:Math.round(duration),
         explicit:!!quickExplicit,
         userForcedExplicit:false,
@@ -6984,8 +6909,6 @@ async function publishTrack(){
       document.getElementById('uploadLyrics').value='';
       document.getElementById('uploadMusicAuthor').value='';
       uploadExplicitManual=false;
-      const _aiCb=document.getElementById('uploadAiGenerated');if(_aiCb)_aiCb.checked=false;
-      uploadTrackType='own';setUploadTrackType('own');
       updateUploadExplicitUI();
     document.getElementById('uploadAiLyricsStatus').textContent='';
     document.getElementById('uploadCustomGenre').value='';
