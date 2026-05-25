@@ -3225,6 +3225,26 @@ body[data-ui-style="glass"]{display:contents}
   </div>
 </div></div>
 
+<div class="modal-overlay" id="changeUsernameModal"><div class="modal" style="max-width:420px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <button class="btn-icon" onclick="closeModal('changeUsernameModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0">Сменить логин</div>
+  </div>
+  <div id="changeUsernameStep1">
+    <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:16px">Логин должен быть уникальным. Латиница, цифры и _ (минимум 3 символа).</p>
+    <input class="md-input" id="changeUsernameNew" placeholder="Новый логин" autocomplete="off">
+    <div class="auth-error" id="changeUsernameError"></div>
+    <div class="modal-actions"><button class="btn-outlined" onclick="closeModal('changeUsernameModal')">Отмена</button><button class="btn-primary" onclick="startChangeUsername()">Сменить</button></div>
+  </div>
+  <div id="changeUsernameStep2" style="display:none">
+    <div style="text-align:center;padding:16px 0">
+      <span class="material-symbols-rounded" style="font-size:48px;color:var(--md-primary)">check_circle</span>
+      <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:16px">Логин успешно изменён!</p>
+    </div>
+    <button class="btn-tonal" style="width:100%;justify-content:center" onclick="closeModal('changeUsernameModal')"><span class="material-symbols-rounded">check</span> Понятно</button>
+  </div>
+</div></div>
+
 <div class="modal-overlay" id="connectedAccountsModal"><div class="modal" style="max-width:480px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
     <button class="btn-icon" onclick="closeModal('connectedAccountsModal')"><span class="material-symbols-rounded">arrow_back</span></button>
@@ -4618,6 +4638,40 @@ async function startChangePassword(){
   }
 }
 
+function openChangeUsername(){
+  closeModal('settingsModal');
+  document.getElementById('changeUsernameStep1').style.display='';
+  document.getElementById('changeUsernameStep2').style.display='none';
+  document.getElementById('changeUsernameNew').value='';
+  document.getElementById('changeUsernameError').textContent='';
+  document.getElementById('changeUsernameModal').classList.add('open');
+}
+async function startChangeUsername(){
+  const newU=document.getElementById('changeUsernameNew').value.trim(),err=document.getElementById('changeUsernameError');
+  err.textContent='';
+  if(!newU||newU.length<3){err.textContent='Логин минимум 3 символа';return}
+  if(!/^[a-zA-Z0-9_]+$/.test(newU)){err.textContent='Логин: латиница, цифры, _';return}
+  const oldU=currentUser.username;
+  if(newU.toLowerCase()===oldU?.toLowerCase()){err.textContent='Это ваш текущий логин';return}
+  err.innerHTML='<div class="loading-spinner" style="width:16px;height:16px;margin:0;border-width:2px;display:inline-block;vertical-align:middle"></div>';
+  try{
+    const snap=await db.ref('usernames/'+newU).once('value');
+    if(snap.exists()){err.textContent='Логин занят';return}
+    const updates={};
+    if(oldU)updates['usernames/'+oldU]=null;
+    updates['usernames/'+newU]=currentUser.uid;
+    updates['users/'+currentUser.uid+'/username']=newU;
+    await db.ref().update(updates);
+    currentUser.username=newU;localStorage.setItem('mp_user',JSON.stringify(currentUser));
+    document.getElementById('changeUsernameStep1').style.display='none';
+    document.getElementById('changeUsernameStep2').style.display='';
+    showSnackbar('Логин изменён на '+newU);
+    updateAuthUI();
+  }catch(x){
+    err.textContent='Ошибка: '+x.message;
+  }
+}
+
 function openConnectedAccounts(){
   closeModal('settingsModal');
   db.ref('users/'+currentUser.uid).once('value').then(s=>{
@@ -4835,6 +4889,7 @@ function openSettings(){
     const themeLabel=themeMode==='device'?'Как на устройстве':(document.body.getAttribute('data-theme')==='dark'?'Тёмная':'Светлая');
     document.getElementById('settingsContent').innerHTML=
       '<div class="settings-item" onclick="openEditProfile()"><span class="material-symbols-rounded">edit</span><div class="settings-item-info"><div class="settings-item-title">Редактировать профиль</div><div class="settings-item-sub">Имя, аватар, био</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+      '<div class="settings-item" onclick="openChangeUsername()"><span class="material-symbols-rounded">alternate_email</span><div class="settings-item-info"><div class="settings-item-title">Логин</div><div class="settings-item-sub">'+(u.username||currentUser.username||'—')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div class="settings-item" onclick="openEmailSettings()"><span class="material-symbols-rounded">mail</span><div class="settings-item-info"><div class="settings-item-title">Email</div><div class="settings-item-sub">'+(u.email||'Не привязан')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       (hasEmail?'<div class="settings-item" onclick="openChangePassword()"><span class="material-symbols-rounded">lock</span><div class="settings-item-info"><div class="settings-item-title">Сменить пароль</div><div class="settings-item-sub">Отправит подтверждение на почту</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
       '<div class="settings-item" onclick="openConnectedAccounts()"><span class="material-symbols-rounded">link</span><div class="settings-item-info"><div class="settings-item-title">Подключённые аккаунты</div><div class="settings-item-sub">Telegram, Google, GitHub</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
@@ -4921,7 +4976,7 @@ function loadUserData(){
   db.ref('favorites/'+uid).on('value',s=>{
     favorites=s.val()||{};
     updateFsLike();
-    const plEl=document.getElementById('profileLikes');if(plEl)plEl.textContent=Object.keys(favorites).length;
+
     const _ap=document.querySelector('.page.active')?.id||'page-home';
     switch(_ap){
       case 'page-home':renderHome();break;
@@ -4965,6 +5020,7 @@ function loadMyTracks(){
     document.getElementById('profileTracks').textContent=arr.length;
     const totalPlays=arr.reduce((s,[id,t])=>s+(t.plays||0),0);
     const totalLikes=arr.reduce((s,[id,t])=>s+(t.likes||0),0);
+    const plEl=document.getElementById('profileLikes');if(plEl)plEl.textContent=totalLikes;
     document.getElementById('profileStatsGrid').innerHTML=
       '<div class="stat-card"><div class="stat-value">'+arr.length+'</div><div class="stat-label">Треков</div></div>'+
       '<div class="stat-card"><div class="stat-value">'+formatPlays(totalPlays)+'</div><div class="stat-label">Прослушиваний</div></div>'+
@@ -6446,7 +6502,6 @@ function renderFavorites(){
   if(fids.length===0){em.style.display='';list.innerHTML='';btn.style.display='none';sbtn.style.display='none';return}
   em.style.display='none';btn.style.display='';sbtn.style.display='';
   list.innerHTML=fids.map(id=>[id,allTracks[id]]).filter(([id,t])=>t).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
-  document.getElementById('profileLikes').textContent=fids.length;
 }
 function playAllFavorites(){const f=Object.keys(favorites).filter(id=>allTracks[id]);if(!f.length)return;playlist=f;playlistIndex=0;currentTrackId=playlist[0];loadAndPlay(allTracks[currentTrackId])}
 function shuffleFavorites(){const f=Object.keys(favorites).filter(id=>allTracks[id]);if(!f.length)return;shuffleArr(f);playlist=f;playlistIndex=0;currentTrackId=playlist[0];loadAndPlay(allTracks[currentTrackId]);showSnackbar('Перемешано')}
