@@ -1920,6 +1920,8 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 .auth-divider{display:flex;align-items:center;gap:16px;margin:20px 0;font:400 13px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant)}
 .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--md-outline-variant)}
 .telegram-btn-wrap{display:flex;justify-content:center;margin-top:8px}
+.social-login-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:12px 28px;border-radius:var(--md-shape-full);border:none;font:500 14px/20px 'Inter',sans-serif;cursor:pointer;transition:all .25s cubic-bezier(.2,0,0,1);box-shadow:var(--md-elevation-1);user-select:none;width:100%}
+.social-login-btn:hover{box-shadow:var(--md-elevation-2);filter:brightness(1.05);transform:translateY(-1px)}.social-login-btn:active{transform:scale(.97)}
 .tg-login-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 28px;border-radius:var(--md-shape-full);background:#54A9EB;color:white;border:none;font:500 14px/20px 'Inter',sans-serif;cursor:pointer;transition:all .25s cubic-bezier(.2,0,0,1);box-shadow:var(--md-elevation-1);user-select:none}
 .tg-login-btn:hover{box-shadow:var(--md-elevation-2);filter:brightness(1.08);transform:translateY(-1px)}.tg-login-btn:active{transform:scale(.97)}
 .tg-login-btn svg{width:22px;height:22px}
@@ -2885,9 +2887,17 @@ body[data-ui-style="glass"]{display:contents}
             <button class="btn-primary" style="width:100%;justify-content:center" onclick="doRegister()"><span class="material-symbols-rounded">person_add</span> Зарегистрироваться</button>
           </div>
           <div class="auth-divider">или</div>
-          <div class="telegram-btn-wrap">
-            <button class="tg-login-btn" onclick="openTelegramLogin()">
-              <svg viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="social-login-btn" onclick="signInWithGoogle()" style="background:#fff;color:#444;border:1px solid #ddd">
+              <svg viewBox="0 0 24 24" width="20" height="20"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+              Войти через Google
+            </button>
+            <button class="social-login-btn" onclick="signInWithGithub()" style="background:#24292e;color:#fff">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+              Войти через GitHub
+            </button>
+            <button class="tg-login-btn" onclick="openTelegramLogin()" style="width:100%;justify-content:center">
+              <svg viewBox="0 0 24 24" fill="white" width="20" height="20"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
               Войти через Telegram
             </button>
           </div>
@@ -3174,6 +3184,53 @@ body[data-ui-style="glass"]{display:contents}
   <div class="password-wrap"><input class="md-input" id="linkPassword" type="password" placeholder="Пароль (мин. 6 символов)"><button class="password-toggle" onclick="togglePasswordVis('linkPassword',this)" type="button"><span class="material-symbols-rounded">visibility_off</span></button></div>
   <div class="auth-error" id="linkEmailError"></div>
   <div class="modal-actions"><button class="btn-outlined" onclick="closeModal('linkEmailModal')">Отмена</button><button class="btn-primary" onclick="saveLinkEmail()">Привязать</button></div>
+</div></div>
+
+<div class="modal-overlay" id="changeEmailModal"><div class="modal" style="max-width:420px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <button class="btn-icon" onclick="closeModal('changeEmailModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0">Сменить почту</div>
+  </div>
+  <div id="changeEmailStep1">
+    <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:16px">На текущую почту будет отправлено письмо для подтверждения смены.</p>
+    <input class="md-input" id="changeEmailNew" placeholder="Новый email" type="email">
+    <div class="auth-error" id="changeEmailError"></div>
+    <div class="modal-actions"><button class="btn-outlined" onclick="closeModal('changeEmailModal')">Отмена</button><button class="btn-primary" onclick="startChangeEmail()">Сменить</button></div>
+  </div>
+  <div id="changeEmailStep2" style="display:none">
+    <div style="text-align:center;padding:16px 0">
+      <span class="material-symbols-rounded" style="font-size:48px;color:var(--md-primary)">mark_email_read</span>
+      <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:16px">Письмо для подтверждения отправлено на вашу новую почту. Перейдите по ссылке в письме.</p>
+    </div>
+    <button class="btn-tonal" style="width:100%;justify-content:center" onclick="closeModal('changeEmailModal')"><span class="material-symbols-rounded">check</span> Понятно</button>
+  </div>
+</div></div>
+
+<div class="modal-overlay" id="changePasswordModal"><div class="modal" style="max-width:420px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <button class="btn-icon" onclick="closeModal('changePasswordModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0">Сменить пароль</div>
+  </div>
+  <div id="changePassStep1">
+    <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:16px">На вашу почту будет отправлено письмо для сброса пароля.</p>
+    <div class="auth-error" id="changePassError"></div>
+    <div class="modal-actions"><button class="btn-outlined" onclick="closeModal('changePasswordModal')">Отмена</button><button class="btn-primary" onclick="startChangePassword()">Отправить письмо</button></div>
+  </div>
+  <div id="changePassStep2" style="display:none">
+    <div style="text-align:center;padding:16px 0">
+      <span class="material-symbols-rounded" style="font-size:48px;color:var(--md-primary)">mark_email_read</span>
+      <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:16px">Письмо отправлено. Перейдите по ссылке в письме, чтобы задать новый пароль.</p>
+    </div>
+    <button class="btn-tonal" style="width:100%;justify-content:center" onclick="closeModal('changePasswordModal')"><span class="material-symbols-rounded">check</span> Понятно</button>
+  </div>
+</div></div>
+
+<div class="modal-overlay" id="connectedAccountsModal"><div class="modal" style="max-width:480px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <button class="btn-icon" onclick="closeModal('connectedAccountsModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0">Подключённые аккаунты</div>
+  </div>
+  <div id="connectedAccountsList"></div>
 </div></div>
 
 <div class="modal-overlay" id="addToPlaylistModal"><div class="modal">
@@ -4459,6 +4516,168 @@ async function sendResetCode(){
     err.textContent=msg;
   }
 }
+async function signInWithGoogle(){
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    const result=await auth.signInWithPopup(provider);
+    await _handleOAuthResult(result,'google');
+  }catch(x){if(x.code!=='auth/popup-closed-by-user')showSnackbar('Ошибка Google: '+x.message)}
+}
+async function signInWithGithub(){
+  try{
+    const provider=new firebase.auth.GithubAuthProvider();
+    const result=await auth.signInWithPopup(provider);
+    await _handleOAuthResult(result,'github');
+  }catch(x){if(x.code!=='auth/popup-closed-by-user')showSnackbar('Ошибка GitHub: '+x.message)}
+}
+async function _handleOAuthResult(result,method){
+  const fireUser=result.user;
+  const mapSnap=await db.ref('authUidMap/'+fireUser.uid).once('value');
+  let rtdbUid=mapSnap.val();
+  if(rtdbUid){
+    const us=await db.ref('users/'+rtdbUid).once('value'),ud=us.val();
+    if(ud){loginUser(ud);showSnackbar('С возвращением, '+ud.displayName+'!');return}
+  }
+  const email=(fireUser.email||'').toLowerCase();
+  if(email){
+    const ek=email.replace(/\./g,','),es=await db.ref('emails/'+ek).once('value');
+    if(es.exists()){
+      rtdbUid=es.val();
+      await db.ref('authUidMap/'+fireUser.uid).set(rtdbUid);
+      const provKey=method==='google'?'googleId':'githubId';
+      await db.ref('users/'+rtdbUid+'/'+provKey).set(fireUser.uid);
+      const us=await db.ref('users/'+rtdbUid).once('value'),ud=us.val();
+      if(ud){loginUser(ud);showSnackbar('С возвращением!');return}
+    }
+  }
+  const uid=fireUser.uid;
+  const dn=fireUser.displayName||email.split('@')[0]||'User';
+  const un=(method+'_'+uid.substr(0,8)).toLowerCase();
+  const ud={uid,username:un,email:email,displayName:dn,photo:fireUser.photoURL||'',bio:'',authMethod:method,createdAt:Date.now()};
+  const provKey=method==='google'?'googleId':'githubId';
+  ud[provKey]=fireUser.uid;
+  await db.ref('users/'+uid).set(ud);
+  if(un)await db.ref('usernames/'+un).set(uid);
+  if(email){const ek=email.replace(/\./g,',');await db.ref('emails/'+ek).set(uid)}
+  await db.ref('authUidMap/'+uid).set(uid);
+  loginUser(ud);showSnackbar('Добро пожаловать, '+dn+'!');
+}
+
+function openEmailSettings(){
+  closeModal('settingsModal');
+  if(!currentUser.email){openLinkEmail();return}
+  document.getElementById('changeEmailStep1').style.display='';
+  document.getElementById('changeEmailStep2').style.display='none';
+  document.getElementById('changeEmailNew').value='';
+  document.getElementById('changeEmailError').textContent='';
+  document.getElementById('changeEmailModal').classList.add('open');
+}
+async function startChangeEmail(){
+  const newEmail=document.getElementById('changeEmailNew').value.trim().toLowerCase(),err=document.getElementById('changeEmailError');
+  err.textContent='';
+  if(!newEmail||!newEmail.includes('@')){err.textContent='Введите корректный Email';return}
+  err.innerHTML='<div class="loading-spinner" style="width:16px;height:16px;margin:0;border-width:2px;display:inline-block;vertical-align:middle"></div>';
+  try{
+    const fireUser=auth.currentUser;
+    if(!fireUser){err.textContent='Требуется повторный вход';return}
+    await fireUser.verifyBeforeUpdateEmail(newEmail);
+    const oldEk=currentUser.email.replace(/\./g,','),newEk=newEmail.replace(/\./g,',');
+    await db.ref('emails/'+oldEk).remove();
+    await db.ref('emails/'+newEk).set(currentUser.uid);
+    await db.ref('users/'+currentUser.uid+'/email').set(newEmail);
+    currentUser.email=newEmail;localStorage.setItem('mp_user',JSON.stringify(currentUser));
+    document.getElementById('changeEmailStep1').style.display='none';
+    document.getElementById('changeEmailStep2').style.display='';
+    showSnackbar('Письмо отправлено на '+newEmail);
+  }catch(x){
+    const msg=x.code==='auth/requires-recent-login'?'Перезайдите в аккаунт для смены почты':x.code==='auth/email-already-in-use'?'Этот email уже используется':'Ошибка: '+x.message;
+    err.textContent=msg;
+  }
+}
+
+function openChangePassword(){
+  closeModal('settingsModal');
+  document.getElementById('changePassStep1').style.display='';
+  document.getElementById('changePassStep2').style.display='none';
+  document.getElementById('changePassError').textContent='';
+  document.getElementById('changePasswordModal').classList.add('open');
+}
+async function startChangePassword(){
+  const err=document.getElementById('changePassError');
+  err.textContent='';
+  if(!currentUser||!currentUser.email){err.textContent='К аккаунту не привязан email';return}
+  err.innerHTML='<div class="loading-spinner" style="width:16px;height:16px;margin:0;border-width:2px;display:inline-block;vertical-align:middle"></div>';
+  try{
+    await auth.sendPasswordResetEmail(currentUser.email);
+    document.getElementById('changePassStep1').style.display='none';
+    document.getElementById('changePassStep2').style.display='';
+    showSnackbar('Письмо отправлено на '+currentUser.email);
+  }catch(x){
+    const msg=x.code==='auth/too-many-requests'?'Слишком много попыток. Подождите':'Ошибка: '+x.message;
+    err.textContent=msg;
+  }
+}
+
+function openConnectedAccounts(){
+  closeModal('settingsModal');
+  db.ref('users/'+currentUser.uid).once('value').then(s=>{
+    const u=s.val()||{};
+    const hasTg=!!u.telegramId,hasGoogle=!!u.googleId,hasGithub=!!u.githubId;
+    const list=document.getElementById('connectedAccountsList');
+    list.innerHTML=
+      _connAccItem('send','Telegram',hasTg?(u.telegramUsername?'@'+u.telegramUsername:'Подключён'):'Не подключён',hasTg,'telegram')+
+      _connAccItem('','Google',hasGoogle?'Подключён':'Не подключён',hasGoogle,'google')+
+      _connAccItem('','GitHub',hasGithub?'Подключён':'Не подключён',hasGithub,'github');
+    document.getElementById('connectedAccountsModal').classList.add('open');
+  });
+}
+function _connAccItem(icon,name,sub,connected,provider){
+  const icons={google:'<svg viewBox="0 0 24 24" width="24" height="24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>',github:'<svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" fill="currentColor"/></svg>'};
+  const iconHtml=icon?'<span class="material-symbols-rounded">'+icon+'</span>':(icons[provider]||'');
+  const action=connected?'onclick="confirmReconnect(\''+provider+'\')"':'onclick="connectAccount(\''+provider+'\')"';
+  return '<div class="settings-item" '+action+'><div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center">'+iconHtml+'</div><div class="settings-item-info"><div class="settings-item-title">'+name+'</div><div class="settings-item-sub">'+sub+'</div></div>'+(connected?'<span class="material-symbols-rounded" style="color:var(--md-primary)">check_circle</span>':'<span class="material-symbols-rounded" style="color:var(--md-outline)">add_circle_outline</span>')+'</div>';
+}
+function connectAccount(provider){
+  if(provider==='telegram'){closeModal('connectedAccountsModal');openLinkTelegram();return}
+  if(provider==='google'){_linkOAuthProvider(new firebase.auth.GoogleAuthProvider(),'googleId');return}
+  if(provider==='github'){_linkOAuthProvider(new firebase.auth.GithubAuthProvider(),'githubId');return}
+}
+async function _linkOAuthProvider(provider,dbKey){
+  try{
+    const fireUser=auth.currentUser;
+    if(!fireUser){showSnackbar('Требуется повторный вход');return}
+    const result=await fireUser.linkWithPopup(provider);
+    await db.ref('users/'+currentUser.uid+'/'+dbKey).set(result.user.uid);
+    showSnackbar('Аккаунт подключён!');openConnectedAccounts();
+  }catch(x){
+    if(x.code==='auth/credential-already-in-use'){showSnackbar('Этот аккаунт уже привязан к другому пользователю')}
+    else if(x.code==='auth/provider-already-linked'){showSnackbar('Уже подключён')}
+    else if(x.code!=='auth/popup-closed-by-user'){showSnackbar('Ошибка: '+x.message)}
+  }
+}
+function confirmReconnect(provider){
+  const names={telegram:'Telegram',google:'Google',github:'GitHub'};
+  if(confirm('Сменить подключённый аккаунт '+names[provider]+'?')){
+    if(provider==='telegram'){closeModal('connectedAccountsModal');openLinkTelegram();return}
+    _relinkOAuth(provider);
+  }
+}
+async function _relinkOAuth(provider){
+  try{
+    const fireUser=auth.currentUser;
+    if(!fireUser){showSnackbar('Требуется повторный вход');return}
+    const providerId=provider==='google'?'google.com':'github.com';
+    try{await fireUser.unlink(providerId)}catch(e){}
+    const authProvider=provider==='google'?new firebase.auth.GoogleAuthProvider():new firebase.auth.GithubAuthProvider();
+    const result=await fireUser.linkWithPopup(authProvider);
+    const dbKey=provider==='google'?'googleId':'githubId';
+    await db.ref('users/'+currentUser.uid+'/'+dbKey).set(result.user.uid);
+    showSnackbar(provider==='google'?'Google':'GitHub'+' аккаунт обновлён!');openConnectedAccounts();
+  }catch(x){
+    if(x.code!=='auth/popup-closed-by-user')showSnackbar('Ошибка: '+x.message);
+  }
+}
+
 function loginUser(ud){
   currentUser={uid:ud.uid,username:ud.username||'',email:ud.email||'',displayName:ud.displayName||'Пользователь',photo:ud.photo||'',bio:ud.bio||'',authMethod:ud.authMethod||'email'};
   localStorage.setItem('mp_user',JSON.stringify(currentUser));
@@ -4611,13 +4830,14 @@ window.addEventListener('resize',()=>{if(document.getElementById('userMenu').cla
 function openSettings(){
   if(!currentUser){showSnackbar('Войдите в аккаунт');return}
   db.ref('users/'+currentUser.uid).once('value').then(s=>{
-    const u=s.val()||{},hasTg=!!u.telegramId,hasEmail=!!u.email&&!!u.passwordHash;
+    const u=s.val()||{},hasEmail=!!u.email&&!!u.passwordHash;
     const themeMode=localStorage.getItem('mp_theme_mode')||(labsSettings.adaptiveTheme?'device':'light');
     const themeLabel=themeMode==='device'?'Как на устройстве':(document.body.getAttribute('data-theme')==='dark'?'Тёмная':'Светлая');
     document.getElementById('settingsContent').innerHTML=
       '<div class="settings-item" onclick="openEditProfile()"><span class="material-symbols-rounded">edit</span><div class="settings-item-info"><div class="settings-item-title">Редактировать профиль</div><div class="settings-item-sub">Имя, аватар, био</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
-      '<div class="settings-item" onclick="'+(hasEmail?'showSnackbar(\'Email уже привязан\')':'openLinkEmail()')+'" ><span class="material-symbols-rounded">mail</span><div class="settings-item-info"><div class="settings-item-title">Email и пароль</div><div class="settings-item-sub">'+(hasEmail?(u.email||'Привязан'):'Не привязан')+'</div></div>'+(hasEmail?'<span class="material-symbols-rounded" style="color:var(--md-primary)">check_circle</span>':'<span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span>')+'</div>'+
-      '<div class="settings-item" onclick="'+(hasTg?'showSnackbar(\'Telegram уже привязан\')':'openLinkTelegram()')+'" ><span class="material-symbols-rounded">send</span><div class="settings-item-info"><div class="settings-item-title">Telegram</div><div class="settings-item-sub">'+(hasTg?('@'+(u.telegramUsername||'Привязан')):'Не привязан')+'</div></div>'+(hasTg?'<span class="material-symbols-rounded" style="color:var(--md-primary)">check_circle</span>':'<span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span>')+'</div>'+
+      '<div class="settings-item" onclick="openEmailSettings()"><span class="material-symbols-rounded">mail</span><div class="settings-item-info"><div class="settings-item-title">Email</div><div class="settings-item-sub">'+(u.email||'Не привязан')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+      (hasEmail?'<div class="settings-item" onclick="openChangePassword()"><span class="material-symbols-rounded">lock</span><div class="settings-item-info"><div class="settings-item-title">Сменить пароль</div><div class="settings-item-sub">Отправит подтверждение на почту</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
+      '<div class="settings-item" onclick="openConnectedAccounts()"><span class="material-symbols-rounded">link</span><div class="settings-item-info"><div class="settings-item-title">Подключённые аккаунты</div><div class="settings-item-sub">Telegram, Google, GitHub</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div style="margin:16px 0;height:1px;background:var(--md-outline-variant)"></div>'+
       '<div class="settings-item" onclick="cycleThemeMode()"><span class="material-symbols-rounded">contrast</span><div class="settings-item-info"><div class="settings-item-title">Тема</div><div class="settings-item-sub">'+themeLabel+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">sync</span></div>'+
       '<div class="settings-item" onclick="openLabsModal()"><span class="material-symbols-rounded">experiment</span><div class="settings-item-info"><div class="settings-item-title">Labs-фичи</div><div class="settings-item-sub">Экспериментальные функции и стили</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
