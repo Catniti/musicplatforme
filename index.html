@@ -2870,7 +2870,9 @@ body[data-ui-style="glass"]{display:contents}
             <input class="md-input" id="loginIdentity" placeholder="Логин или Email" autocomplete="username">
             <div class="password-wrap"><input class="md-input" id="loginPassword" type="password" placeholder="Пароль" autocomplete="current-password"><button class="password-toggle" onclick="togglePasswordVis('loginPassword',this)" type="button"><span class="material-symbols-rounded">visibility_off</span></button></div>
             <div class="auth-error" id="loginError"></div>
+            <div id="captcha-container" style="margin:8px 0;min-height:100px"></div>
             <button class="btn-primary" style="width:100%;justify-content:center" onclick="doLogin()"><span class="material-symbols-rounded">login</span> Войти</button>
+            <a href="#" onclick="event.preventDefault();openResetPasswordModal()" style="display:block;text-align:center;margin-top:8px;font:400 13px/18px 'Inter',sans-serif;color:var(--md-primary)">Забыли пароль?</a>
           </div>
           <div id="registerForm" style="display:none">
             <input class="md-input" id="regUsername" placeholder="Логин (уникальный)" autocomplete="username">
@@ -2881,7 +2883,6 @@ body[data-ui-style="glass"]{display:contents}
             <div class="auth-error" id="regError"></div>
             <button class="btn-primary" style="width:100%;justify-content:center" onclick="doRegister()"><span class="material-symbols-rounded">person_add</span> Зарегистрироваться</button>
           </div>
-          <div id="captcha-container" style="margin:8px 0;min-height:100px"></div>
           <div class="auth-divider">или</div>
           <div class="telegram-btn-wrap">
             <button class="tg-login-btn" onclick="openTelegramLogin()">
@@ -3110,6 +3111,27 @@ body[data-ui-style="glass"]{display:contents}
   </div>
 </div></div>
 
+<div class="modal-overlay" id="resetPasswordModal"><div class="modal" style="max-width:420px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <button class="btn-icon" onclick="closeModal('resetPasswordModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0">Сброс пароля</div>
+  </div>
+  <div id="resetStep1">
+    <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:16px">Введите email, привязанный к аккаунту. Мы отправим код для сброса пароля.</p>
+    <input class="md-input" id="resetEmail" placeholder="Email" type="email" autocomplete="email">
+    <div class="auth-error" id="resetError"></div>
+    <button class="btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="sendResetCode()"><span class="material-symbols-rounded">send</span> Отправить код</button>
+  </div>
+  <div id="resetStep2" style="display:none">
+    <p style="font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-bottom:16px">Код отправлен на <strong id="resetEmailDisplay"></strong>. Введите его ниже.</p>
+    <input class="md-input" id="resetCode" placeholder="Код из письма (6 цифр)" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+    <div class="password-wrap"><input class="md-input" id="resetNewPassword" type="password" placeholder="Новый пароль (мин. 6 символов)" autocomplete="new-password"><button class="password-toggle" onclick="togglePasswordVis('resetNewPassword',this)" type="button"><span class="material-symbols-rounded">visibility_off</span></button></div>
+    <div class="password-wrap"><input class="md-input" id="resetNewPassword2" type="password" placeholder="Повторите пароль" autocomplete="new-password"><button class="password-toggle" onclick="togglePasswordVis('resetNewPassword2',this)" type="button"><span class="material-symbols-rounded">visibility_off</span></button></div>
+    <div class="auth-error" id="resetError2"></div>
+    <button class="btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="confirmResetPassword()"><span class="material-symbols-rounded">lock_reset</span> Сменить пароль</button>
+    <a href="#" onclick="event.preventDefault();sendResetCode()" style="display:block;text-align:center;margin-top:12px;font:400 13px/18px 'Inter',sans-serif;color:var(--md-primary)">Отправить код повторно</a>
+  </div>
+</div></div>
 <div class="modal-overlay" id="settingsModal"><div class="modal" style="max-width:520px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
     <button class="btn-icon" onclick="closeModal('settingsModal')"><span class="material-symbols-rounded">arrow_back</span></button>
@@ -4374,6 +4396,55 @@ async function doLogin(){
   }catch(x){err.textContent='Ошибка: '+x.message}
 }
 
+let _resetEmailKey='',_resetUid='';
+function openResetPasswordModal(){
+  document.getElementById('resetStep1').style.display='';
+  document.getElementById('resetStep2').style.display='none';
+  document.getElementById('resetEmail').value='';
+  document.getElementById('resetError').textContent='';
+  document.getElementById('resetPasswordModal').classList.add('open');
+}
+async function sendResetCode(){
+  const email=document.getElementById('resetEmail').value.trim().toLowerCase(),err=document.getElementById('resetError');
+  err.textContent='';
+  if(!email||!email.includes('@')){err.textContent='Введите корректный Email';return}
+  err.innerHTML='<div class="loading-spinner" style="width:16px;height:16px;margin:0;border-width:2px;display:inline-block;vertical-align:middle"></div>';
+  try{
+    const ek=email.replace(/\./g,',');
+    const es=await db.ref('emails/'+ek).once('value');
+    if(!es.exists()){err.textContent='Email не найден';return}
+    _resetUid=es.val();_resetEmailKey=ek;
+    const code=String(Math.floor(100000+Math.random()*900000));
+    await db.ref('passwordResets/'+ek).set({code,ts:Date.now(),uid:_resetUid});
+    try{
+      await fetch('https://api.emailjs.com/api/v1.0/email/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service_id:'service_musicplatforme',template_id:'template_reset_code',user_id:'YOUR_EMAILJS_PUBLIC_KEY',template_params:{to_email:email,reset_code:code,app_name:'MusicPlatforme'}})});
+    }catch(ex){}
+    document.getElementById('resetEmailDisplay').textContent=email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
+    document.getElementById('resetStep1').style.display='none';
+    document.getElementById('resetStep2').style.display='';
+    document.getElementById('resetError2').textContent='';
+    showSnackbar('Код отправлен на '+email);
+  }catch(x){err.textContent='Ошибка: '+x.message}
+}
+async function confirmResetPassword(){
+  const code=document.getElementById('resetCode').value.trim(),p1=document.getElementById('resetNewPassword').value,p2=document.getElementById('resetNewPassword2').value,err=document.getElementById('resetError2');
+  err.textContent='';
+  if(!code||code.length!==6){err.textContent='Введите 6-значный код';return}
+  if(p1.length<6){err.textContent='Пароль минимум 6 символов';return}
+  if(p1!==p2){err.textContent='Пароли не совпадают';return}
+  err.innerHTML='<div class="loading-spinner" style="width:16px;height:16px;margin:0;border-width:2px;display:inline-block;vertical-align:middle"></div>';
+  try{
+    const snap=await db.ref('passwordResets/'+_resetEmailKey).once('value');
+    const data=snap.val();
+    if(!data){err.textContent='Код не найден. Запросите новый';return}
+    if(Date.now()-data.ts>900000){err.textContent='Код истёк (15 мин). Запросите новый';await db.ref('passwordResets/'+_resetEmailKey).remove();return}
+    if(data.code!==code){err.textContent='Неверный код';return}
+    const ph=await hashPassword(p1);
+    await db.ref('users/'+_resetUid+'/passwordHash').set(ph);
+    await db.ref('passwordResets/'+_resetEmailKey).remove();
+    closeModal('resetPasswordModal');showSnackbar('Пароль успешно изменён!');
+  }catch(x){err.textContent='Ошибка: '+x.message}
+}
 function loginUser(ud){
   currentUser={uid:ud.uid,username:ud.username||'',email:ud.email||'',displayName:ud.displayName||'Пользователь',photo:ud.photo||'',bio:ud.bio||'',authMethod:ud.authMethod||'email'};
   localStorage.setItem('mp_user',JSON.stringify(currentUser));
@@ -4616,6 +4687,7 @@ function loadUserData(){
   db.ref('favorites/'+uid).on('value',s=>{
     favorites=s.val()||{};
     updateFsLike();
+    const plEl=document.getElementById('profileLikes');if(plEl)plEl.textContent=Object.keys(favorites).length;
     const _ap=document.querySelector('.page.active')?.id||'page-home';
     switch(_ap){
       case 'page-home':renderHome();break;
@@ -6244,7 +6316,7 @@ function playArtistAll(){if(!currentArtistTracks.length)return;playlist=currentA
 
 /* ===== WAVE ===== */
 function startWave(){
-  const entries=Object.entries(allTracks).filter(([,t])=>t&&t.title&&t.artistName&&(t.audioUrl||t.audioData));if(!entries.length){showSnackbar('Нет треков');return}
+  const entries=Object.entries(allTracks).filter(([,t])=>t&&t.title&&t.artistName);if(!entries.length){showSnackbar('Нет треков');return}
   const fids=Object.keys(favorites),fe=entries.filter(([id])=>fids.includes(id)),nfe=entries.filter(([id])=>!fids.includes(id));
   shuffleArr(fe);shuffleArr(nfe);let wt=fe.length?[...fe,...nfe]:[...entries];if(!fe.length)shuffleArr(wt);
   document.getElementById('waveTracks').innerHTML=wt.map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
