@@ -1792,8 +1792,8 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 .track-duration{font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);flex-shrink:0}
 .track-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
 @media(hover:hover){.track-actions{transition:opacity .25s}.track-item:hover .track-actions{opacity:1}}
-.now-playing-mark{display:flex;align-items:center;justify-content:center;font-size:16px;transform:translateY(calc(var(--doc-beat-bounce,0px)*-1));transition:transform 0.05s linear;will-change:transform}
-.track-item.playing .track-thumb .material-symbols-rounded{transform:translateY(calc(var(--doc-beat-bounce,0px)*-0.45));transition:transform 0.05s linear;will-change:transform}
+.now-playing-mark{display:flex;align-items:center;justify-content:center;font-size:16px}
+.track-item.playing .track-thumb .material-symbols-rounded{}
 #authorSuggestDropdown div:hover{background:var(--md-surface-container-highest)}
 .track-plays{font:400 11px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);display:flex;align-items:center;gap:2px;flex-shrink:0;margin-right:8px}
 .track-plays .material-symbols-rounded{font-size:14px}
@@ -1978,7 +1978,7 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 .fs-cover-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
 .fs-cover{width:100%;max-width:360px;aspect-ratio:1;border-radius:var(--md-shape-lg);background:var(--md-surface-container-highest);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:var(--md-elevation-3);transition:border-radius .5s cubic-bezier(.2,0,0,1),transform .045s linear, box-shadow .08s linear, filter .08s linear}
 .fs-cover.playing{border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.04) inset}
-.fs-cover.beat{transform:translateY(calc(var(--beat-bounce, 0px) * -1)) scale(calc(1 + var(--beat-scale, 0))) rotate(calc(var(--beat-tilt, 0deg)));box-shadow:0 24px 56px rgba(0,0,0,.30),0 0 0 1px rgba(255,255,255,.06) inset;filter:saturate(calc(1 + var(--beat-sat, 0)))}
+.fs-cover.beat{transform:scale(calc(1 + var(--beat-scale, 0))) rotate(calc(var(--beat-tilt, 0deg)));box-shadow:0 24px 56px rgba(0,0,0,.30),0 0 0 1px rgba(255,255,255,.06) inset;filter:saturate(calc(1 + var(--beat-sat, 0)))}
 @keyframes coverPulse{0%,100%{opacity:1}50%{opacity:.985}}
 .fs-cover img{width:100%;height:100%;object-fit:cover}
 .fs-cover .material-symbols-rounded{font-size:96px;color:var(--md-outline)}
@@ -6007,16 +6007,14 @@ function animateBeatCover(){
   st._peak=(st._peak||0)*0.68;
   const tiltTarget=(mids-highs)/255*3.5;
   st._t=(st._t||0)+(tiltTarget-(st._t||0))*0.22;
-  const bounce=st._peak*32+energy*8;
-  const scale=st._peak*0.09+energy*0.025;
-  const sat=st._peak*0.40+energy*0.10;
-  const glow=st._peak*0.6;
+  const scale=st._peak*0.04+energy*0.015;
+  const sat=st._peak*0.30+energy*0.08;
   cover.classList.add('beat');
-  cover.style.setProperty('--beat-bounce',bounce.toFixed(2)+'px');
+  cover.style.setProperty('--beat-bounce','0px');
   cover.style.setProperty('--beat-scale',scale.toFixed(4));
   cover.style.setProperty('--beat-tilt',st._t.toFixed(2)+'deg');
   cover.style.setProperty('--beat-sat',sat.toFixed(3));
-  document.documentElement.style.setProperty('--doc-beat-bounce',(bounce*0.42).toFixed(2)+'px');
+  document.documentElement.style.setProperty('--doc-beat-bounce','0px');
 }
 let eightDLoopHandle=null;
 function start8DLoop(){
