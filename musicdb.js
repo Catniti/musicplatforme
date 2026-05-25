@@ -1,27 +1,25 @@
 /**
  * MusicPlatforme Server DB Client
- * Подключи этот файл в index.html ПОСЛЕ Firebase и ПЕРЕД основным скриптом:
- * <script src="https://a11cc0fd-cb9b-4609-8305-d47f99831b19-00-70ono3xcux3f.riker.replit.dev/api/musicdb.js"></script>
+ * Подключи этот файл в index.html ПОСЛЕ Firebase и ПЕРЕД основным скриптом.
  *
- * Или скачай файл и подключи локально.
+ * Для подключения своего сервера:
+ * 1. Установите URL сервера в localStorage: localStorage.setItem('mp_server_url', 'https://your-server.com/api')
+ * 2. Или настройте через Панель Создателя → Настройки сервера
  */
 (function () {
   'use strict';
 
   /* ===== НАСТРОЙКИ ===== */
-  const PROD_BASE = 'https://data-sync-hub--vriskas.replit.app/api';
-  const DEV_BASE  = 'https://a11cc0fd-cb9b-4609-8305-d47f99831b19-00-70ono3xcux3f.riker.replit.dev/api';
+  const DEFAULT_SERVER = '';
 
   function detectServerBase() {
-    // Позволяем вручную переопределить URL из панели создателя
     try {
       const override = localStorage.getItem('mp_server_url_override');
       if (override && override.startsWith('http')) return override.replace(/\/$/, '') + (override.includes('/api') ? '' : '/api');
+      const saved = localStorage.getItem('mp_server_url');
+      if (saved && saved.startsWith('http')) return saved.replace(/\/$/, '') + (saved.includes('/api') ? '' : '/api');
     } catch { /* ignore */ }
-    const host = (window.location.hostname || '').toLowerCase();
-    if (host.includes('replit.app') || host.includes('data-sync-hub')) return PROD_BASE;
-    if (host.includes('github.io') || host === 'localhost' || host === '') return PROD_BASE;
-    return DEV_BASE;
+    return DEFAULT_SERVER;
   }
 
   const SERVER_BASE = detectServerBase();
@@ -602,7 +600,7 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div style="background:var(--md-surface-container);border-radius:16px;padding:14px;border:1px solid var(--md-outline-variant)">
       <div style="font:700 13px/18px 'Inter',sans-serif;color:var(--md-on-surface);margin-bottom:8px;display:flex;align-items:center;gap:6px">
-        ${statusIcon(srv.status)} 🖥️ Сервер (Replit)
+        ${statusIcon(srv.status)} 🖥️ Сервер
       </div>
       <div style="font:400 12px/18px 'Inter',sans-serif;color:var(--md-on-surface-variant)">
         Статус: <b>${srv.status === 'ok' ? 'Работает' : srv.status === 'offline' ? 'Не доступен' : 'Ошибка'}</b><br>
@@ -1349,7 +1347,7 @@
       const rows = [
         {
           icon: 'dns',
-          name: '🖥️ Сервер (Replit DB)',
+          name: '🖥️ Сервер',
           statusBadge: badge(srv.status),
           latency: latencyBadge(srv.latencyMs),
           extra: [
