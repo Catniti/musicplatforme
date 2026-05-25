@@ -6244,7 +6244,7 @@ function playArtistAll(){if(!currentArtistTracks.length)return;playlist=currentA
 
 /* ===== WAVE ===== */
 function startWave(){
-  const entries=Object.entries(allTracks);if(!entries.length){showSnackbar('Нет треков');return}
+  const entries=Object.entries(allTracks).filter(([,t])=>t&&t.title&&t.artistName&&(t.audioUrl||t.audioData));if(!entries.length){showSnackbar('Нет треков');return}
   const fids=Object.keys(favorites),fe=entries.filter(([id])=>fids.includes(id)),nfe=entries.filter(([id])=>!fids.includes(id));
   shuffleArr(fe);shuffleArr(nfe);let wt=fe.length?[...fe,...nfe]:[...entries];if(!fe.length)shuffleArr(wt);
   document.getElementById('waveTracks').innerHTML=wt.map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
@@ -6265,24 +6265,24 @@ const RADIO_FALLBACK_STATIONS={
   RU:[
     {name:'Европа Плюс',country:'Россия',language:'ru',tags:'pop,hits,европа',bitrate:128,favicon:'https://www.europaplus.ru/favicon.ico',url_resolved:'https://ep128.hostingradio.ru/europaplus128.mp3',url:'https://ep256.hostingradio.ru/europaplus256.mp3',homepage:'https://europaplus.ru'},
     {name:'Радио ENERGY (NRJ)',country:'Россия',language:'ru',tags:'dance,electronic,energy,nrj',bitrate:128,favicon:'https://nrjrussia.ru/favicon.ico',url_resolved:'https://energy128.hostingradio.ru/energy128.mp3',homepage:'https://nrjrussia.ru'},
-    {name:'Хит FM',country:'Россия',language:'ru',tags:'hits,pop,хит',bitrate:96,favicon:'https://hitfm.ru/favicon.ico',url_resolved:'https://hitfm.hostingradio.ru/hitfm96.mp3',homepage:'https://hitfm.ru'},
-    {name:'DFM',country:'Россия',language:'ru',tags:'dance,electronic,dfm',bitrate:96,favicon:'https://dfm.ru/favicon.ico',url_resolved:'https://dfm.hostingradio.ru/dfm96.mp3',homepage:'https://dfm.ru'},
-    {name:'Дорожное радио',country:'Россия',language:'ru',tags:'road,pop,retro,russian,дорожное',bitrate:128,favicon:'https://dorognoe.ru/favicon.ico',url_resolved:'https://dorognoe.hostingradio.ru/dorognoe128.mp3',url:'https://dorognoe.hostingradio.ru:8000/dorognoe',homepage:'https://dorognoe.ru'},
-    {name:'Русское Радио',country:'Россия',language:'ru',tags:'pop,russian,русское',bitrate:96,favicon:'https://rusradio.ru/favicon.ico',url_resolved:'https://rusradio.hostingradio.ru/rusradio96.mp3',url:'https://rusradio.hostingradio.ru/rusradio128.mp3',homepage:'https://rusradio.ru'},
+    {name:'Хит FM',country:'Россия',language:'ru',tags:'hits,pop,хит',bitrate:128,favicon:'https://hitfm.ru/favicon.ico',url_resolved:'https://hitfm.hostingradio.ru/hitfm128.mp3',homepage:'https://hitfm.ru'},
+    {name:'DFM',country:'Россия',language:'ru',tags:'dance,electronic,dfm',bitrate:128,favicon:'https://dfm.ru/favicon.ico',url_resolved:'https://dfm.hostingradio.ru/dfm128.mp3',homepage:'https://dfm.ru'},
+    {name:'Дорожное радио',country:'Россия',language:'ru',tags:'road,pop,retro,russian,дорожное',bitrate:128,favicon:'https://dorognoe.ru/favicon.ico',url_resolved:'https://dorognoe.hostingradio.ru:8000/radio',homepage:'https://dorognoe.ru'},
+    {name:'Русское Радио',country:'Россия',language:'ru',tags:'pop,russian,русское',bitrate:128,favicon:'https://rusradio.ru/favicon.ico',url_resolved:'https://rusradio.hostingradio.ru/rusradio128.mp3',homepage:'https://rusradio.ru'},
     {name:'Авторадио',country:'Россия',language:'ru',tags:'pop,russian,auto,авторадио',bitrate:96,favicon:'https://www.avtoradio.ru/favicon.ico',url_resolved:'https://avtoradio.hostingradio.ru/avtoradio96.mp3',homepage:'https://avtoradio.ru'},
     {name:'Ретро FM',country:'Россия',language:'ru',tags:'retro,pop,80s,90s,ретро',bitrate:96,favicon:'https://retrofm.ru/favicon.ico',url_resolved:'https://retrofm.hostingradio.ru/retrofm96.mp3',url:'https://retrofm.hostingradio.ru/retrofm128.mp3',homepage:'https://retrofm.ru'},
     {name:'Наше Радио',country:'Россия',language:'ru',tags:'rock,russian,наше',bitrate:128,favicon:'https://nashe.ru/favicon.ico',url_resolved:'https://nashe1.hostingradio.ru/nashe-128.mp3',homepage:'https://nashe.ru'},
-    {name:'Radio Monte Carlo',country:'Россия',language:'ru',tags:'pop,lounge,montecarlo',bitrate:96,favicon:'https://montecarlo.ru/favicon.ico',url_resolved:'https://montecarlo.hostingradio.ru/montecarlo96.mp3',url:'https://montecarlo.hostingradio.ru/montecarlo96.aacp',homepage:'https://montecarlo.ru'},
+    {name:'Radio Monte Carlo',country:'Россия',language:'ru',tags:'pop,lounge,montecarlo',bitrate:128,favicon:'https://montecarlo.ru/favicon.ico',url_resolved:'https://montecarlo.hostingradio.ru/montecarlo128.mp3',homepage:'https://montecarlo.ru'},
     {name:'Радио Дача',country:'Россия',language:'ru',tags:'pop,retro,russian,дача',bitrate:96,favicon:'https://www.radiodacha.ru/favicon.ico',url_resolved:'https://radiodacha.hostingradio.ru/dacha96.mp3',homepage:'https://www.radiodacha.ru'},
-    {name:'Record Dance Radio',country:'Россия',language:'ru',tags:'dance,electronic,record',bitrate:96,favicon:'https://radiorecord.ru/favicon.ico',url_resolved:'https://radiorecord.hostingradio.ru/rr96.mp3',url:'https://radiorecord.hostingradio.ru/rr_main96.aacp',homepage:'https://radiorecord.ru'},
-    {name:'Maximum',country:'Россия',language:'ru',tags:'rock,pop,maximum',bitrate:96,favicon:'https://maximum.ru/favicon.ico',url_resolved:'https://maximum.hostingradio.ru/maximum96.mp3',url:'https://maximum.hostingradio.ru/maximum96.aacp',homepage:'https://maximum.ru'},
-    {name:'Радио 7',country:'Россия',language:'ru',tags:'pop,easy,7',bitrate:96,favicon:'https://radio7.ru/favicon.ico',url_resolved:'https://radio7.hostingradio.ru/radio796.mp3',homepage:'https://radio7.ru'},
-    {name:'Радио Маяк',country:'Россия',language:'ru',tags:'news,talk,маяк',bitrate:128,favicon:'https://radiomayak.ru/favicon.ico',url_resolved:'https://icecast-vgtrk.cdnvideo.ru/mayak',homepage:'https://radiomayak.ru'},
+    {name:'Record Dance Radio',country:'Россия',language:'ru',tags:'dance,electronic,record',bitrate:96,favicon:'https://radiorecord.ru/favicon.ico',url_resolved:'https://radiorecord.hostingradio.ru/rr_main96.aacp',homepage:'https://radiorecord.ru'},
+    {name:'Maximum',country:'Россия',language:'ru',tags:'rock,pop,maximum',bitrate:128,favicon:'https://maximum.ru/favicon.ico',url_resolved:'https://maximum.hostingradio.ru/maximum128.mp3',homepage:'https://maximum.ru'},
+    {name:'Радио 7',country:'Россия',language:'ru',tags:'pop,easy,7',bitrate:256,favicon:'https://radio7.ru/favicon.ico',url_resolved:'https://radio7server.streamr.ru:8040/radio7256.mp3',homepage:'https://radio7.ru'},
+    {name:'Радио Маяк',country:'Россия',language:'ru',tags:'news,talk,маяк',bitrate:128,favicon:'https://radiomayak.ru/favicon.ico',url_resolved:'https://icecast-vgtrk.cdnvideo.ru/mayakfm_mp3_128kbps',homepage:'https://radiomayak.ru'},
     {name:'Вести FM',country:'Россия',language:'ru',tags:'news,talk,вести',bitrate:128,favicon:'',url_resolved:'https://icecast-vgtrk.cdnvideo.ru/vestifm',url:'https://icecast-vgtrk.cdnvideo.ru/vestifm_mp3_128kbps',homepage:'https://radiovesti.ru'},
-    {name:'Радио России',country:'Россия',language:'ru',tags:'news,talk,россия',bitrate:128,favicon:'https://radiorossii.ru/favicon.ico',url_resolved:'https://icecast-vgtrk.cdnvideo.ru/radiorossii',homepage:'https://radiorossii.ru'},
-    {name:'Радио Зенит',country:'Россия',language:'ru',tags:'sport,football,news,spb,зенит',bitrate:96,favicon:'https://radiozenit.ru/favicon.ico',url_resolved:'https://pub0301.101.ru:8443/stream/trust/mp3/128/269',url:'https://pub0302.101.ru:8443/stream/trust/mp3/128/269',homepage:'https://radiozenit.ru'},
-    {name:'Юмор FM',country:'Россия',language:'ru',tags:'humor,fun,talk,юмор',bitrate:128,favicon:'https://humorfm.by/favicon.ico',url_resolved:'https://pub0302.101.ru:8443/stream/trust/mp3/128/11',url:'https://pub0301.101.ru:8443/stream/trust/mp3/128/11',homepage:'https://www.veseloeradio.ru/'},
-    {name:'Comedy Radio',country:'Россия',language:'ru',tags:'comedy,fun,юмор',bitrate:128,favicon:'https://comedy-radio.ru/favicon.ico',url_resolved:'https://pub0302.101.ru:8443/stream/trust/mp3/128/16',homepage:'https://comedy-radio.ru'},
+    {name:'Rock FM',country:'Россия',language:'ru',tags:'rock,alternative',bitrate:128,favicon:'https://rockfm.ru/favicon.ico',url_resolved:'https://nashe1.hostingradio.ru/rock-128.mp3',homepage:'https://rockfm.ru'},
+    {name:'Радио Ваня',country:'Россия',language:'ru',tags:'pop,russian,ваня',bitrate:128,favicon:'https://radiovanya.ru/favicon.ico',url_resolved:'https://icecast-radiovanya.cdnvideo.ru/radiovanya',homepage:'https://radiovanya.ru'},
+    {name:'Юмор FM',country:'Россия',language:'ru',tags:'humor,fun,talk,юмор',bitrate:128,favicon:'https://humorfm.by/favicon.ico',url_resolved:'https://pub0302.101.ru:8000/stream/trust/mp3/128/17',homepage:'https://www.veseloeradio.ru/'},
+    {name:'Шансон',country:'Россия',language:'ru',tags:'shanson,russian,шансон',bitrate:128,favicon:'https://radioshanson.fm/favicon.ico',url_resolved:'https://chanson.hostingradio.ru:8041/chanson128.mp3',homepage:'https://radioshanson.fm'},
     {name:'Маруся FM',country:'Россия',language:'ru',tags:'pop,russian,маруся',bitrate:128,favicon:'https://marus.fm/favicon.ico',url_resolved:'https://listen1.myradio24.com/8304',homepage:'https://marus.fm'},
     {name:'Relax FM',country:'Россия',language:'ru',tags:'relax,chillout',bitrate:128,favicon:'https://relax-fm.ru/favicon.ico',url_resolved:'https://relax.hostingradio.ru/relax96.mp3',url:'https://pub0301.101.ru:8443/stream/trust/mp3/128/200',homepage:'https://relax-fm.ru'}
   ]
@@ -6304,7 +6304,7 @@ function normalizeRadioStations(list,country){
 function mergePriorityRadioStations(country,list){
   const normalized=normalizeRadioStations(list,country);
   if(String(country).toUpperCase()!=='RU') return normalized;
-  const priorityNames=['Юмор FM','Радио Дача','Радио Зенит','Авторадио','Дорожное радио'];
+  const priorityNames=['Юмор FM','Радио Дача','Радио Ваня','Авторадио','Дорожное радио'];
   const priority=(RADIO_FALLBACK_STATIONS.RU||[]).filter(s=>priorityNames.includes(s.name));
   const merged=[...priority,...normalized];
   const seen=new Set();
