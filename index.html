@@ -3188,7 +3188,7 @@ body[data-ui-style="glass"]{display:contents}
 
 <div class="modal-overlay" id="changeEmailModal"><div class="modal" style="max-width:420px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-    <button class="btn-icon" onclick="closeModal('changeEmailModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <button class="btn-icon" onclick="closeModal('changeEmailModal');openSettings()"><span class="material-symbols-rounded">arrow_back</span></button>
     <div class="modal-title" style="margin-bottom:0">Сменить почту</div>
   </div>
   <div id="changeEmailStep1">
@@ -3208,7 +3208,7 @@ body[data-ui-style="glass"]{display:contents}
 
 <div class="modal-overlay" id="changePasswordModal"><div class="modal" style="max-width:420px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-    <button class="btn-icon" onclick="closeModal('changePasswordModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <button class="btn-icon" onclick="closeModal('changePasswordModal');openSettings()"><span class="material-symbols-rounded">arrow_back</span></button>
     <div class="modal-title" style="margin-bottom:0">Сменить пароль</div>
   </div>
   <div id="changePassStep1">
@@ -3227,7 +3227,7 @@ body[data-ui-style="glass"]{display:contents}
 
 <div class="modal-overlay" id="changeUsernameModal"><div class="modal" style="max-width:420px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-    <button class="btn-icon" onclick="closeModal('changeUsernameModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <button class="btn-icon" onclick="closeModal('changeUsernameModal');openSettings()"><span class="material-symbols-rounded">arrow_back</span></button>
     <div class="modal-title" style="margin-bottom:0">Сменить логин</div>
   </div>
   <div id="changeUsernameStep1">
@@ -3247,7 +3247,7 @@ body[data-ui-style="glass"]{display:contents}
 
 <div class="modal-overlay" id="connectedAccountsModal"><div class="modal" style="max-width:480px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-    <button class="btn-icon" onclick="closeModal('connectedAccountsModal')"><span class="material-symbols-rounded">arrow_back</span></button>
+    <button class="btn-icon" onclick="closeModal('connectedAccountsModal');openSettings()"><span class="material-symbols-rounded">arrow_back</span></button>
     <div class="modal-title" style="margin-bottom:0">Подключённые аккаунты</div>
   </div>
   <div id="connectedAccountsList"></div>
@@ -4732,6 +4732,23 @@ async function _relinkOAuth(provider){
   }
 }
 
+function openPrivacySettings(){
+  closeModal('settingsModal');
+  db.ref('users/'+currentUser.uid).once('value').then(s=>{
+    const u=s.val()||{};
+    const hideFav=!!u.hideFavorites;
+    document.getElementById('settingsContent').innerHTML=
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px"><button class="btn-icon" onclick="openSettings()"><span class="material-symbols-rounded">arrow_back</span></button><div class="modal-title" style="margin-bottom:0">Конфиденциальность</div></div>'+
+      '<div class="settings-item"><span class="material-symbols-rounded">visibility_off</span><div class="settings-item-info"><div class="settings-item-title">Скрыть понравившиеся треки</div><div class="settings-item-sub">Другие пользователи не увидят ваши лайки</div></div><label class="md-switch"><input type="checkbox" id="privacyHideFav" '+(hideFav?'checked':'')+' onchange="togglePrivacyHideFav(this.checked)"><span class="slider"></span></label></div>';
+    document.getElementById('settingsModal').classList.add('open');
+  });
+}
+function togglePrivacyHideFav(val){
+  if(!currentUser)return;
+  db.ref('users/'+currentUser.uid+'/hideFavorites').set(val);
+  showSnackbar(val?'Понравившиеся скрыты':'Понравившиеся видны');
+}
+
 function loginUser(ud){
   currentUser={uid:ud.uid,username:ud.username||'',email:ud.email||'',displayName:ud.displayName||'Пользователь',photo:ud.photo||'',bio:ud.bio||'',authMethod:ud.authMethod||'email'};
   localStorage.setItem('mp_user',JSON.stringify(currentUser));
@@ -4893,6 +4910,7 @@ function openSettings(){
       '<div class="settings-item" onclick="openEmailSettings()"><span class="material-symbols-rounded">mail</span><div class="settings-item-info"><div class="settings-item-title">Email</div><div class="settings-item-sub">'+(u.email||'Не привязан')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       (hasEmail?'<div class="settings-item" onclick="openChangePassword()"><span class="material-symbols-rounded">lock</span><div class="settings-item-info"><div class="settings-item-title">Сменить пароль</div><div class="settings-item-sub">Отправит подтверждение на почту</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
       '<div class="settings-item" onclick="openConnectedAccounts()"><span class="material-symbols-rounded">link</span><div class="settings-item-info"><div class="settings-item-title">Подключённые аккаунты</div><div class="settings-item-sub">Telegram, Google, GitHub</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+      '<div class="settings-item" onclick="openPrivacySettings()"><span class="material-symbols-rounded">shield</span><div class="settings-item-info"><div class="settings-item-title">Конфиденциальность</div><div class="settings-item-sub">Скрыть понравившиеся треки</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div style="margin:16px 0;height:1px;background:var(--md-outline-variant)"></div>'+
       '<div class="settings-item" onclick="cycleThemeMode()"><span class="material-symbols-rounded">contrast</span><div class="settings-item-info"><div class="settings-item-title">Тема</div><div class="settings-item-sub">'+themeLabel+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">sync</span></div>'+
       '<div class="settings-item" onclick="openLabsModal()"><span class="material-symbols-rounded">experiment</span><div class="settings-item-info"><div class="settings-item-title">Labs-фичи</div><div class="settings-item-sub">Экспериментальные функции и стили</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
@@ -5589,14 +5607,14 @@ function openTrackFromHash(){
   const tid=decodeURIComponent(match[1]||'');
   if(!tid)return false;
   if(_openTrackFromHashDone&&currentTrackId===tid)return true;
-  if(!allTracks[tid]){
+  if(!allTracks[tid]||!allTracks[tid].title){
     let retries=0;
     const tryOpen=()=>{
       if(_openTrackFromHashDone&&currentTrackId===tid)return;
-      if(allTracks[tid]){openTrackFromHash();return}
-      if(++retries<20) setTimeout(tryOpen,300);
+      if(allTracks[tid]&&allTracks[tid].title){openTrackFromHash();return}
+      if(++retries<40) setTimeout(tryOpen,500);
     };
-    setTimeout(tryOpen,300);
+    setTimeout(tryOpen,500);
     return false;
   }
   _openTrackFromHashDone=true;
@@ -5605,6 +5623,7 @@ function openTrackFromHash(){
   return true;
 }
 window.addEventListener('hashchange',()=>{_openTrackFromHashDone=false;openTrackFromHash();});
+document.addEventListener('DOMContentLoaded',()=>setTimeout(openTrackFromHash,1000));
 function shareTrackById(tid){
   const t=allTracks[tid];if(!t)return;
   const url=buildTrackShareUrl(tid);
@@ -5686,7 +5705,7 @@ function handleSearch(q){
 function showPlayer(){if(!playerVisible){playerVisible=true;document.getElementById('playerBar').classList.add('visible')}}
 
 function playTrackById(id){
-  const track=allTracks[id];if(!track){showSnackbar('Трек не найден');return}
+  const track=allTracks[id];if(!track||!track.title){return}
   if(currentTrackId===id){togglePlay();return}
   currentTrackId=id;
   const ap=document.querySelector('.page.active'),items=ap?ap.querySelectorAll('.track-item'):[];
@@ -7920,6 +7939,7 @@ function openCreatorUserDetail(uid){
   db.ref('users/'+uid).once('value').then(s=>{
     const u=s.val()||{};
     const tracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===uid);
+    const verifyButton=isCreatorUser(u)?'':'<button class="btn-tonal" style="'+(u.verified?'color:var(--md-error)':'')+'" onclick="creatorToggleVerify(\''+uid+'\')">'+(u.verified?'<span class="material-symbols-rounded" style="font-size:16px">verified</span> Снять галочку':'<span class="material-symbols-rounded" style="font-size:16px;color:#1d9bf0">verified</span> Выдать галочку')+'</button>';
     const banButton=isCreatorUser(u)
       ? ''
       : '<button class="btn-outlined" onclick="creatorToggleBanUser(\''+uid+'\')">'+(u.banned?'Разбанить':'Бан')+'</button>';
@@ -7950,7 +7970,7 @@ function openCreatorUserDetail(uid){
       +     (authMethods?'<div style="margin-top:4px">Способы входа: '+authMethods+'</div>':'')
       +     accountMergeNote
       +   '</div>'
-      +   banButton
+      +   verifyButton+banButton
       + '</div>'
       + '<div class="settings-item">'
       +   '<span class="material-symbols-rounded">library_music</span>'
@@ -7962,6 +7982,15 @@ function openCreatorUserDetail(uid){
       + trackRows;
     creatorPanelWrap('Пользователь', html);
   });
+}
+async function creatorToggleVerify(uid){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
+  const snap=await db.ref('users/'+uid).once('value');
+  const u=snap.val()||{};
+  const newVal=!u.verified;
+  await db.ref('users/'+uid+'/verified').set(newVal);
+  showSnackbar(newVal?'Галочка выдана':'Галочка снята');
+  openCreatorUserDetail(uid);
 }
 async function creatorToggleBanUser(uid){
   if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
