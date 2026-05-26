@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Удаление фона — нейросеть</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0b1120;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      padding: 1rem;
+      margin: 0;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 650px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 2.5rem;
+      padding: 1.8rem 1.5rem 2.2rem;
+      box-shadow: 0 30px 55px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    h1 {
+      color: #f1f5f9;
+      font-weight: 600;
+      font-size: clamp(1.6rem, 5vw, 2rem);
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    h1 span {
+      background: linear-gradient(135deg, #c084fc, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(124, 58, 237, 0.2);
+      border: 1px solid rgba(124, 58, 237, 0.4);
+      color: #c084fc;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 2rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #a78bfa;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    .upload-area {
+      background: rgba(15, 23, 42, 0.7);
+      border: 2px dashed #475569;
+      border-radius: 1.8rem;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      text-align: center;
+    }
+    .upload-area:hover {
+      border-color: #c084fc;
+      background: rgba(30, 41, 59, 0.6);
+    }
+    .upload-area.dragover {
+      border-color: #a78bfa;
+      background: rgba(124, 58, 237, 0.15);
+    }
+    .upload-icon {
+      font-size: 2.8rem;
+      opacity: 0.8;
+    }
+    .upload-text {
+      color: #cbd5e1;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+    .upload-hint {
+      color: #64748b;
+      font-size: 0.8rem;
+    }
+
+    .progress-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+    }
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #334155;
+      border-top-color: #a78bfa;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-text {
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      max-width: 320px;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #7c3aed, #c084fc);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background:
+        repeating-conic-gradient(#1a2236 0% 25%, #141c2e 0% 50%) 0 0 / 20px 20px;
+      border-radius: 2rem;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 20px 30px -10px rgba(0,0,0,0.6);
+      display: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .canvas-container.holding {
+      cursor: grabbing;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+    }
+
+    #originalCanvas {
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    #originalCanvas.visible {
+      opacity: 1;
+    }
+
+    #resultCanvas {
+      z-index: 0;
+    }
+
+    .hint-overlay {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      z-index: 15;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid #334155;
+      color: #f1f5f9;
+      padding: 0.75rem 1.4rem;
+      border-radius: 2.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+    .btn:hover {
+      background: rgba(51, 65, 85, 0.9);
+    }
+    .btn-primary {
+      background: #7c3aed;
+      border-color: #a78bfa;
+      color: white;
+      box-shadow: 0 6px 18px rgba(124, 58, 237, 0.4);
+    }
+    .btn-primary:hover { background: #6d28d9; }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      filter: grayscale(0.5);
+    }
+
+    .status-text {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      text-align: center;
+      min-height: 1.2rem;
+    }
+
+    input[type="file"] { display: none; }
+
+    @media (max-width: 480px) {
+      .card { padding: 1.5rem 1rem 1.8rem; }
+      .btn { padding: 0.7rem 1rem; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>
+      <span>&#x2702;&#xFE0F; Удалить фон</span>
+      <span class="badge"><span class="badge-dot"></span> AI</span>
+    </h1>
+
+    <div id="uploadArea" class="upload-area">
+      <div class="upload-icon">&#x1F4F7;</div>
+      <div class="upload-text">Загрузите изображение</div>
+      <div class="upload-hint">или перетащите сюда</div>
+    </div>
+
+    <div id="progressContainer" class="progress-container">
+      <div class="spinner"></div>
+      <div class="progress-text" id="progressText">Загружаю нейросеть...</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*">
+
+    <div id="canvasContainer" class="canvas-container">
+      <canvas id="resultCanvas"></canvas>
+      <canvas id="originalCanvas"></canvas>
+      <div class="hint-overlay" id="hintOverlay">&#x1F446; Удерживайте для просмотра ДО</div>
+    </div>
+
+    <div class="controls">
+      <button id="resetBtn" class="btn">&#x1F504; Новое фото</button>
+      <button id="downloadBtn" class="btn btn-primary" disabled>&#x2B07;&#xFE0F; Скачать</button>
+    </div>
+    <div id="statusMessage" class="status-text">Загрузите фото — нейросеть удалит фон автоматически</div>
+  </div>
+
+  <script type="module">
+    import { removeBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.11/+esm';
+
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressText = document.getElementById('progressText');
+    const progressBar = document.getElementById('progressBar');
+    const canvasContainer = document.getElementById('canvasContainer');
+    const originalCanvas = document.getElementById('originalCanvas');
+    const resultCanvas = document.getElementById('resultCanvas');
+    const hintOverlay = document.getElementById('hintOverlay');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const statusDiv = document.getElementById('statusMessage');
+
+    const originalCtx = originalCanvas.getContext('2d');
+    const resultCtx = resultCanvas.getContext('2d');
+
+    let resultBlob = null;
+    let isHolding = false;
+
+    function setupHoldToSee() {
+      const container = canvasContainer;
+
+      const showOriginal = () => {
+        if (!resultBlob) return;
+        isHolding = true;
+        originalCanvas.classList.add('visible');
+        hintOverlay.textContent = '\uD83D\uDD0D Оригинал (ДО) — отпустите';
+        container.classList.add('holding');
+      };
+
+      const showResult = () => {
+        isHolding = false;
+        originalCanvas.classList.remove('visible');
+        hintOverlay.textContent = '\uD83D\uDC46 Удерживайте для просмотра ДО';
+        container.classList.remove('holding');
+      };
+
+      container.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        showOriginal();
+      });
+      window.addEventListener('mouseup', () => { if (isHolding) showResult(); });
+      container.addEventListener('touchstart', () => { showOriginal(); }, { passive: true });
+      container.addEventListener('touchend', () => { if (isHolding) showResult(); });
+      container.addEventListener('touchcancel', () => { if (isHolding) showResult(); });
+    }
+
+    function drawImageCover(ctx, img, cw, ch) {
+      const scale = Math.max(cw / img.width, ch / img.height);
+      const sw = img.width * scale;
+      const sh = img.height * scale;
+      ctx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+    }
+
+    async function loadImage(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        statusDiv.textContent = '\u26A0\uFE0F Пожалуйста, выберите изображение';
+        return;
+      }
+
+      uploadArea.style.display = 'none';
+      progressContainer.style.display = 'flex';
+      canvasContainer.style.display = 'none';
+      downloadBtn.disabled = true;
+      resultBlob = null;
+      isHolding = false;
+
+      progressText.textContent = 'Загружаю нейросеть...';
+      progressBar.style.width = '0%';
+      statusDiv.textContent = '\u2699\uFE0F Обрабатываю...';
+
+      const originalImg = await createImage(file);
+
+      const maxDim = 1024;
+      let w = originalImg.width, h = originalImg.height;
+      if (Math.max(w, h) > maxDim) {
+        const ratio = maxDim / Math.max(w, h);
+        w = Math.floor(w * ratio);
+        h = Math.floor(h * ratio);
+      }
+
+      [originalCanvas, resultCanvas].forEach(c => { c.width = w; c.height = h; });
+
+      const ar = w / h;
+      canvasContainer.style.aspectRatio = `${ar}`;
+
+      originalCtx.drawImage(originalImg, 0, 0, w, h);
+
+      try {
+        const blob = await removeBackground(file, {
+          progress(key, current, total) {
+            if (key === 'fetch:model') {
+              const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+              progressText.textContent = `Загружаю модель... ${pct}%`;
+              progressBar.style.width = pct + '%';
+            } else if (key === 'compute:inference') {
+              progressText.textContent = 'Удаляю фон (нейросеть работает)...';
+              progressBar.style.width = '100%';
+            }
+          }
+        });
+
+        resultBlob = blob;
+
+        const resultImg = await createImage(blob);
+        resultCtx.clearRect(0, 0, w, h);
+        resultCtx.drawImage(resultImg, 0, 0, w, h);
+
+        progressContainer.style.display = 'none';
+        canvasContainer.style.display = 'block';
+        originalCanvas.classList.remove('visible');
+        hintOverlay.textContent = '\uD83D\uDC46 Удерживайте для просмотра ДО';
+        statusDiv.textContent = '\u2705 Готово! Удерживайте для сравнения с оригиналом';
+        downloadBtn.disabled = false;
+      } catch (err) {
+        console.error('Background removal error:', err);
+        progressContainer.style.display = 'none';
+        uploadArea.style.display = 'flex';
+        statusDiv.textContent = '\u274C Ошибка обработки: ' + (err.message || 'неизвестная ошибка');
+      }
+    }
+
+    function createImage(source) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Не удалось загрузить изображение'));
+        if (source instanceof Blob) {
+          img.src = URL.createObjectURL(source);
+        } else if (typeof source === 'string') {
+          img.src = source;
+        } else if (source instanceof File) {
+          const reader = new FileReader();
+          reader.onload = (e) => { img.src = e.target.result; };
+          reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+          reader.readAsDataURL(source);
+        }
+      });
+    }
+
+    function downloadResult() {
+      if (!resultBlob) return;
+      const url = URL.createObjectURL(resultBlob);
+      const a = document.createElement('a');
+      a.download = 'bez_fona.png';
+      a.href = url;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
+
+    function reset() {
+      resultBlob = null;
+      isHolding = false;
+      originalCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
+      resultCtx.clearRect(0, 0, resultCanvas.width, resultCanvas.height);
+      originalCanvas.classList.remove('visible');
+      canvasContainer.style.display = 'none';
+      progressContainer.style.display = 'none';
+      uploadArea.style.display = 'flex';
+      downloadBtn.disabled = true;
+      statusDiv.textContent = 'Загрузите фото — нейросеть удалит фон автоматически';
+      fileInput.value = '';
+    }
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => { if (e.target.files[0]) loadImage(e.target.files[0]); });
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]);
+    });
+    resetBtn.addEventListener('click', reset);
+    downloadBtn.addEventListener('click', downloadResult);
+    setupHoldToSee();
+  </script>
+</body>
+</html>
