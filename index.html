@@ -4138,6 +4138,10 @@ async function analyzeTrackLyricsWithAI({audioFile=null,title='',genre='',musicA
 
 async function analyzeLyricsForUpload(){
   if(!selectedAudioFile && !selectedAudioDataURL){showSnackbar('Сначала выберите аудиофайл');return}
+  if(!selectedAudioFile && selectedAudioDataURL){
+    try{const r=await fetch(selectedAudioDataURL);const b=await r.blob();selectedAudioFile=new File([b],'track.mp3',{type:b.type||'audio/mpeg'})}catch(e){}
+  }
+  if(!selectedAudioFile){showSnackbar('Не удалось подготовить аудио для анализа');return}
   const btn=document.getElementById('analyzeUploadLyricsBtn');
   const status=document.getElementById('uploadAiLyricsStatus');
   const title=document.getElementById('uploadTitle').value.trim();
@@ -4156,7 +4160,7 @@ async function analyzeLyricsForUpload(){
     });
     const result=await runWithTimeout(
       ()=>analyzeTrackLyricsWithAI({audioFile:selectedAudioFile,title,genre,musicAuthor,duration,seedLyrics}),
-      15000,
+      60000,
       {transcript:'',hasVocals:true,chorus:'',songStructure:(seedLyrics?[{type:'lyrics',label:'Текст',text:seedLyrics}]:[]),structureSummary:'Таймаут анализа текста',displayLyrics:seedLyrics||'[текст не распознан транскрибатором]',detectedLyrics:seedLyrics||'[текст не распознан транскрибатором]',uncertainTranscription:true}
     );
     document.getElementById('uploadLyrics').value=(result.displayLyrics||result.detectedLyrics||seedLyrics||'[текст не распознан транскрибатором]').trim();
@@ -4205,7 +4209,7 @@ async function analyzeLyricsForEdit(){
     if(!audioFile) throw new Error('no-audio');
     const result=await runWithTimeout(
       ()=>analyzeTrackLyricsWithAI({audioFile,title,genre,musicAuthor,duration:Number(track.duration||0),seedLyrics}),
-      15000,
+      60000,
       {transcript:'',hasVocals:true,chorus:'',songStructure:(seedLyrics?[{type:'lyrics',label:'Текст',text:seedLyrics}]:[]),structureSummary:'Таймаут анализа текста',displayLyrics:seedLyrics||'[текст не распознан транскрибатором]',detectedLyrics:seedLyrics||'[текст не распознан транскрибатором]',uncertainTranscription:true}
     );
     document.getElementById('editTrackLyrics').value=(result.displayLyrics||result.detectedLyrics||seedLyrics||'[текст не распознан транскрибатором]').trim();
@@ -4733,14 +4737,12 @@ async function _relinkOAuth(provider){
 }
 
 function openPrivacySettings(){
-  closeModal('settingsModal');
   db.ref('users/'+currentUser.uid).once('value').then(s=>{
     const u=s.val()||{};
     const hideFav=!!u.hideFavorites;
     document.getElementById('settingsContent').innerHTML=
       '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px"><button class="btn-icon" onclick="openSettings()"><span class="material-symbols-rounded">arrow_back</span></button><div class="modal-title" style="margin-bottom:0">Конфиденциальность</div></div>'+
       '<div class="settings-item"><span class="material-symbols-rounded">visibility_off</span><div class="settings-item-info"><div class="settings-item-title">Скрыть понравившиеся треки</div><div class="settings-item-sub">Другие пользователи не увидят ваши лайки</div></div><label class="md-switch"><input type="checkbox" id="privacyHideFav" '+(hideFav?'checked':'')+' onchange="togglePrivacyHideFav(this.checked)"><span class="slider"></span></label></div>';
-    document.getElementById('settingsModal').classList.add('open');
   });
 }
 function togglePrivacyHideFav(val){
@@ -7671,11 +7673,16 @@ function showModerationDetails(trackId,kind){
     const reasons=[];
     if(m.reason) reasons.push(m.reason);
     if(detected && detected!=='[инструментал]') reasons.push('В распознанном тексте найдены чувствительные слова или выражения');
+    const foundWords=[];
+    const allText=(t.title+' '+t.lyrics+' '+detected+' '+transcript).toLowerCase().replace(/[^a-zа-яёй0-9]/gi,' ');
+    explicitWords.forEach(w=>{if(allText.includes(w.toLowerCase()))foundWords.push(w)});
+    const uniqueFound=[...new Set(foundWords)];
+    const highlightedDetected=detected?(()=>{let h=esc(detected.slice(0,1800));uniqueFound.forEach(w=>{const re=new RegExp('('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');h=h.replace(re,'<mark style="background:#F2B8B5;border-radius:4px;padding:0 2px;color:var(--md-on-surface)">$1</mark>')});return h})():'[нет данных]';
     body.innerHTML='<div class="settings-item" style="align-items:flex-start"><span class="material-symbols-rounded">warning</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Трек')+'</div><div class="settings-item-sub">Трек отмечен как содержащий чувствительный контент • '+stamp+'</div></div></div>'+
     '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Почему поставлена пометка</div><div class="effect-sub" style="margin-top:8px">'+esc(reasons.join('. ')||'В тексте/транскрипции обнаружены маты, токсичные или неприемлемые слова')+'</div></div>'+
-    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Что распознано</div><div class="effect-sub" style="margin-top:8px">'+esc((detected||'[нет данных]').slice(0,1800))+'</div></div>'+
+    (uniqueFound.length?'<div class="effect-card" style="margin-top:12px"><div class="effect-name">Найденные слова</div><div class="effect-sub" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+uniqueFound.map(w=>'<span style="background:#F2B8B5;border-radius:8px;padding:2px 10px;font:500 13px/20px \'Inter\',sans-serif;color:var(--md-on-surface)">'+esc(w)+'</span>').join('')+'</div></div>':'')+
+    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Что распознано</div><div class="effect-sub" style="margin-top:8px;white-space:pre-wrap">'+highlightedDetected+'</div></div>'+
     '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Транскрипция</div><div class="effect-sub" style="margin-top:8px">'+esc(transcript||'Транскрипция недоступна')+'</div></div>'+
-    '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Момент проверки</div><div class="effect-sub" style="margin-top:8px">При публикации / фоновом анализе после загрузки трека</div></div>'+
     '<div class="effect-card" style="margin-top:12px"><div class="effect-name">Уверенность</div><div class="effect-sub" style="margin-top:8px">'+Math.round(Number(m.confidence||0)*100)+'%</div></div>';
   }
   document.getElementById('moderationDetailsModal').classList.add('open');
