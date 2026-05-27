@@ -7248,7 +7248,7 @@ async function publishTrack(){
         lyrics:quickLyrics,
         musicAuthor,
         artistId:currentUser.uid,
-        artistName:musicAuthor||currentUser.displayName||'Неизвестен',
+        artistName:currentUser.displayName||'Неизвестен',
         duration:Math.round(duration),
         explicit:!!quickExplicit,
         userForcedExplicit:false,
