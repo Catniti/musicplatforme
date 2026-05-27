@@ -3439,14 +3439,14 @@ body[data-ui-style="glass"]{display:contents}
     <div class="modal-title" style="margin-bottom:0">Аудио-эффекты</div>
   </div>
   <div class="effect-presets">
-    <button class="speed-btn" onclick="applyFxPreset('off')">Обычный</button>
-    <button class="speed-btn" onclick="applyFxPreset('cinema')">Кино</button>
-    <button class="speed-btn" onclick="applyFxPreset('club')">Клуб</button>
-    <button class="speed-btn" onclick="applyFxPreset('focus')">Фокус</button>
-    <button class="speed-btn" onclick="applyFxPreset('8d')">8D</button>
-    <button class="speed-btn" onclick="applyFxPreset('bass')">Bass Boost</button>
-    <button class="speed-btn" onclick="applyFxPreset('vocal')">Vocal</button>
-    <button class="speed-btn" onclick="applyFxPreset('night')">Night</button>
+    <button class="speed-btn active" data-preset="off" onclick="applyFxPreset('off')">Обычный</button>
+    <button class="speed-btn" data-preset="cinema" onclick="applyFxPreset('cinema')">Кино</button>
+    <button class="speed-btn" data-preset="club" onclick="applyFxPreset('club')">Клуб</button>
+    <button class="speed-btn" data-preset="focus" onclick="applyFxPreset('focus')">Фокус</button>
+    <button class="speed-btn" data-preset="8d" onclick="applyFxPreset('8d')">8D</button>
+    <button class="speed-btn" data-preset="bass" onclick="applyFxPreset('bass')">Bass Boost</button>
+    <button class="speed-btn" data-preset="vocal" onclick="applyFxPreset('vocal')">Vocal</button>
+    <button class="speed-btn" data-preset="night" onclick="applyFxPreset('night')">Night</button>
   </div>
   <div class="effect-grid">
     <div class="effect-card">
@@ -3683,6 +3683,7 @@ let partyGeoWatchId=null;
 let partyGeo={enabled:false,lat:null,lon:null,accuracy:null};
 let audioCtx=null,mediaSource=null,fxNodes=null;
 let fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};
+let currentFxPreset='off';
 localStorage.setItem('mp_device_id',deviceId);localStorage.setItem('mp_device_name',deviceName);
 try{const savedFx=JSON.parse(localStorage.getItem('mp_fx_state')||'null');if(savedFx)fxState={...fxState,...savedFx}}catch(e){}
 const audio=document.getElementById('audioPlayer');
@@ -6421,8 +6422,11 @@ function syncFxUi(){
   document.getElementById('fx8dRateValue').textContent=Number(fxState.eightDRate||.35).toFixed(2)+'x';
   document.getElementById('fxWidthValue').textContent=Number(fxState.width||1).toFixed(2)+'x';
   document.getElementById('fxEchoValue').textContent=Math.round(Number(fxState.echo||0))+'%';
+  document.querySelectorAll('.effect-presets .speed-btn[data-preset]').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.preset===currentFxPreset);
+  });
 }
-function toggleFx(name){fxState[name]=!fxState[name];startAudioEngine();applyFxState();syncFxUi()}
+function toggleFx(name){fxState[name]=!fxState[name];currentFxPreset=null;startAudioEngine();applyFxState();syncFxUi()}
 function updateFxFromUI(){
   fxState.bass=Number(document.getElementById('fxBass')?.value||0);
   fxState.presence=Number(document.getElementById('fxPresence')?.value||0);
@@ -6433,9 +6437,10 @@ function updateFxFromUI(){
   fxState.eightDRate=Number(document.getElementById('fx8dRate')?.value||.35);
   fxState.width=Number(document.getElementById('fxWidth')?.value||1);
   fxState.echo=Number(document.getElementById('fxEcho')?.value||0);
+  currentFxPreset=null;
   startAudioEngine();applyFxState();syncFxUi();
 }
-function resetFx(){fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};applyFxState();syncFxUi();showSnackbar('Эффекты сброшены')}
+function resetFx(){fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};currentFxPreset='off';applyFxState();syncFxUi();showSnackbar('Эффекты сброшены')}
 function applyFxPreset(name){
   if(name==='off')fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};
   if(name==='cinema')fxState={...fxState,spatial:true,eightD:false,drive:false,bass:5,presence:3,air:2,warmth:2,gain:1.04,speed:1,eightDRate:.35,width:1.35,echo:12};
@@ -6445,7 +6450,10 @@ function applyFxPreset(name){
   if(name==='bass')fxState={...fxState,spatial:false,eightD:false,drive:true,bass:12,presence:0,air:-1,warmth:2,gain:1.08,speed:1,eightDRate:.35,width:1,echo:0};
   if(name==='vocal')fxState={...fxState,spatial:false,eightD:false,drive:false,bass:-2,presence:7,air:5,warmth:1,gain:1,speed:1,eightDRate:.35,width:1.05,echo:0};
   if(name==='night')fxState={...fxState,spatial:true,eightD:false,drive:false,bass:3,presence:-1,air:-2,warmth:4,gain:.94,speed:1,eightDRate:.2,width:1.15,echo:14};
-  startAudioEngine();applyFxState();syncFxUi();showSnackbar('Пресет: '+name)
+  currentFxPreset=name;
+  startAudioEngine();applyFxState();syncFxUi();
+  const labels={off:'Обычный',cinema:'Кино',club:'Клуб',focus:'Фокус','8d':'8D',bass:'Bass Boost',vocal:'Vocal',night:'Night'};
+  showSnackbar('Пресет: '+(labels[name]||name));
 }
 
 /* ===== FULLSCREEN PLAYER ===== */
@@ -7376,9 +7384,14 @@ function deleteTrack(id){
   if(sel) sel.value='';
   document.getElementById('deleteModal').classList.add('open');
 }
-function confirmDeleteTrack(){
+async function confirmDeleteTrack(){
   if(!deleteTrackId||!currentUser)return;const t=allTracks[deleteTrackId];
-  if(!t||t.artistId!==currentUser.uid){showSnackbar('Нет доступа');closeModal('deleteModal');return}
+  const isOwner=t&&t.artistId===currentUser.uid;
+  const creator=isCreatorUser(currentUser);
+  if(!t||(!isOwner&&!creator)){showSnackbar('Нет доступа');closeModal('deleteModal');return}
+  const fireUser=firebase.auth().currentUser;
+  if(!fireUser){showSnackbar('Требуется авторизация');closeModal('deleteModal');return}
+  try{await fireUser.getIdToken(true)}catch(e){showSnackbar('Ошибка авторизации');closeModal('deleteModal');return}
   const reason=document.getElementById('deleteTrackReason')?.value||'';
   const delId=deleteTrackId;
   db.ref('tracks/'+delId).remove();
@@ -7813,12 +7826,14 @@ function getFilteredCreatorLogs(){
   });
 }
 function openCreatorLogs(){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступ запрещён');return}
   const serverBadge='<span style="font:600 12px/16px \'Inter\',sans-serif;color:var(--md-primary);background:var(--md-primary-container);border-radius:8px;padding:3px 10px;flex-shrink:0">СЕРВЕР</span>';
   creatorPanelWrap('Логи', '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">'+serverBadge+'<input class="md-input" id="creatorLogFromDate" type="date" style="max-width:150px;margin:0;border-radius:14px"><input class="md-input" id="creatorLogToDate" type="date" style="max-width:150px;margin:0;border-radius:14px"><button class="btn-tonal" onclick="renderCreatorRealtimeConsole()"><span class="material-symbols-rounded">filter_alt</span> Фильтр</button><button class="btn-tonal" onclick="loadAllCreatorLogs().then(renderCreatorRealtimeConsole)"><span class="material-symbols-rounded">sync</span> Обновить</button><button class="btn-tonal" onclick="creatorLogs=[];globalCreatorLogs=[];renderCreatorRealtimeConsole();pushCreatorLog(\'info\',\'Логи очищены локально\')"><span class="material-symbols-rounded">delete_sweep</span> Очистить</button></div><div class="creator-console" id="creatorRealtimeConsole"></div>');
   pushCreatorLog('info','Открыта realtime-консоль создателя');
   loadAllCreatorLogs().then(renderCreatorRealtimeConsole);
 }
 async function openCreatorReports(){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступ запрещён');return}
   const snap=await db.ref('reports').once('value');
   const reports=snap.val()||{};
   const grouped={};
@@ -7853,6 +7868,7 @@ async function openCreatorReports(){
   }).join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">done_all</span><h3>Жалоб нет</h3></div>'));
 }
 function creatorDeleteTrackConfirm(tid,rowId){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
   const t=allTracks[tid];
   if(!t){showSnackbar('Трек не найден');return}
   if(confirm('Удалить трек "'+(t.title||'Без названия')+'"?')){
@@ -7883,10 +7899,12 @@ function openCreatorStats(){
   });
 }
 function openCreatorTrackManager(){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступ запрещён');return}
   const rows=Object.entries(allTracks).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0)).slice(0,100);
   creatorPanelWrap('Управление треками', rows.length?rows.map(([id,t])=>'<div class="settings-item"><span class="material-symbols-rounded">music_note</span><div class="settings-item-info"><div class="settings-item-title">'+esc(t.title||'Без названия')+'</div><div class="settings-item-sub">'+esc(t.artistName||'—')+' • '+formatPlays(t.plays||0)+' прослушиваний</div></div><button class="btn-text" onclick="playTrackById(\''+id+'\')">Открыть</button><button class="btn-outlined" onclick="creatorEditForeignTrack(\''+id+'\')">Изменить</button><button class="btn-outlined" onclick="creatorDeleteTrackConfirm(\''+id+'\')">Удалить</button></div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">music_off</span><h3>Нет треков</h3></div>');
 }
 async function toggleServiceFeatured(tid){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступно только создателю');return}
   const t=allTracks[tid];
   if(!t||!t.title)return;
   const newFeatured=!t.serviceFeatured;
@@ -7898,6 +7916,7 @@ async function toggleServiceFeatured(tid){
   openCreatorTrackManager();
 }
 async function openCreatorModuleCheck(){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступ запрещён');return}
   const headerHtml='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'
     +'<span style="font:600 12px/16px \'Inter\',sans-serif;color:var(--md-primary);background:var(--md-primary-container);border-radius:8px;padding:3px 10px">СЕРВЕР</span>'
     +'<button class="btn-tonal" onclick="openCreatorModuleCheck()"><span class="material-symbols-rounded">refresh</span> Обновить</button>'
@@ -7934,6 +7953,7 @@ async function openCreatorModuleCheck(){
   }).join('');
 }
 function openCreatorUsers(){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступ запрещён');return}
   db.ref('users').once('value').then(s=>{
     const users=Object.values(s.val()||{}).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
     const html=users.length
@@ -7943,6 +7963,7 @@ function openCreatorUsers(){
   });
 }
 function openCreatorUserDetail(uid){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступ запрещён');return}
   db.ref('users/'+uid).once('value').then(s=>{
     const u=s.val()||{};
     const tracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===uid);
@@ -8059,6 +8080,7 @@ function revokeVerification(uid){
   }).catch(e=>showSnackbar('Ошибка: '+e.message));
 }
 function openVerificationRequests(){
+  if(!isCreatorUser(currentUser)){showSnackbar('Доступ запрещён');return}
   db.ref('verificationRequests').orderByChild('status').equalTo('pending').once('value').then(s=>{
     const reqs=s.val()||{};
     const entries=Object.entries(reqs);
@@ -8180,6 +8202,34 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeFullscreenPlayer();if(queueOpen)toggleQueue();document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.remove('open'));document.querySelectorAll('.track-context-menu').forEach(m=>m.remove())}
 });
 document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.id==='loginIdentity'||e.target.id==='loginPassword')doLogin();if(e.target.id==='regPassword2')doRegister()});
+
+/* ===== SECURITY: protect sensitive functions from console access ===== */
+(function(){
+  const _confirmDelete=confirmDeleteTrack;
+  const _creatorDelete=creatorDeleteTrackConfirm;
+  const _publishTrack=publishTrack;
+  window.confirmDeleteTrack=function(){
+    if(!document.getElementById('deleteModal')?.classList.contains('open')){console.warn('[Security] Прямой вызов запрещён');return}
+    return _confirmDelete.apply(this,arguments);
+  };
+  window.creatorDeleteTrackConfirm=function(){
+    if(!isCreatorUser(currentUser)){console.warn('[Security] Доступ запрещён');return}
+    return _creatorDelete.apply(this,arguments);
+  };
+  const _dbRef=db.ref.bind(db);
+  const protectedPaths=['tracks','users','trackAudio','reports','deletedTracks','verificationRequests'];
+  const origRemove=firebase.database.Reference.prototype.remove;
+  firebase.database.Reference.prototype.remove=function(){
+    const path=this.toString().replace(this.root.toString(),'');
+    const topLevel=path.split('/')[0];
+    if(protectedPaths.includes(topLevel)){
+      if(!currentUser){console.warn('[Security] Удаление запрещено: нет авторизации');return Promise.reject(new Error('Unauthorized'))}
+      const fireUser=firebase.auth().currentUser;
+      if(!fireUser){console.warn('[Security] Удаление запрещено: нет Firebase Auth');return Promise.reject(new Error('Unauthorized'))}
+    }
+    return origRemove.apply(this,arguments);
+  };
+})();
 
 /* ===== INIT ===== */
 restoreSession();
