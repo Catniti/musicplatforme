@@ -3438,46 +3438,101 @@ body[data-ui-style="glass"]{display:contents}
     <button class="btn-icon" onclick="closeModal('audioEffectsModal')"><span class="material-symbols-rounded">arrow_back</span></button>
     <div class="modal-title" style="margin-bottom:0">Аудио-эффекты</div>
   </div>
-  <div class="effect-presets">
-    <button class="speed-btn" onclick="applyFxPreset('off')">Обычный</button>
-    <button class="speed-btn" onclick="applyFxPreset('cinema')">Кино</button>
-    <button class="speed-btn" onclick="applyFxPreset('club')">Клуб</button>
-    <button class="speed-btn" onclick="applyFxPreset('focus')">Фокус</button>
-    <button class="speed-btn" onclick="applyFxPreset('8d')">8D</button>
-    <button class="speed-btn" onclick="applyFxPreset('bass')">Bass Boost</button>
-    <button class="speed-btn" onclick="applyFxPreset('vocal')">Vocal</button>
-    <button class="speed-btn" onclick="applyFxPreset('night')">Night</button>
+  <div class="tab-bar" style="margin-bottom:16px">
+    <div class="tab-item active" onclick="switchFxTab('presets',this)">Готовые</div>
+    <div class="tab-item" onclick="switchFxTab('custom',this)">Настраиваемые</div>
   </div>
-  <div class="effect-grid">
-    <div class="effect-card">
-      <div class="effect-card-title"><span class="material-symbols-rounded">surround_sound</span> Пространство</div>
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Объёмное звучание</div><div class="effect-sub">Лёгкое расширение стерео</div></div><div class="toggle" id="fxSpatialToggle" onclick="toggleFx('spatial')"></div></div>
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">8D-движение</div><div class="effect-sub">Звук вращается вокруг головы</div></div><div class="toggle" id="fx8DToggle" onclick="toggleFx('eightD')"></div></div>
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Скорость 8D</div><div class="effect-sub">Скорость панорамирования</div></div><div class="effect-value" id="fx8dRateValue">0.35x</div></div>
-      <input class="effect-slider" id="fx8dRate" type="range" min="0.05" max="1.2" step="0.01" value="0.35" oninput="updateFxFromUI()">
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Ширина стерео</div><div class="effect-sub">Насколько широко разводить каналы</div></div><div class="effect-value" id="fxWidthValue">1.00x</div></div>
-      <input class="effect-slider" id="fxWidth" type="range" min="0.8" max="2.4" step="0.01" value="1" oninput="updateFxFromUI()">
+  <div id="fxPresetsTab">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('surround')">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-primary);margin-bottom:8px">surround_sound</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">Объёмное звучание</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Стерео 2.40x • Воздух +6 dB • Тёплота +3 dB</div>
+      </div>
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('8d-move')">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-primary);margin-bottom:8px">360</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">8D движение</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Звук вращается вокруг • Скорость 0.10x</div>
+      </div>
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('cinema')">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-primary);margin-bottom:8px">movie</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">Кино</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Широкая сцена • Басс +5 • Эхо</div>
+      </div>
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('club')">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-primary);margin-bottom:8px">nightlife</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">Клуб</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Мощный басс • Драйв • Тёплый звук</div>
+      </div>
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('bass')">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-primary);margin-bottom:8px">speaker</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">Bass Boost</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Максимум баса • Драйв • +12 dB</div>
+      </div>
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('vocal')">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-primary);margin-bottom:8px">mic</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">Вокал</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Чёткий голос • Воздух +5 • Чёткость +7</div>
+      </div>
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('night')">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-primary);margin-bottom:8px">bedtime</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">Ночной</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Тихий и мягкий • Тёплота +4 • Эхо</div>
+      </div>
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('focus')">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-primary);margin-bottom:8px">psychology</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">Фокус</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Чёткость +6 • Воздух +4 • Без баса</div>
+      </div>
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('concert')">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-primary);margin-bottom:8px">stadium</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">Концерт</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Широкая сцена • Эхо • Объём</div>
+      </div>
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('lofi')">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-primary);margin-bottom:8px">headphones</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">Lo-Fi</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Тёплый винил • Басс +4 • Мягкий драйв</div>
+      </div>
+      <div class="effect-card" style="cursor:pointer;text-align:center;padding:20px 14px" onclick="applyFxPreset('off')" id="fxPresetOffCard">
+        <span class="material-symbols-rounded" style="font-size:36px;color:var(--md-outline);margin-bottom:8px">volume_up</span>
+        <div style="font:600 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)">Обычный</div>
+        <div style="font:400 12px/16px 'Inter',sans-serif;color:var(--md-on-surface-variant);margin-top:4px">Без эффектов</div>
+      </div>
     </div>
-    <div class="effect-card">
-      <div class="effect-card-title"><span class="material-symbols-rounded">music_note</span> Тон и детали</div>
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Басс</div><div class="effect-sub">Больше глубины и удара</div></div><div class="effect-value" id="fxBassValue">0 dB</div></div>
-      <input class="effect-slider" id="fxBass" type="range" min="-10" max="16" step="1" value="0" oninput="updateFxFromUI()">
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Чёткость</div><div class="effect-sub">Вокал и детали выше</div></div><div class="effect-value" id="fxPresenceValue">0 dB</div></div>
-      <input class="effect-slider" id="fxPresence" type="range" min="-8" max="14" step="1" value="0" oninput="updateFxFromUI()">
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Воздух</div><div class="effect-sub">Лёгкий блеск верхов</div></div><div class="effect-value" id="fxAirValue">0 dB</div></div>
-      <input class="effect-slider" id="fxAir" type="range" min="-6" max="12" step="1" value="0" oninput="updateFxFromUI()">
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Тёплота</div><div class="effect-sub">Мягче и плотнее середина</div></div><div class="effect-value" id="fxWarmthValue">0 dB</div></div>
-      <input class="effect-slider" id="fxWarmth" type="range" min="-8" max="10" step="1" value="0" oninput="updateFxFromUI()">
-    </div>
-    <div class="effect-card">
-      <div class="effect-card-title"><span class="material-symbols-rounded">tune</span> Динамика</div>
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Мягкий драйв</div><div class="effect-sub">Лёгкая насыщенность звука</div></div><div class="toggle" id="fxDriveToggle" onclick="toggleFx('drive')"></div></div>
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Громкость</div><div class="effect-sub">Дополнительный уровень</div></div><div class="effect-value" id="fxGainValue">1.00x</div></div>
-      <input class="effect-slider" id="fxGain" type="range" min="0.6" max="1.8" step="0.01" value="1" oninput="updateFxFromUI()">
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Скорость</div><div class="effect-sub">Playback rate</div></div><div class="effect-value" id="fxSpeedValue">1.00x</div></div>
-      <input class="effect-slider" id="fxSpeed" type="range" min="0.75" max="1.35" step="0.01" value="1" oninput="updateFxFromUI()">
-      <div class="effect-row"><div class="effect-meta"><div class="effect-name">Эхо</div><div class="effect-sub">Лёгкий хвост пространства</div></div><div class="effect-value" id="fxEchoValue">0%</div></div>
-      <input class="effect-slider" id="fxEcho" type="range" min="0" max="40" step="1" value="0" oninput="updateFxFromUI()">
+  </div>
+  <div id="fxCustomTab" style="display:none">
+    <div class="effect-grid">
+      <div class="effect-card">
+        <div class="effect-card-title"><span class="material-symbols-rounded">surround_sound</span> Пространство</div>
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Объёмное звучание</div><div class="effect-sub">Лёгкое расширение стерео</div></div><div class="toggle" id="fxSpatialToggle" onclick="toggleFx('spatial')"></div></div>
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">8D-движение</div><div class="effect-sub">Звук вращается вокруг головы</div></div><div class="toggle" id="fx8DToggle" onclick="toggleFx('eightD')"></div></div>
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Скорость 8D</div><div class="effect-sub">Скорость панорамирования</div></div><div class="effect-value" id="fx8dRateValue">0.35x</div></div>
+        <input class="effect-slider" id="fx8dRate" type="range" min="0.05" max="1.2" step="0.01" value="0.35" oninput="updateFxFromUI()">
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Ширина стерео</div><div class="effect-sub">Насколько широко разводить каналы</div></div><div class="effect-value" id="fxWidthValue">1.00x</div></div>
+        <input class="effect-slider" id="fxWidth" type="range" min="0.8" max="2.4" step="0.01" value="1" oninput="updateFxFromUI()">
+      </div>
+      <div class="effect-card">
+        <div class="effect-card-title"><span class="material-symbols-rounded">music_note</span> Тон и детали</div>
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Басс</div><div class="effect-sub">Больше глубины и удара</div></div><div class="effect-value" id="fxBassValue">0 dB</div></div>
+        <input class="effect-slider" id="fxBass" type="range" min="-10" max="16" step="1" value="0" oninput="updateFxFromUI()">
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Чёткость</div><div class="effect-sub">Вокал и детали выше</div></div><div class="effect-value" id="fxPresenceValue">0 dB</div></div>
+        <input class="effect-slider" id="fxPresence" type="range" min="-8" max="14" step="1" value="0" oninput="updateFxFromUI()">
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Воздух</div><div class="effect-sub">Лёгкий блеск верхов</div></div><div class="effect-value" id="fxAirValue">0 dB</div></div>
+        <input class="effect-slider" id="fxAir" type="range" min="-6" max="12" step="1" value="0" oninput="updateFxFromUI()">
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Тёплота</div><div class="effect-sub">Мягче и плотнее середина</div></div><div class="effect-value" id="fxWarmthValue">0 dB</div></div>
+        <input class="effect-slider" id="fxWarmth" type="range" min="-8" max="10" step="1" value="0" oninput="updateFxFromUI()">
+      </div>
+      <div class="effect-card">
+        <div class="effect-card-title"><span class="material-symbols-rounded">tune</span> Динамика</div>
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Мягкий драйв</div><div class="effect-sub">Лёгкая насыщенность звука</div></div><div class="toggle" id="fxDriveToggle" onclick="toggleFx('drive')"></div></div>
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Громкость</div><div class="effect-sub">Дополнительный уровень</div></div><div class="effect-value" id="fxGainValue">1.00x</div></div>
+        <input class="effect-slider" id="fxGain" type="range" min="0.6" max="1.8" step="0.01" value="1" oninput="updateFxFromUI()">
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Скорость</div><div class="effect-sub">Playback rate</div></div><div class="effect-value" id="fxSpeedValue">1.00x</div></div>
+        <input class="effect-slider" id="fxSpeed" type="range" min="0.75" max="1.35" step="0.01" value="1" oninput="updateFxFromUI()">
+        <div class="effect-row"><div class="effect-meta"><div class="effect-name">Эхо</div><div class="effect-sub">Лёгкий хвост пространства</div></div><div class="effect-value" id="fxEchoValue">0%</div></div>
+        <input class="effect-slider" id="fxEcho" type="range" min="0" max="40" step="1" value="0" oninput="updateFxFromUI()">
+      </div>
     </div>
   </div>
   <div class="effect-note">Эффекты работают локально на устройстве через Web Audio API и не ломают обычное воспроизведение.</div>
@@ -5794,7 +5849,7 @@ async function doLoad(track){
   }).catch(err=>{showSnackbar('Ошибка воспроизведения')})
 }
 
-function togglePlay(){if(!audio.src)return;if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});if(isPlaying){audio.pause();document.getElementById('fsCover').classList.remove('playing');if('mediaSession' in navigator)navigator.mediaSession.playbackState='paused';}else{audio.play();document.getElementById('fsCover').classList.add('playing');if('mediaSession' in navigator)navigator.mediaSession.playbackState='playing';}isPlaying=!isPlaying;updatePlayButton();broadcastPlaybackState();broadcastPartyState()}
+function togglePlay(){if(!audio.src)return;if(isPlaying){audio.pause();if(audioCtx&&audioCtx.state==='running')audioCtx.suspend().catch(()=>{});document.getElementById('fsCover').classList.remove('playing');if('mediaSession' in navigator)navigator.mediaSession.playbackState='paused';}else{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});audio.play();document.getElementById('fsCover').classList.add('playing');if('mediaSession' in navigator)navigator.mediaSession.playbackState='playing';}isPlaying=!isPlaying;updatePlayButton();broadcastPlaybackState();broadcastPartyState()}
 function updatePlayButton(){const ic=isPlaying?'pause':'play_arrow';document.getElementById('playIcon').textContent=ic;document.getElementById('fsPlayIcon').textContent=ic;document.getElementById('waveCircle').classList.toggle('playing-anim',isPlaying)}
 function prevTrack(){if(!playlist.length)return;if(audio.currentTime>3){audio.currentTime=0;broadcastPlaybackState();broadcastPartyState();return}playlistIndex=(playlistIndex-1+playlist.length)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
 function nextTrack(){if(!playlist.length)return;if(isShuffle)playlistIndex=Math.floor(Math.random()*playlist.length);else playlistIndex=(playlistIndex+1)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
@@ -6436,8 +6491,16 @@ function updateFxFromUI(){
   startAudioEngine();applyFxState();syncFxUi();
 }
 function resetFx(){fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};applyFxState();syncFxUi();showSnackbar('Эффекты сброшены')}
+function switchFxTab(tab,el){
+  document.querySelectorAll('#audioEffectsModal .tab-item').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('fxPresetsTab').style.display=tab==='presets'?'':'none';
+  document.getElementById('fxCustomTab').style.display=tab==='custom'?'':'none';
+}
 function applyFxPreset(name){
   if(name==='off')fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};
+  if(name==='surround')fxState={...fxState,spatial:true,eightD:false,drive:false,bass:0,presence:0,air:6,warmth:3,gain:1,speed:1,eightDRate:.35,width:2.4,echo:0};
+  if(name==='8d-move')fxState={...fxState,spatial:true,eightD:true,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.10,width:1,echo:0};
   if(name==='cinema')fxState={...fxState,spatial:true,eightD:false,drive:false,bass:5,presence:3,air:2,warmth:2,gain:1.04,speed:1,eightDRate:.35,width:1.35,echo:12};
   if(name==='club')fxState={...fxState,spatial:true,eightD:false,drive:true,bass:9,presence:2,air:1,warmth:3,gain:1.1,speed:1,eightDRate:.35,width:1.2,echo:8};
   if(name==='focus')fxState={...fxState,spatial:false,eightD:false,drive:false,bass:-1,presence:6,air:4,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};
@@ -6445,7 +6508,10 @@ function applyFxPreset(name){
   if(name==='bass')fxState={...fxState,spatial:false,eightD:false,drive:true,bass:12,presence:0,air:-1,warmth:2,gain:1.08,speed:1,eightDRate:.35,width:1,echo:0};
   if(name==='vocal')fxState={...fxState,spatial:false,eightD:false,drive:false,bass:-2,presence:7,air:5,warmth:1,gain:1,speed:1,eightDRate:.35,width:1.05,echo:0};
   if(name==='night')fxState={...fxState,spatial:true,eightD:false,drive:false,bass:3,presence:-1,air:-2,warmth:4,gain:.94,speed:1,eightDRate:.2,width:1.15,echo:14};
-  startAudioEngine();applyFxState();syncFxUi();showSnackbar('Пресет: '+name)
+  if(name==='concert')fxState={...fxState,spatial:true,eightD:false,drive:false,bass:4,presence:4,air:3,warmth:1,gain:1.02,speed:1,eightDRate:.35,width:1.6,echo:18};
+  if(name==='lofi')fxState={...fxState,spatial:false,eightD:false,drive:true,bass:4,presence:-3,air:-2,warmth:5,gain:.96,speed:1,eightDRate:.35,width:1.1,echo:10};
+  const labels={'off':'Обычный','surround':'Объёмное звучание','8d-move':'8D движение','cinema':'Кино','club':'Клуб','focus':'Фокус','8d':'8D','bass':'Bass Boost','vocal':'Вокал','night':'Ночной','concert':'Концерт','lofi':'Lo-Fi'};
+  startAudioEngine();applyFxState();syncFxUi();showSnackbar('Пресет: '+(labels[name]||name))
 }
 
 /* ===== FULLSCREEN PLAYER ===== */
