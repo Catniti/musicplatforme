@@ -1,0 +1,146 @@
+{
+  "rules": {
+    "tracks": {
+      ".read": true,
+      "$trackId": {
+        ".write": "auth != null && (
+          !data.exists() ||
+          data.child('artistId').val() === auth.uid ||
+          root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru'
+        )",
+        "plays": {
+          ".write": "auth != null"
+        },
+        "likes": {
+          ".write": "auth != null"
+        }
+      }
+    },
+    "trackAudio": {
+      "$trackId": {
+        ".read": "auth != null",
+        ".write": "auth != null && (
+          !data.exists() ||
+          root.child('tracks').child($trackId).child('artistId').val() === auth.uid ||
+          root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru'
+        )"
+      }
+    },
+    "trackVideoData": {
+      "$trackId": {
+        ".read": true,
+        ".write": "auth != null && (
+          !data.exists() ||
+          root.child('tracks').child($trackId).child('artistId').val() === auth.uid ||
+          root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru'
+        )"
+      }
+    },
+    "users": {
+      ".read": true,
+      "$uid": {
+        ".write": "auth != null && (
+          $uid === auth.uid ||
+          root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru'
+        )",
+        "verified": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru'"
+        },
+        "banned": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru'"
+        }
+      }
+    },
+    "usernames": {
+      ".read": true,
+      "$username": {
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid || root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru')"
+      }
+    },
+    "emails": {
+      ".read": true,
+      "$email": {
+        ".write": "auth != null"
+      }
+    },
+    "authUidMap": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && ($uid === auth.uid || data.val() === auth.uid || !data.exists())"
+      }
+    },
+    "favorites": {
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && $uid === auth.uid"
+      }
+    },
+    "subscriptions": {
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && $uid === auth.uid"
+      }
+    },
+    "subscribers": {
+      "$artistId": {
+        ".read": true,
+        "$uid": {
+          ".write": "auth != null && $uid === auth.uid"
+        }
+      }
+    },
+    "playlists": {
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && $uid === auth.uid"
+      }
+    },
+    "history": {
+      "$uid": {
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null && $uid === auth.uid"
+      }
+    },
+    "presence": {
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && $uid === auth.uid"
+      }
+    },
+    "reports": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru'",
+      ".write": "auth != null"
+    },
+    "deletedTracks": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru'",
+      ".write": "auth != null"
+    },
+    "verificationRequests": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru'",
+      "$uid": {
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null && ($uid === auth.uid || root.child('users').child(auth.uid).child('email').val() === 'vriskas@catniti.ru')"
+      }
+    },
+    "partySessions": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "artistPhotos": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "notifications": {
+      "$uid": {
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null"
+      }
+    },
+    "fxPresets": {
+      "$uid": {
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null && $uid === auth.uid"
+      }
+    }
+  }
+}
