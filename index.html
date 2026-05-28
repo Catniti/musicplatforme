@@ -1471,15 +1471,7 @@
         title: 'Видео вместо обложки',
         sub: 'В полноэкранном плеере вместо обложки показывается видео трека, если оно есть. Экспериментально.'
       },
-      {
-        key: 'showAds',
-        icon: 'campaign',
-        title: 'Реклама',
-        sub: 'Показывает рекламные баннеры на платформе. Сама реклама на странице будет не скоро — пока это тестовый режим.',
-        onToggle: function(val) {
-          if (val) { _showAdPopup(); } else { _hideAllAds(); }
-        }
-      },
+
     ];
 
     window.renderLabsModal = function() {
@@ -1508,9 +1500,7 @@
       if (!window.labsSettings) window.labsSettings = {};
       window.labsSettings[key] = !window.labsSettings[key];
       try {
-        var toSave = Object.assign({}, window.labsSettings);
-        delete toSave.showAds;
-        localStorage.setItem('mp_labs_settings', JSON.stringify(toSave));
+        localStorage.setItem('mp_labs_settings', JSON.stringify(window.labsSettings));
       } catch {}
       const item = LABS_ITEMS.find(i => i.key === key);
       if (item && item.onToggle) item.onToggle(window.labsSettings[key]);
@@ -3171,8 +3161,8 @@ body[data-ui-style="glass"]{display:contents}
 </div></div>
 <div class="modal-overlay" id="settingsModal"><div class="modal" style="max-width:520px">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-    <button class="btn-icon" onclick="closeModal('settingsModal')"><span class="material-symbols-rounded">arrow_back</span></button>
-    <div class="modal-title" style="margin-bottom:0">Настройки</div>
+    <button class="btn-icon" id="settingsBackBtn" onclick="_settingsBack()"><span class="material-symbols-rounded">arrow_back</span></button>
+    <div class="modal-title" style="margin-bottom:0" id="settingsTitle">Настройки</div>
   </div>
   <div id="settingsContent"></div>
 </div></div>
@@ -3747,43 +3737,13 @@ async function _fetchTrackAudio(trackId){
   return snap2.val()||null;
 }
 let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"compactTrackList":false,"glass":false}');
-labsSettings.showAds=false;
+
 if(labsSettings && labsSettings.liquidGlass!==undefined && labsSettings.glass===undefined){
   labsSettings.glass=!!labsSettings.liquidGlass;
   delete labsSettings.liquidGlass;
   localStorage.setItem('mp_labs_settings',JSON.stringify(labsSettings));
 }
-/* ad functions for labs */
-function _showAdPopup(){
-  if(document.getElementById('adPopup'))return;
-  var overlay=document.createElement('div');overlay.id='adPopup';
-  overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;animation:fadeIn .3s';
-  overlay.innerHTML='<div style="background:var(--md-surface-container-high,#1e1e1e);border-radius:24px;padding:28px;max-width:380px;width:90%;text-align:center;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.4)">'
-    +'<button onclick="document.getElementById(\'adPopup\').remove()" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:var(--md-surface-container,#2a2a2a);border:none;color:var(--md-on-surface,#e0e0e0);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">&times;</button>'
-    +'<div style="font-size:48px;margin-bottom:12px">⛏️</div>'
-    +'<div style="font:700 20px/1.3 Inter,sans-serif;color:var(--md-on-surface,#e0e0e0);margin-bottom:8px">Unbreaking SMP</div>'
-    +'<div style="font:400 14px/1.5 Inter,sans-serif;color:var(--md-on-surface-variant,#a0a0a0);margin-bottom:16px">Майнкрафт сервер для настоящих выживальщиков! Присоединяйся и играй с друзьями.</div>'
-    +'<div style="background:var(--md-surface-container,#2a2a2a);border-radius:12px;padding:12px;margin-bottom:12px">'
-    +'<div style="font:600 13px Inter,sans-serif;color:var(--md-on-surface-variant,#a0a0a0)">IP сервера</div>'
-    +'<div style="font:700 18px Inter,sans-serif;color:var(--md-primary,#6750A4);margin-top:4px;user-select:all">mc.musis.ru</div>'
-    +'<div style="font:400 12px Inter,sans-serif;color:var(--md-on-surface-variant,#a0a0a0);margin-top:4px">Версия: 1.21.11</div>'
-    +'</div>'
-    +'<button onclick="navigator.clipboard.writeText(\'mc.musis.ru\');this.textContent=\'Скопировано!\';setTimeout(()=>{this.textContent=\'Скопировать IP\'},1500)" style="width:100%;padding:12px;background:var(--md-primary,#6750A4);color:#fff;border:none;border-radius:14px;font:600 14px Inter,sans-serif;cursor:pointer">Скопировать IP</button>'
-    +'</div>';
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove()});
-  _showAdBanner();
-}
-function _showAdBanner(){
-  if(document.getElementById('adBanner'))return;
-  var b=document.createElement('div');b.id='adBanner';
-  b.style.cssText='position:fixed;bottom:calc(var(--player-height,72px) + 8px);left:50%;transform:translateX(-50%);z-index:900;background:var(--md-surface-container-high,#1e1e1e);border:1px solid var(--md-outline-variant,#444);border-radius:16px;padding:10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:420px;width:calc(100% - 32px);animation:fadeIn .3s';
-  b.innerHTML='<span style="font-size:28px">⛏️</span>'
-    +'<div style="flex:1;min-width:0"><div style="font:600 13px Inter,sans-serif;color:var(--md-on-surface,#e0e0e0)">Unbreaking SMP</div><div style="font:400 11px Inter,sans-serif;color:var(--md-on-surface-variant,#a0a0a0)">mc.musis.ru · Версия 1.21.11</div></div>'
-    +'<button onclick="document.getElementById(\'adBanner\').remove()" style="width:28px;height:28px;border-radius:50%;background:var(--md-surface-container,#2a2a2a);border:none;color:var(--md-on-surface,#e0e0e0);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">&times;</button>';
-  document.body.appendChild(b);
-}
-function _hideAllAds(){var p=document.getElementById('adPopup');if(p)p.remove();var b=document.getElementById('adBanner');if(b)b.remove()}
+
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
 let uploadExplicitManual=false,editExplicitManual=false,editExplicitLockedByAI=false;
@@ -4853,11 +4813,11 @@ async function _relinkOAuth(provider){
 }
 
 function openPrivacySettings(){
+  _setSettingsTitle('Конфиденциальность',openSettings);
   db.ref('users/'+currentUser.uid).once('value').then(s=>{
     const u=s.val()||{};
     const hideFav=!!u.hideFavorites;
     document.getElementById('settingsContent').innerHTML=
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px"><button class="btn-icon" onclick="openSettings()"><span class="material-symbols-rounded">arrow_back</span></button><div class="modal-title" style="margin-bottom:0">Конфиденциальность</div></div>'+
       '<div class="settings-item"><span class="material-symbols-rounded">visibility_off</span><div class="settings-item-info"><div class="settings-item-title">Скрыть понравившиеся треки</div><div class="settings-item-sub">Другие пользователи не увидят ваши лайки</div></div><label class="md-switch"><input type="checkbox" id="privacyHideFav" '+(hideFav?'checked':'')+' onchange="togglePrivacyHideFav(this.checked)"><span class="slider"></span></label></div>';
   });
 }
@@ -5016,7 +4976,12 @@ document.addEventListener('click',e=>{if(!e.target.closest('#userMenu')&&!e.targ
 window.addEventListener('resize',()=>{if(document.getElementById('userMenu').classList.contains('open'))toggleUserMenu(),toggleUserMenu()});
 
 /* ===== SETTINGS ===== */
+var _settingsNav=[];
+function _settingsBack(){if(_settingsNav.length>0){var prev=_settingsNav.pop();prev()}else{closeModal('settingsModal')}}
+function _setSettingsTitle(t,parentFn){var el=document.getElementById('settingsTitle');if(el)el.textContent=t||'Настройки';if(parentFn)_settingsNav.push(parentFn)}
 function openSettings(){
+  _settingsNav=[];
+  _setSettingsTitle('');
   if(!currentUser){showSnackbar('Войдите в аккаунт');return}
   db.ref('users/'+currentUser.uid).once('value').then(s=>{
     const u=s.val()||{},hasEmail=!!u.email&&!!u.passwordHash;
@@ -6849,7 +6814,7 @@ function mergePriorityRadioStations(country,list){
   const normalized=normalizeRadioStations(list,country);
   if(String(country).toUpperCase()!=='RU') return normalized;
   const priorityNames=['Юмор FM','Радио Зенит','Радио Дача','Радио Ваня','Авторадио','Дорожное радио'];
-  const priority=(RADIO_FALLBACK_STATIONS.RU||[]).filter(s=>priorityNames.includes(s.name));
+  const priority=(RADIO_FALLBACK_STATIONS.RU||[]).filter(s=>priorityNames.includes(s.name)).sort((a,b)=>priorityNames.indexOf(a.name)-priorityNames.indexOf(b.name));
   const merged=[...priority,...normalized];
   const seen=new Set();
   return merged.filter(st=>{
@@ -7739,13 +7704,13 @@ function _start404Game(){
   wrap.style.display='block';
   var cv=document.getElementById('game404cv'),ctx=cv.getContext('2d');
   var W=cv.width,H=cv.height,gs=20,cols=Math.floor(W/gs),rows=Math.floor(H/gs);
-  var snake=[{x:5,y:5}],food={x:10,y:10},score=0;
+  var snake=[{x:6,y:5},{x:5,y:5}],food={x:10,y:10},score=0;
   _g404.dir='right';_g404.running=true;
   function spawn(){food={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}
   spawn();
   var isMobile=window.innerWidth<=768;
   var btns=document.getElementById('game404btns');
-  if(isMobile&&btns){btns.innerHTML=['←:left','↑:up','↓:down','→:right'].map(function(b){var p=b.split(':');return '<button style="width:48px;height:48px;border-radius:50%;background:var(--md-surface-container-high);border:1px solid var(--md-outline-variant);color:var(--md-on-surface);font-size:22px;cursor:pointer" ontouchstart="_g404.dir=\''+p[1]+'\'" onmousedown="_g404.dir=\''+p[1]+'\'">'+p[0]+'</button>'}).join('')}
+  if(isMobile&&btns){var bs='width:48px;height:48px;border-radius:50%;background:var(--md-surface-container-high);border:1px solid var(--md-outline-variant);color:var(--md-on-surface);font-size:22px;cursor:pointer;-webkit-tap-highlight-color:transparent';btns.innerHTML='<div style="display:grid;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px;gap:6px;justify-items:center"><div></div><button style="'+bs+'" ontouchstart="_g404.dir=\'up\'" onmousedown="_g404.dir=\'up\'">↑</button><div></div><button style="'+bs+'" ontouchstart="_g404.dir=\'left\'" onmousedown="_g404.dir=\'left\'">←</button><button style="'+bs+'" ontouchstart="_g404.dir=\'down\'" onmousedown="_g404.dir=\'down\'">↓</button><button style="'+bs+'" ontouchstart="_g404.dir=\'right\'" onmousedown="_g404.dir=\'right\'">→</button></div>'}
   function draw(){
     ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--md-surface-container')||'#1e1e1e';ctx.fillRect(0,0,W,H);
     ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--md-primary')||'#6750A4';ctx.font='16px sans-serif';ctx.fillText('♪',food.x*gs+3,food.y*gs+16);
@@ -7766,7 +7731,7 @@ function _start404Game(){
     snake.unshift({x:nx,y:ny});
     if(nx===food.x&&ny===food.y){score++;spawn()}else snake.pop();
     draw();
-  },120);
+  },180);
   draw();
   var sx,sy;
   cv.ontouchstart=function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY};
@@ -7902,16 +7867,15 @@ function _verifyCreatorAccess(){
 }
 function openAdminTools(){
   if(!_verifyCreatorAccess()){showSnackbar('Доступ запрещён');console.warn('[Security] Creator panel access denied for',currentUser?.uid);return}
+  _setSettingsTitle('Меню создателя',openSettings);
   document.getElementById('settingsContent').innerHTML=
-    '<div class="modal-title" style="margin-bottom:12px">Меню создателя</div>'+
     '<div class="settings-item" onclick="openVerificationRequests()"><span class="material-symbols-rounded" style="color:#1d9bf0">verified</span><div class="settings-item-info"><div class="settings-item-title">Заявки на подтверждение</div><div class="settings-item-sub">Просмотр видео-заявок на синюю галочку</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorReports()"><span class="material-symbols-rounded">flag</span><div class="settings-item-info"><div class="settings-item-title">Жалобы на треки</div><div class="settings-item-sub">Просмотр жалоб и удаление треков с подтверждением</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorAppeals()"><span class="material-symbols-rounded">balance</span><div class="settings-item-info"><div class="settings-item-title">Оспаривания</div><div class="settings-item-sub">Запросы на снятие пометки авторских прав</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorStats()"><span class="material-symbols-rounded">monitoring</span><div class="settings-item-info"><div class="settings-item-title">Статистика</div><div class="settings-item-sub">Треки, пользователи, прослушивания, жалобы</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorTrackManager()"><span class="material-symbols-rounded">library_music</span><div class="settings-item-info"><div class="settings-item-title">Управление треками</div><div class="settings-item-sub">Поиск, рекомендации сервиса, удаление</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
     '<div class="settings-item" onclick="openCreatorModuleCheck()"><span class="material-symbols-rounded">checklist</span><div class="settings-item-info"><div class="settings-item-title">Проверка модулей</div><div class="settings-item-sub">Плеер, БД, party mode, модерация и видео</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
-    '<div class="settings-item" onclick="openCreatorUsers()"><span class="material-symbols-rounded">group</span><div class="settings-item-info"><div class="settings-item-title">Управление пользователями</div><div class="settings-item-sub">Список пользователей и их контента</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
-    '<div class="modal-actions"><button class="btn-outlined" onclick="openSettings()">Назад</button></div>';
+    '<div class="settings-item" onclick="openCreatorUsers()"><span class="material-symbols-rounded">group</span><div class="settings-item-info"><div class="settings-item-title">Управление пользователями</div><div class="settings-item-sub">Список пользователей и их контента</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>';
   document.getElementById('settingsModal').classList.add('open');
 }
 function adminOpenUserActions(uid){
@@ -7940,7 +7904,8 @@ function reviewPendingModeration(){
   playlist=pending.map(([id])=>id);playlistIndex=0;currentTrackId=playlist[0];loadAndPlay(allTracks[currentTrackId]);showSnackbar('Открыт первый трек с ожидающей модерацией');
 }
 function creatorPanelWrap(title, body){
-  document.getElementById('settingsContent').innerHTML='<div class="modal-title" style="margin-bottom:12px">'+title+'</div>'+body+'<div class="modal-actions"><button class="btn-outlined" onclick="openAdminTools()">Назад</button></div>';
+  _setSettingsTitle(title,openAdminTools);
+  document.getElementById('settingsContent').innerHTML=body;
   document.getElementById('settingsModal').classList.add('open');
 }
 function renderCreatorRealtimeConsole(){

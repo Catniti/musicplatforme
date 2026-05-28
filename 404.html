@@ -59,10 +59,14 @@ body{background:var(--bg);font-family:'Inter',system-ui,sans-serif;height:100vh;
   </div>
   <canvas id="gameCanvas" width="360" height="480"></canvas>
   <div class="game-controls" id="gameControls">
-    <button class="game-btn" ontouchstart="gDir='left'" onmousedown="gDir='left'">←</button>
-    <button class="game-btn" ontouchstart="gDir='up'" onmousedown="gDir='up'">↑</button>
-    <button class="game-btn" ontouchstart="gDir='down'" onmousedown="gDir='down'">↓</button>
-    <button class="game-btn" ontouchstart="gDir='right'" onmousedown="gDir='right'">→</button>
+    <div style="display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px;gap:6px;justify-items:center">
+      <div></div>
+      <button class="game-btn" ontouchstart="gDir='up'" onmousedown="gDir='up'">↑</button>
+      <div></div>
+      <button class="game-btn" ontouchstart="gDir='left'" onmousedown="gDir='left'">←</button>
+      <button class="game-btn" ontouchstart="gDir='down'" onmousedown="gDir='down'">↓</button>
+      <button class="game-btn" ontouchstart="gDir='right'" onmousedown="gDir='right'">→</button>
+    </div>
   </div>
 </div>
 
@@ -88,7 +92,7 @@ function startGame(){
   var W=cv.width,H=cv.height,gs=20,cols=W/gs,rows=H/gs;
   // Responsive canvas
   if(window.innerWidth<400){cv.width=300;cv.height=400;W=300;H=400;cols=W/gs;rows=H/gs}
-  var snake=[{x:5,y:5}],food={x:10,y:10},score=0;
+  var snake=[{x:6,y:5},{x:5,y:5}],food={x:10,y:10},score=0;
   gDir='right';gRunning=true;
   document.getElementById('gameScore').textContent='0';
   function spawn(){food={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}
@@ -131,7 +135,7 @@ function startGame(){
     if(nx===food.x&&ny===food.y){score++;document.getElementById('gameScore').textContent=score;spawn()}
     else snake.pop();
     draw();
-  },120);
+  },180);
   draw();
 }
 function closeGame(){
