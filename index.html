@@ -24,10 +24,10 @@
 <meta name="keywords" content="MusicPlatforme, музыка, слушать музыку бесплатно, музыкальная платформа, моя волна, публикация музыки">
 <meta name="author" content="MusicPlatforme">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://vriskasYT.github.io/musicplatforme">
+<link rel="canonical" href="https://musis.ru">
 <meta property="og:title" content="MusicPlatforme — Слушай музыку бесплатно">
 <meta property="og:description" content="Бесплатная музыкальная платформа с умной ИИ-модерацией. Слушай, публикуй и открывай новую музыку.">
-<meta property="og:url" content="https://vriskasYT.github.io/musicplatforme">
+<meta property="og:url" content="https://musis.ru">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MusicPlatforme">
 <meta property="og:locale" content="ru_RU">
@@ -43,7 +43,10 @@
 <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/VriskasYT/musicplatforme/main/icon.png">
 <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/VriskasYT/musicplatforme/main/icon.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication","name":"MusicPlatforme","url":"https://vriskasYT.github.io/musicplatforme","description":"Бесплатная музыкальная платформа с умной ИИ-модерацией.","applicationCategory":"MusicApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"}}
+{"@context":"https://schema.org","@type":"WebApplication","name":"MusicPlatforme","url":"https://musis.ru","description":"Бесплатная музыкальная платформа с умной ИИ-модерацией.","applicationCategory":"MusicApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"}}
+</script>
+<script>
+(function(){var r=sessionStorage.getItem('spa_redirect');if(r){sessionStorage.removeItem('spa_redirect');history.replaceState(null,'',r)}})();
 </script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -2510,14 +2513,18 @@ body.radio-mode .player-artist-name{font-size:11px}
   .cards-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
   .hero-banner{padding:24px}
   .hero-title{font-size:24px;line-height:32px}
-  .profile-header{flex-direction:column;text-align:center}
+  .profile-header{flex-direction:column;text-align:center;align-items:center}
+  .profile-header>div{align-items:center}
+  .profile-header div[style*="display:flex"]{justify-content:center}
   .profile-stats{justify-content:center;flex-wrap:wrap}
   .player-controls{flex:3}
   .player-track-info{min-width:70px;max-width:120px}
   .progress-time{display:none}
   .artist-page-header{flex-direction:column;align-items:center;text-align:center}
   .artist-page-avatar{width:120px;height:120px}
+  .artist-page-info{align-items:center}
   .artist-page-info>div[style]{justify-content:center!important}
+  .artist-page-info>div{justify-content:center;text-align:center}
   .wave-circle{width:150px;height:150px}
   .wave-circle .material-symbols-rounded{font-size:48px}
   .modal{padding:20px;max-width:100%}
@@ -3703,6 +3710,10 @@ function _loadArtistPhotos(){
       if(photo&&typeof photo==='string'){_artistPhotoCache[aid]=photo;loaded++}
     }
     if(loaded>0){
+      document.querySelectorAll('img[data-artist-id]').forEach(img=>{
+        const aid=img.getAttribute('data-artist-id');
+        if(aid&&_artistPhotoCache[aid]&&!img.src){img.src=_artistPhotoCache[aid];img.style.display=''}
+      });
       const _pid=document.querySelector('.page.active')?.id||'page-home';
       if(_pid==='page-home'&&typeof renderHome==='function') renderHome();
     }
@@ -5244,9 +5255,15 @@ function openTrackContextMenu(e,tid){
   menu.innerHTML=items;
   menu.style.top=Math.min(e.clientY,window.innerHeight-300)+'px';
   menu.style.right=(window.innerWidth-e.clientX)+'px';
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:979;background:transparent';
+  const closeMenu=()=>{try{menu.remove()}catch(e){}try{overlay.remove()}catch(e){}};
+  overlay.addEventListener('click',closeMenu);
+  overlay.addEventListener('touchstart',closeMenu,{passive:true});
+  menu.addEventListener('click',()=>setTimeout(()=>{try{overlay.remove()}catch(e){}},0));
+  document.body.appendChild(overlay);
   document.body.appendChild(menu);
   requestAnimationFrame(()=>{const r=menu.getBoundingClientRect();if(r.bottom>window.innerHeight)menu.style.top=(window.innerHeight-r.height-8)+'px';if(r.right>window.innerWidth)menu.style.right='8px'});
-  setTimeout(()=>{document.addEventListener('click',()=>menu.remove(),{once:true})},10);
 }
 
 function togglePlayNext(tid){if(!playlist.length){playlist=[tid];playlistIndex=0;return}playlist.splice(playlistIndex+1,0,tid);showSnackbar('Будет следующим')}
@@ -5655,8 +5672,9 @@ async function saveTrackEdits(){
 }
 
 function buildTrackShareUrl(tid){
-  const base=(location.origin+location.pathname).replace(/\/?$/,'');
-  return base+'#track='+encodeURIComponent(tid);
+  const t=allTracks[tid];
+  if(t){const slug=_slugify(t.title||'track');return 'https://musis.ru/track/'+slug+'-'+tid.substring(0,8)}
+  return 'https://musis.ru/#track='+encodeURIComponent(tid);
 }
 let _openTrackFromHashDone=false;
 function openTrackFromHash(){
@@ -6529,7 +6547,7 @@ function applyFxPreset(name){
 }
 
 /* ===== FULLSCREEN PLAYER ===== */
-function openFullscreenPlayer(){if(!currentTrackId)return;document.getElementById('fsPlayer').classList.add('open');updateFsLike();syncFxUi();if(isPlaying)document.getElementById('fsCover').classList.add('playing')}
+function openFullscreenPlayer(){if(!currentTrackId)return;document.getElementById('fsPlayer').classList.add('open');updateFsLike();syncFxUi();if(isPlaying)document.getElementById('fsCover').classList.add('playing');if(!_skipPush&&currentTrackId&&!currentTrackId.startsWith('radio:'))_pushRouteForTrack(currentTrackId)}
 function closeFullscreenPlayer(){document.getElementById('fsPlayer').classList.remove('open')}
 function updateFsLike(){
   const liked=!!(currentTrackId&&favorites[currentTrackId]);
@@ -6662,7 +6680,7 @@ function deletePlaylist(plId){if(!currentUser)return;db.ref('playlists/'+current
 
 /* ===== VIEW ARTIST ===== */
 function viewArtist(aid){
-  navigate('artist');
+  navigate('artist');if(!_skipPush)_pushRouteForArtist(aid);
   const freshNav=currentArtistId!==aid;
   currentArtistId=aid;
   const h=document.getElementById('artistHeader'),tl=document.getElementById('artistTracks');
@@ -6752,15 +6770,16 @@ const RADIO_FALLBACK_STATIONS={
     {name:'Радио Дача',country:'Россия',language:'ru',tags:'pop,retro,russian,дача',bitrate:128,favicon:'https://www.radiodacha.ru/favicon.ico',url_resolved:'https://listen13.vdfm.ru:8000/dacha',homepage:'https://www.radiodacha.ru'},
     {name:'Record Dance Radio',country:'Россия',language:'ru',tags:'dance,electronic,record',bitrate:96,favicon:'https://radiorecord.ru/favicon.ico',url_resolved:'https://radiorecord.hostingradio.ru/rr_main96.aacp',url:'https://radiorecord.hostingradio.ru/sd9096.aacp',homepage:'https://radiorecord.ru'},
     {name:'Maximum',country:'Россия',language:'ru',tags:'rock,pop,maximum',bitrate:128,favicon:'https://maximum.ru/favicon.ico',url_resolved:'https://maximum.hostingradio.ru/maximum128.mp3',homepage:'https://maximum.ru'},
-    {name:'Радио 7',country:'Россия',language:'ru',tags:'pop,easy,7',bitrate:256,favicon:'https://radio7.ru/favicon.ico',url_resolved:'https://radio7server.streamr.ru:8040/radio7256.mp3',homepage:'https://radio7.ru'},
-    {name:'Радио Маяк',country:'Россия',language:'ru',tags:'news,talk,маяк',bitrate:128,favicon:'https://radiomayak.ru/favicon.ico',url_resolved:'https://icecast-vgtrk.cdnvideo.ru/mayakfm_mp3_128kbps',homepage:'https://radiomayak.ru'},
-    {name:'Вести FM',country:'Россия',language:'ru',tags:'news,talk,вести',bitrate:128,favicon:'',url_resolved:'https://icecast-vgtrk.cdnvideo.ru/vestifm',url:'https://icecast-vgtrk.cdnvideo.ru/vestifm_mp3_128kbps',homepage:'https://radiovesti.ru'},
+    {name:'Радио 7',country:'Россия',language:'ru',tags:'pop,easy,7',bitrate:256,favicon:'https://radio7.ru/favicon.png',url_resolved:'https://radio7server.streamr.ru:8040/radio7256.mp3',homepage:'https://radio7.ru'},
+    {name:'Радио Маяк',country:'Россия',language:'ru',tags:'news,talk,маяк',bitrate:128,favicon:'https://cdn-st1.smotrim.ru/smotrimru/i/favicon/apple-touch-icon-120x120.png',url_resolved:'https://icecast-vgtrk.cdnvideo.ru/mayakfm_mp3_128kbps',homepage:'https://radiomayak.ru'},
+    {name:'Вести FM',country:'Россия',language:'ru',tags:'news,talk,вести',bitrate:128,favicon:'https://cdn-st1.smotrim.ru/smotrimru/i/favicon/apple-touch-icon-120x120.png',url_resolved:'https://icecast-vgtrk.cdnvideo.ru/vestifm',url:'https://icecast-vgtrk.cdnvideo.ru/vestifm_mp3_128kbps',homepage:'https://radiovesti.ru'},
     {name:'Rock FM',country:'Россия',language:'ru',tags:'rock,alternative',bitrate:128,favicon:'https://rockfm.ru/favicon.ico',url_resolved:'https://nashe1.hostingradio.ru/rock-128.mp3',homepage:'https://rockfm.ru'},
     {name:'Радио Ваня',country:'Россия',language:'ru',tags:'pop,russian,ваня',bitrate:128,favicon:'https://radiovanya.ru/favicon.ico',url_resolved:'https://icecast-radiovanya.cdnvideo.ru/radiovanya',homepage:'https://radiovanya.ru'},
     {name:'Юмор FM',country:'Россия',language:'ru',tags:'humor,fun,talk,юмор',bitrate:128,favicon:'https://humorfm.by/favicon.ico',url_resolved:'https://pub0302.101.ru:8000/stream/trust/mp3/128/17',homepage:'https://www.veseloeradio.ru/'},
     {name:'Шансон',country:'Россия',language:'ru',tags:'shanson,russian,шансон',bitrate:128,favicon:'https://radioshanson.fm/favicon.ico',url_resolved:'https://chanson.hostingradio.ru:8041/chanson128.mp3',homepage:'https://radioshanson.fm'},
     {name:'Маруся FM',country:'Россия',language:'ru',tags:'pop,russian,маруся',bitrate:128,favicon:'https://marus.fm/favicon.ico',url_resolved:'https://radio-holding.ru:9433/marusya_default',homepage:'https://marus.fm'},
-    {name:'Relax FM',country:'Россия',language:'ru',tags:'relax,chillout',bitrate:128,favicon:'https://relax-fm.ru/favicon.ico',url_resolved:'https://pub0201.101.ru:8443/stream/trust/mp3/128/24',homepage:'https://relax-fm.ru'}
+    {name:'Relax FM',country:'Россия',language:'ru',tags:'relax,chillout',bitrate:128,favicon:'https://relax-fm.ru/favicon.ico',url_resolved:'https://pub0201.101.ru:8443/stream/trust/mp3/128/24',homepage:'https://relax-fm.ru'},
+    {name:'Радио Зенит',country:'Россия',language:'ru',tags:'sport,talk,news,зенит,спб',bitrate:256,favicon:'https://radiozenit.ru/design/images/site-design/radio-zenit-logo-new.png',url_resolved:'https://radiozenit.hostingradio.ru/radiozenit256.mp3',homepage:'https://radiozenit.ru'}
   ]
 };
 let radioApiServerIndex=0;
@@ -6974,17 +6993,24 @@ function setRadioPlayerMeta(s){
   document.body.classList.add('radio-mode');
   showPlayer();
   document.getElementById('playerSong').textContent=s.name||'Радио';
-  document.getElementById('playerArtist').textContent=(s.country||'')+(s.language?' • '+s.language:'');
+  document.getElementById('playerArtist').textContent='musis.ru';
   document.getElementById('playerExplicit').style.display='none';
   document.getElementById('playerThumb').innerHTML=s.favicon?'<img src="'+s.favicon+'" alt="">':'<span class="material-symbols-rounded">radio</span>';
   document.getElementById('fsCover').innerHTML=s.favicon?'<img src="'+s.favicon+'" alt="">':'<span class="material-symbols-rounded">radio</span>';
   document.getElementById('fsTitle').textContent=s.name||'Радио';
-  document.getElementById('fsArtist').textContent=(s.country||'')+(s.language?' • '+s.language:'');
+  document.getElementById('fsArtist').textContent='musis.ru';
   document.getElementById('fsMusicAuthor').style.display='none';
   document.getElementById('currentTime').textContent='LIVE';
   document.getElementById('totalTime').textContent='LIVE';
   document.getElementById('fsCurrentTime').textContent='LIVE';
   document.getElementById('fsTotalTime').textContent='LIVE';
+  if('mediaSession' in navigator){
+    navigator.mediaSession.metadata=new MediaMetadata({title:s.name||'Радио',artist:'musis.ru',album:'Радио',artwork:s.favicon?[{src:s.favicon}]:[]});
+    navigator.mediaSession.setActionHandler('play',()=>togglePlay());
+    navigator.mediaSession.setActionHandler('pause',()=>togglePlay());
+    navigator.mediaSession.setActionHandler('previoustrack',null);
+    navigator.mediaSession.setActionHandler('nexttrack',null);
+  }
 }
 function tryPlayStreamCandidates(candidates,stationName){
   return new Promise((resolve,reject)=>{
@@ -7086,6 +7112,7 @@ function playRadioStation(index){
   const s=radioStations[index];
   if(!s) return;
   setRadioPlayerMeta(s);
+  if(!_skipPush)_pushRouteForRadio(s);
   const candidates=getSpecialRadioCandidates(s)
     .concat(
       String(s.url_resolved||'').replace('http://','https://'),
@@ -7515,8 +7542,23 @@ function switchProfileTab(tab,el){
   }
 }
 
-/* ===== NAVIGATION ===== */
-function navigate(page){
+/* ===== ROUTING & NAVIGATION ===== */
+function _slugify(s){return String(s||'').toLowerCase().replace(/[ёЁ]/g,'е').replace(/[а-яА-Я]/g,c=>{const m='абвгдежзийклмнопрстуфхцчшщъыьэюя';const l='abvgdezhzijklmnoprstufhcchshshhyeyuya'.match(/.{1,2}/g)||[];const r={'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ж':'zh','з':'z','и':'i','й':'j','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};return r[c.toLowerCase()]||c}).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,80)||'untitled'}
+const _pageRoutes={home:'/',explore:'/explore',wave:'/wave',radio:'/radio',charts:'/charts','new-releases':'/new',favorites:'/favorites',playlists:'/playlists',history:'/history',subscriptions:'/subscriptions',upload:'/upload',profile:'/profile',search:'/search'};
+const _routeToPage={};Object.entries(_pageRoutes).forEach(([p,r])=>{_routeToPage[r]=p});
+const _seoDefaults={title:'MusicPlatforme — Слушай музыку бесплатно',desc:'Бесплатная музыкальная платформа. Слушай, публикуй и открывай новую музыку.',url:'https://musis.ru',img:'https://raw.githubusercontent.com/VriskasYT/musicplatforme/main/icon.png'};
+function _updateSEO(opts){
+  const t=opts.title||_seoDefaults.title,d=opts.desc||_seoDefaults.desc,u=opts.url||_seoDefaults.url,img=opts.img||_seoDefaults.img;
+  document.title=t;
+  const _set=(sel,attr,val)=>{const el=document.querySelector(sel);if(el)el.setAttribute(attr,val)};
+  _set('meta[name="description"]','content',d);
+  _set('meta[property="og:title"]','content',t);_set('meta[property="og:description"]','content',d);
+  _set('meta[property="og:url"]','content',u);_set('meta[property="og:image"]','content',img);
+  _set('meta[name="twitter:title"]','content',t);_set('meta[name="twitter:description"]','content',d);
+  _set('meta[name="twitter:image"]','content',img);_set('link[rel="canonical"]','href',u);
+}
+let _skipPush=false;
+function navigate(page,pushUrl){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const t=document.getElementById('page-'+page);if(t)t.classList.add('active');
   document.querySelectorAll('.sidebar .nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
@@ -7530,7 +7572,102 @@ function navigate(page){
   if(page==='history')renderHistory();
   if(page==='charts')renderCharts();
   if(page==='new-releases')renderNewReleases();
+  if(!_skipPush){
+    const path=pushUrl||_pageRoutes[page]||'/';
+    const url='https://musis.ru'+path;
+    const titles={home:'MusicPlatforme — Слушай музыку бесплатно',explore:'Обзор — MusicPlatforme',wave:'Моя волна — MusicPlatforme',radio:'Радио — MusicPlatforme',charts:'Чарты — MusicPlatforme','new-releases':'Новинки — MusicPlatforme',favorites:'Любимое — MusicPlatforme',playlists:'Плейлисты — MusicPlatforme',history:'История — MusicPlatforme',subscriptions:'Подписки — MusicPlatforme',upload:'Загрузить — MusicPlatforme',profile:'Профиль — MusicPlatforme',search:'Поиск — MusicPlatforme'};
+    _updateSEO({title:titles[page]||_seoDefaults.title,url});
+    try{history.pushState({page,path},'',path)}catch(e){}
+  }
 }
+function _pushRouteForTrack(tid){
+  const t=allTracks[tid];if(!t)return;
+  const slug=_slugify(t.title||'track');
+  const path='/track/'+slug+'-'+tid.substring(0,8);
+  const title=(t.title||'Трек')+' — '+(t.musicAuthor||t.artistName||'Автор')+' | MusicPlatforme';
+  const desc='Слушай «'+(t.title||'')+'» — '+(t.musicAuthor||t.artistName||'')+' бесплатно на MusicPlatforme';
+  _updateSEO({title,desc,url:'https://musis.ru'+path,img:t.cover||_seoDefaults.img});
+  try{history.pushState({track:tid,path},'',path)}catch(e){}
+}
+function _pushRouteForArtist(aid){
+  const u=allTracks?Object.values(allTracks).find(t=>t.artistId===aid):null;
+  const name=u?u.artistName:'';
+  const slug=_slugify(name||'artist');
+  const path='/artist/'+slug+'-'+aid.substring(0,8);
+  const title=(name||'Артист')+' | MusicPlatforme';
+  const desc='Слушай треки '+(name||'артиста')+' бесплатно на MusicPlatforme';
+  _updateSEO({title,desc,url:'https://musis.ru'+path});
+  try{history.pushState({artist:aid,path},'',path)}catch(e){}
+}
+function _pushRouteForRadio(station){
+  const slug=_slugify(station.name||'radio');
+  const path='/radio/'+slug;
+  const title=(station.name||'Радио')+' — Слушать онлайн | MusicPlatforme';
+  const desc='Слушай '+(station.name||'радио')+' онлайн бесплатно на MusicPlatforme';
+  _updateSEO({title,desc,url:'https://musis.ru'+path,img:station.favicon||_seoDefaults.img});
+  try{history.pushState({radio:slug,path},'',path)}catch(e){}
+}
+window.addEventListener('popstate',e=>{
+  const state=e.state;
+  if(!state){_skipPush=true;navigate('home');_skipPush=false;return}
+  _skipPush=true;
+  if(state.page){navigate(state.page)}
+  else if(state.track){playTrackById(state.track);setTimeout(()=>openFullscreenPlayer(),80)}
+  else if(state.artist){viewArtist(state.artist)}
+  else if(state.radio&&radioStations.length){
+    const s=radioStations.find(r=>_slugify(r.name)===state.radio);
+    if(s){const idx=radioStations.indexOf(s);playRadioStation(idx)}
+  }
+  _skipPush=false;
+});
+function _handleInitialRoute(){
+  const path=location.pathname;
+  if(location.hash&&location.hash.includes('track='))return;
+  if(path==='/'||path===''||path==='/index.html')return;
+  const trackMatch=path.match(/^\/track\/(.+?)(?:-([a-z0-9]{6,10}))?$/i);
+  if(trackMatch){
+    const tidPrefix=trackMatch[2]||'';
+    if(tidPrefix){
+      const wait=()=>{
+        const found=Object.keys(allTracks).find(k=>k.startsWith(tidPrefix));
+        if(found){_skipPush=true;playTrackById(found);setTimeout(()=>openFullscreenPlayer(),80);_skipPush=false}
+        else if(Date.now()-_routeInitTime<20000) setTimeout(wait,500);
+      };
+      _routeInitTime=Date.now();setTimeout(wait,800);
+    }
+    return;
+  }
+  const artistMatch=path.match(/^\/artist\/(.+?)(?:-([a-z0-9]{6,10}))?$/i);
+  if(artistMatch){
+    const aidPrefix=artistMatch[2]||'';
+    if(aidPrefix){
+      const wait=()=>{
+        const found=Object.keys(allTracks).length>0?Object.values(allTracks).find(t=>t.artistId&&t.artistId.startsWith(aidPrefix)):null;
+        if(found){_skipPush=true;viewArtist(found.artistId);_skipPush=false}
+        else if(Date.now()-_routeInitTime<20000) setTimeout(wait,500);
+      };
+      _routeInitTime=Date.now();setTimeout(wait,800);
+    }
+    return;
+  }
+  const radioMatch=path.match(/^\/radio\/(.+)$/i);
+  if(radioMatch&&radioMatch[1]!==undefined){
+    const slug=radioMatch[1];
+    const wait=()=>{
+      if(radioStations.length){
+        const s=radioStations.find(r=>_slugify(r.name)===slug);
+        if(s){_skipPush=true;navigate('radio');const idx=radioStations.indexOf(s);playRadioStation(idx);_skipPush=false}
+        else{_skipPush=true;navigate('radio');_skipPush=false}
+      }else if(Date.now()-_routeInitTime<15000) setTimeout(wait,500);
+    };
+    _routeInitTime=Date.now();setTimeout(wait,800);
+    return;
+  }
+  const simplePage=_routeToPage[path];
+  if(simplePage){_skipPush=true;navigate(simplePage);_skipPush=false;return}
+}
+let _routeInitTime=Date.now();
+document.addEventListener('DOMContentLoaded',()=>setTimeout(_handleInitialRoute,500));
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open')}
 
 /* ===== THEME ===== */
