@@ -1472,12 +1472,12 @@
         sub: 'В полноэкранном плеере вместо обложки показывается видео трека, если оно есть. Экспериментально.'
       },
       {
-        key: 'customIcons',
-        icon: 'auto_awesome',
-        title: 'Кастомные иконки',
-        sub: 'Переключает иконки платформы в заполненный стиль (filled) — более яркий и насыщенный внешний вид.',
+        key: 'showAds',
+        icon: 'campaign',
+        title: 'Реклама',
+        sub: 'Показывает рекламные баннеры на платформе. Сама реклама на странице будет не скоро — пока это тестовый режим.',
         onToggle: function(val) {
-          if (typeof window.applyLabsCustomIcons === 'function') window.applyLabsCustomIcons(val);
+          if (val) { _showAdPopup(); } else { _hideAllAds(); }
         }
       },
     ];
@@ -1508,7 +1508,9 @@
       if (!window.labsSettings) window.labsSettings = {};
       window.labsSettings[key] = !window.labsSettings[key];
       try {
-        localStorage.setItem('mp_labs_settings', JSON.stringify(window.labsSettings));
+        var toSave = Object.assign({}, window.labsSettings);
+        delete toSave.showAds;
+        localStorage.setItem('mp_labs_settings', JSON.stringify(toSave));
       } catch {}
       const item = LABS_ITEMS.find(i => i.key === key);
       if (item && item.onToggle) item.onToggle(window.labsSettings[key]);
@@ -1678,7 +1680,8 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--md-
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--md-outline-variant);border-radius:3px}
 .material-symbols-rounded{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;user-select:none;-webkit-user-select:none}
 .material-symbols-rounded.filled{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
-button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-highlight-color:transparent!important;-webkit-touch-callout:none}
+button,a,[onclick],input,select,textarea{outline:none!important;-webkit-tap-highlight-color:transparent!important;-webkit-touch-callout:none;-webkit-user-select:none}
+button:focus,a:focus,[onclick]:focus{outline:none!important;box-shadow:none!important;-webkit-tap-highlight-color:transparent!important}
 
 /* ===== BUTTONS ===== */
 .btn-primary{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:var(--md-primary);color:var(--md-on-primary);border:none;border-radius:var(--md-shape-full);font:500 14px/20px 'Inter',sans-serif;letter-spacing:.1px;cursor:pointer;transition:all .25s cubic-bezier(.2,0,0,1);box-shadow:var(--md-elevation-1);user-select:none;position:relative;overflow:hidden}
@@ -2974,13 +2977,17 @@ body[data-ui-style="glass"]{display:contents}
     <div class="track-list" id="playlistViewTracks"></div>
   </div>
   <div class="page" id="page-404">
-    <div style="position:relative;min-height:80vh;display:flex;align-items:center;justify-content:center;overflow:hidden;perspective:600px">
-      <canvas id="matrix404" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;border-radius:var(--md-shape-xl);opacity:.4"></canvas>
-      <div id="scene404" style="position:relative;z-index:1;text-align:center;padding:32px;transform-style:preserve-3d;transition:transform .1s ease-out">
-        <div style="font:900 clamp(64px,15vw,140px)/1 'Inter',sans-serif;color:var(--md-on-surface);letter-spacing:-3px;text-shadow:0 0 40px rgba(0,255,70,.4);margin-bottom:12px;transform:translateZ(40px)">404</div>
-        <div style="font:400 clamp(14px,2.5vw,20px)/1.4 'Inter',sans-serif;color:var(--md-on-surface-variant);height:30px;display:flex;align-items:center;justify-content:center;transform:translateZ(20px)"><span id="tw404" style="border-right:2px solid #0f0;padding-right:3px"></span></div>
-        <button class="btn-primary" style="margin-top:28px;transform:translateZ(15px)" onclick="history.length>1?history.back():navigate('home')"><span class="material-symbols-rounded">arrow_back</span> Назад</button>
-        <div style="margin-top:12px;font:400 12px/1.4 'Inter',sans-serif;color:var(--md-on-surface-variant);opacity:.5;transform:translateZ(8px)" id="pathHint404"></div>
+    <div style="min-height:80vh;display:flex;align-items:center;justify-content:center">
+      <div style="text-align:center;padding:32px">
+        <div id="code404spa" onclick="_start404Game()" style="font:900 clamp(64px,15vw,140px)/1 'Inter',sans-serif;color:var(--md-on-surface);letter-spacing:-3px;margin-bottom:8px;cursor:pointer;transition:color .3s;user-select:none">404</div>
+        <div style="font:400 11px/1 'Inter',sans-serif;color:var(--md-on-surface-variant);opacity:0;transition:opacity .3s;margin-top:2px;margin-bottom:8px" id="gameHint404">Нажми, чтобы поиграть</div>
+        <div style="font:400 clamp(14px,2.5vw,20px)/1.4 'Inter',sans-serif;color:var(--md-on-surface-variant);height:30px;display:flex;align-items:center;justify-content:center"><span id="tw404" style="border-right:2px solid var(--md-primary);padding-right:3px"></span></div>
+        <button class="btn-primary" style="margin-top:24px" onclick="navigate('home')"><span class="material-symbols-rounded">home</span> На главную</button>
+        <div style="margin-top:12px;font:400 12px/1.4 'Inter',sans-serif;color:var(--md-on-surface-variant);opacity:.5" id="pathHint404"></div>
+        <div id="game404wrap" style="display:none;margin-top:20px;position:relative">
+          <canvas id="game404cv" width="320" height="420" style="border-radius:16px;background:var(--md-surface-container);max-width:100%;touch-action:none"></canvas>
+          <div style="display:flex;gap:8px;justify-content:center;margin-top:10px" id="game404btns"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -3740,12 +3747,43 @@ async function _fetchTrackAudio(trackId){
   return snap2.val()||null;
 }
 let labsSettings=JSON.parse(localStorage.getItem('mp_labs_settings')||'{"videoInsteadOfCover":false,"compactTrackList":false,"glass":false}');
+labsSettings.showAds=false;
 if(labsSettings && labsSettings.liquidGlass!==undefined && labsSettings.glass===undefined){
   labsSettings.glass=!!labsSettings.liquidGlass;
   delete labsSettings.liquidGlass;
   localStorage.setItem('mp_labs_settings',JSON.stringify(labsSettings));
 }
-if(labsSettings.customIcons){document.addEventListener('DOMContentLoaded',()=>{let el=document.getElementById('mp-custom-icons-style');if(!el){el=document.createElement('style');el.id='mp-custom-icons-style';document.head.appendChild(el);}el.textContent='.material-symbols-rounded{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}';});}
+/* ad functions for labs */
+function _showAdPopup(){
+  if(document.getElementById('adPopup'))return;
+  var overlay=document.createElement('div');overlay.id='adPopup';
+  overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;animation:fadeIn .3s';
+  overlay.innerHTML='<div style="background:var(--md-surface-container-high,#1e1e1e);border-radius:24px;padding:28px;max-width:380px;width:90%;text-align:center;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.4)">'
+    +'<button onclick="document.getElementById(\'adPopup\').remove()" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:var(--md-surface-container,#2a2a2a);border:none;color:var(--md-on-surface,#e0e0e0);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">&times;</button>'
+    +'<div style="font-size:48px;margin-bottom:12px">⛏️</div>'
+    +'<div style="font:700 20px/1.3 Inter,sans-serif;color:var(--md-on-surface,#e0e0e0);margin-bottom:8px">Unbreaking SMP</div>'
+    +'<div style="font:400 14px/1.5 Inter,sans-serif;color:var(--md-on-surface-variant,#a0a0a0);margin-bottom:16px">Майнкрафт сервер для настоящих выживальщиков! Присоединяйся и играй с друзьями.</div>'
+    +'<div style="background:var(--md-surface-container,#2a2a2a);border-radius:12px;padding:12px;margin-bottom:12px">'
+    +'<div style="font:600 13px Inter,sans-serif;color:var(--md-on-surface-variant,#a0a0a0)">IP сервера</div>'
+    +'<div style="font:700 18px Inter,sans-serif;color:var(--md-primary,#6750A4);margin-top:4px;user-select:all">mc.musis.ru</div>'
+    +'<div style="font:400 12px Inter,sans-serif;color:var(--md-on-surface-variant,#a0a0a0);margin-top:4px">Версия: 1.21.11</div>'
+    +'</div>'
+    +'<button onclick="navigator.clipboard.writeText(\'mc.musis.ru\');this.textContent=\'Скопировано!\';setTimeout(()=>{this.textContent=\'Скопировать IP\'},1500)" style="width:100%;padding:12px;background:var(--md-primary,#6750A4);color:#fff;border:none;border-radius:14px;font:600 14px Inter,sans-serif;cursor:pointer">Скопировать IP</button>'
+    +'</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove()});
+  _showAdBanner();
+}
+function _showAdBanner(){
+  if(document.getElementById('adBanner'))return;
+  var b=document.createElement('div');b.id='adBanner';
+  b.style.cssText='position:fixed;bottom:calc(var(--player-height,72px) + 8px);left:50%;transform:translateX(-50%);z-index:900;background:var(--md-surface-container-high,#1e1e1e);border:1px solid var(--md-outline-variant,#444);border-radius:16px;padding:10px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:420px;width:calc(100% - 32px);animation:fadeIn .3s';
+  b.innerHTML='<span style="font-size:28px">⛏️</span>'
+    +'<div style="flex:1;min-width:0"><div style="font:600 13px Inter,sans-serif;color:var(--md-on-surface,#e0e0e0)">Unbreaking SMP</div><div style="font:400 11px Inter,sans-serif;color:var(--md-on-surface-variant,#a0a0a0)">mc.musis.ru · Версия 1.21.11</div></div>'
+    +'<button onclick="document.getElementById(\'adBanner\').remove()" style="width:28px;height:28px;border-radius:50%;background:var(--md-surface-container,#2a2a2a);border:none;color:var(--md-on-surface,#e0e0e0);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">&times;</button>';
+  document.body.appendChild(b);
+}
+function _hideAllAds(){var p=document.getElementById('adPopup');if(p)p.remove();var b=document.getElementById('adBanner');if(b)b.remove()}
 let currentArtistTracks=[],currentArtistId=null,queueOpen=false,lyricsOpen=false;
 let playedTracks={};
 let uploadExplicitManual=false,editExplicitManual=false,editExplicitLockedByAI=false;
@@ -6810,7 +6848,7 @@ function normalizeRadioStations(list,country){
 function mergePriorityRadioStations(country,list){
   const normalized=normalizeRadioStations(list,country);
   if(String(country).toUpperCase()!=='RU') return normalized;
-  const priorityNames=['Юмор FM','Радио Дача','Радио Ваня','Авторадио','Дорожное радио'];
+  const priorityNames=['Юмор FM','Радио Зенит','Радио Дача','Радио Ваня','Авторадио','Дорожное радио'];
   const priority=(RADIO_FALLBACK_STATIONS.RU||[]).filter(s=>priorityNames.includes(s.name));
   const merged=[...priority,...normalized];
   const seen=new Set();
@@ -7683,32 +7721,9 @@ let _routeInitTime=Date.now();
 document.addEventListener('DOMContentLoaded',()=>setTimeout(_handleInitialRoute,500));
 function _init404Page(){
   document.getElementById('pathHint404').textContent=location.pathname;
-  var c=document.getElementById('matrix404');if(!c||c._inited)return;c._inited=true;
-  var ctx=c.getContext('2d');
-  function resize(){c.width=c.offsetWidth;c.height=c.offsetHeight}
-  resize();
-  var chars='アイウエオカキクケコ0123456789ABCDEF♪♫♩♬';
-  var fs=13,cols=Math.floor(c.width/fs)||1;
-  var drops=[];for(var i=0;i<cols;i++)drops[i]=Math.random()*-50;
-  var iv=setInterval(function(){
-    if(!document.getElementById('page-404').classList.contains('active')){clearInterval(iv);c._inited=false;return}
-    ctx.fillStyle='rgba(10,10,10,.07)';ctx.fillRect(0,0,c.width,c.height);
-    ctx.font=fs+'px monospace';
-    for(var i=0;i<drops.length;i++){
-      ctx.fillStyle=Math.random()>.97?'rgba(150,255,150,.8)':'rgba(0,255,70,.25)';
-      ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*fs,drops[i]*fs);
-      if(drops[i]*fs>c.height&&Math.random()>.975)drops[i]=0;
-      drops[i]+=.4;
-    }
-  },55);
-  window.addEventListener('resize',resize);
-  var scene=document.getElementById('scene404');
-  if(scene){
-    var pg=document.getElementById('page-404');
-    pg.addEventListener('mousemove',function(e){var r=pg.getBoundingClientRect();var cx=r.left+r.width/2,cy=r.top+r.height/2;var rx=(e.clientY-cy)/(r.height/2)*10,ry=(e.clientX-cx)/(r.width/2)*-10;scene.style.transform='rotateX('+rx+'deg) rotateY('+ry+'deg)'});
-    pg.addEventListener('touchmove',function(e){if(!e.touches[0])return;var r=pg.getBoundingClientRect();var cx=r.left+r.width/2,cy=r.top+r.height/2;var rx=(e.touches[0].clientY-cy)/(r.height/2)*10,ry=(e.touches[0].clientX-cx)/(r.width/2)*-10;scene.style.transform='rotateX('+rx+'deg) rotateY('+ry+'deg)'},{passive:true});
-  }
-  var phrases=['Страница не найдена...','Тут ничего нет','Может, трек удалили?','Вы заблудились в матрице','404: нот фаунд','Эта страница сбежала','Мелодия потерялась...','Здесь только тишина','Попробуйте вернуться назад'];
+  var code=document.getElementById('code404spa'),hint=document.getElementById('gameHint404');
+  if(code&&hint){code.onmouseenter=function(){hint.style.opacity='1'};code.onmouseleave=function(){hint.style.opacity='0'}}
+  var phrases=['Страница не найдена...','Тут ничего нет','Может, трек удалили?','Вы заблудились','404: нот фаунд','Эта страница сбежала','Кажется, что-то пошло не так','Мелодия потерялась...','Здесь только тишина','Попробуйте вернуться на главную'];
   var el=document.getElementById('tw404');if(!el)return;el.textContent='';
   var pi=0,ci=0,del=false;
   (function tick(){
@@ -7718,6 +7733,46 @@ function _init404Page(){
     else{el.textContent=p.substring(0,ci);ci--;if(ci<0){del=false;ci=0;pi=(pi+1)%phrases.length;setTimeout(tick,400);return}setTimeout(tick,30)}
   })();
 }
+var _g404={dir:'right',running:false,iv:null};
+function _start404Game(){
+  var wrap=document.getElementById('game404wrap');if(!wrap)return;
+  wrap.style.display='block';
+  var cv=document.getElementById('game404cv'),ctx=cv.getContext('2d');
+  var W=cv.width,H=cv.height,gs=20,cols=Math.floor(W/gs),rows=Math.floor(H/gs);
+  var snake=[{x:5,y:5}],food={x:10,y:10},score=0;
+  _g404.dir='right';_g404.running=true;
+  function spawn(){food={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}
+  spawn();
+  var isMobile=window.innerWidth<=768;
+  var btns=document.getElementById('game404btns');
+  if(isMobile&&btns){btns.innerHTML=['←:left','↑:up','↓:down','→:right'].map(function(b){var p=b.split(':');return '<button style="width:48px;height:48px;border-radius:50%;background:var(--md-surface-container-high);border:1px solid var(--md-outline-variant);color:var(--md-on-surface);font-size:22px;cursor:pointer" ontouchstart="_g404.dir=\''+p[1]+'\'" onmousedown="_g404.dir=\''+p[1]+'\'">'+p[0]+'</button>'}).join('')}
+  function draw(){
+    ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--md-surface-container')||'#1e1e1e';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--md-primary')||'#6750A4';ctx.font='16px sans-serif';ctx.fillText('♪',food.x*gs+3,food.y*gs+16);
+    snake.forEach(function(s,i){var r=1-i/snake.length;ctx.fillStyle='rgba(103,80,164,'+(0.4+r*0.6)+')';ctx.beginPath();ctx.roundRect(s.x*gs+1,s.y*gs+1,gs-2,gs-2,4);ctx.fill()});
+  }
+  if(_g404.iv)clearInterval(_g404.iv);
+  _g404.iv=setInterval(function(){
+    if(!_g404.running)return;
+    var h=snake[0],nx=h.x,ny=h.y;
+    if(_g404.dir==='right')nx++;else if(_g404.dir==='left')nx--;else if(_g404.dir==='up')ny--;else if(_g404.dir==='down')ny++;
+    if(nx<0||nx>=cols||ny<0||ny>=rows||snake.some(function(s){return s.x===nx&&s.y===ny})){
+      _g404.running=false;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#fff';ctx.font='bold 24px Inter,sans-serif';ctx.textAlign='center';
+      ctx.fillText('Game Over — '+score,W/2,H/2);
+      ctx.font='13px Inter,sans-serif';ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillText('Нажмите чтобы заново',W/2,H/2+30);ctx.textAlign='start';
+      cv.onclick=function(){cv.onclick=null;_start404Game()};return;
+    }
+    snake.unshift({x:nx,y:ny});
+    if(nx===food.x&&ny===food.y){score++;spawn()}else snake.pop();
+    draw();
+  },120);
+  draw();
+  var sx,sy;
+  cv.ontouchstart=function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY};
+  cv.ontouchend=function(e){if(!_g404.running||!sx)return;var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)>Math.abs(dy)){if(dx>20&&_g404.dir!=='left')_g404.dir='right';else if(dx<-20&&_g404.dir!=='right')_g404.dir='left'}else{if(dy>20&&_g404.dir!=='up')_g404.dir='down';else if(dy<-20&&_g404.dir!=='down')_g404.dir='up'}};
+}
+document.addEventListener('keydown',function(e){if(!_g404.running)return;if(e.key==='ArrowUp'||e.key==='w'){if(_g404.dir!=='down')_g404.dir='up'}else if(e.key==='ArrowDown'||e.key==='s'){if(_g404.dir!=='up')_g404.dir='down'}else if(e.key==='ArrowLeft'||e.key==='a'){if(_g404.dir!=='right')_g404.dir='left'}else if(e.key==='ArrowRight'||e.key==='d'){if(_g404.dir!=='left')_g404.dir='right'}});
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open')}
 
 /* ===== THEME ===== */
