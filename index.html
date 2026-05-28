@@ -2973,6 +2973,17 @@ body[data-ui-style="glass"]{display:contents}
     <div id="playlistViewHeader"></div>
     <div class="track-list" id="playlistViewTracks"></div>
   </div>
+  <div class="page" id="page-404">
+    <div style="position:relative;min-height:80vh;display:flex;align-items:center;justify-content:center;overflow:hidden">
+      <canvas id="matrix404" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;border-radius:var(--md-shape-xl);opacity:.4"></canvas>
+      <div style="position:relative;z-index:1;text-align:center;padding:32px">
+        <div style="font:900 clamp(64px,15vw,140px)/1 'Inter',sans-serif;color:var(--md-on-surface);letter-spacing:-3px;text-shadow:0 0 40px rgba(103,80,164,.5);margin-bottom:12px">404</div>
+        <div style="font:400 clamp(14px,2.5vw,20px)/1.4 'Inter',sans-serif;color:var(--md-on-surface-variant);height:30px;display:flex;align-items:center;justify-content:center"><span id="tw404" style="border-right:2px solid var(--md-primary);padding-right:3px"></span></div>
+        <button class="btn-primary" style="margin-top:28px" onclick="navigate('home')"><span class="material-symbols-rounded">home</span> На главную</button>
+        <div style="margin-top:12px;font:400 12px/1.4 'Inter',sans-serif;color:var(--md-on-surface-variant);opacity:.5" id="pathHint404"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== BOTTOM NAV ===== -->
@@ -7666,9 +7677,40 @@ function _handleInitialRoute(){
   }
   const simplePage=_routeToPage[path];
   if(simplePage){_skipPush=true;navigate(simplePage);_skipPush=false;return}
+  _skipPush=true;navigate('404');_skipPush=false;_init404Page();
 }
 let _routeInitTime=Date.now();
 document.addEventListener('DOMContentLoaded',()=>setTimeout(_handleInitialRoute,500));
+function _init404Page(){
+  document.getElementById('pathHint404').textContent=location.pathname;
+  var c=document.getElementById('matrix404');if(!c||c._inited)return;c._inited=true;
+  var ctx=c.getContext('2d');
+  function resize(){c.width=c.offsetWidth;c.height=c.offsetHeight}
+  resize();
+  var chars='アイウエオカキクケコ0123456789ABCDEF♪♫♩♬';
+  var fs=13,cols=Math.floor(c.width/fs)||1;
+  var drops=[];for(var i=0;i<cols;i++)drops[i]=Math.random()*-50;
+  var iv=setInterval(function(){
+    if(!document.getElementById('page-404').classList.contains('active')){clearInterval(iv);c._inited=false;return}
+    ctx.fillStyle='rgba(10,10,10,.07)';ctx.fillRect(0,0,c.width,c.height);
+    ctx.font=fs+'px monospace';
+    for(var i=0;i<drops.length;i++){
+      ctx.fillStyle=Math.random()>.97?'rgba(154,130,219,.8)':'rgba(103,80,164,.25)';
+      ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*fs,drops[i]*fs);
+      if(drops[i]*fs>c.height&&Math.random()>.975)drops[i]=0;
+      drops[i]+=.4;
+    }
+  },55);
+  window.addEventListener('resize',resize);
+  var phrases=['Страница не найдена...','Тут ничего нет','Может, трек удалили?','Вы заблудились в матрице','404: нот фаунд','Эта страница сбежала','Мелодия потерялась...','Здесь только тишина','Попробуйте вернуться на главную'];
+  var el=document.getElementById('tw404'),pi=0,ci=0,del=false;
+  (function tick(){
+    if(!document.getElementById('page-404').classList.contains('active'))return;
+    var p=phrases[pi];
+    if(!del){el.textContent=p.substring(0,ci+1);ci++;if(ci>=p.length){setTimeout(function(){del=true;tick()},2000);return}setTimeout(tick,60+Math.random()*40)}
+    else{el.textContent=p.substring(0,ci);ci--;if(ci<0){del=false;ci=0;pi=(pi+1)%phrases.length;setTimeout(tick,400);return}setTimeout(tick,30)}
+  })();
+}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open')}
 
 /* ===== THEME ===== */

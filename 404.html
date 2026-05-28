@@ -1,14 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>MusicPlatforme</title>
-<script>
-// GitHub Pages SPA redirect: store path and redirect to index
-var path=location.pathname+location.search+location.hash;
-sessionStorage.setItem('spa_redirect',path);
-location.replace('/');
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 — MusicPlatforme</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;overflow:hidden;font-family:'Inter','Segoe UI',system-ui,sans-serif;height:100vh;display:flex;align-items:center;justify-content:center}
+canvas{position:fixed;top:0;left:0;z-index:0}
+.content{position:relative;z-index:1;text-align:center;padding:20px}
+.code-404{font-size:clamp(80px,20vw,180px);font-weight:900;color:#fff;letter-spacing:-4px;text-shadow:0 0 40px rgba(103,80,164,.6),0 0 80px rgba(103,80,164,.3);line-height:1;margin-bottom:16px;animation:glitch 3s infinite}
+.typewriter{font-size:clamp(16px,3vw,24px);color:rgba(255,255,255,.8);height:36px;display:flex;align-items:center;justify-content:center;gap:0}
+.typewriter-text{border-right:2px solid rgba(103,80,164,.8);padding-right:4px;animation:blink .7s infinite}
+.home-btn{display:inline-flex;align-items:center;gap:8px;margin-top:32px;padding:14px 32px;background:linear-gradient(135deg,#6750A4,#9a82db);color:#fff;border:none;border-radius:28px;font:600 16px/1 'Inter',sans-serif;cursor:pointer;text-decoration:none;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(103,80,164,.4)}
+.home-btn:hover{transform:scale(1.05);box-shadow:0 6px 30px rgba(103,80,164,.6)}
+.home-btn svg{width:20px;height:20px}
+.path-hint{margin-top:16px;font:400 13px/1.4 'Inter',sans-serif;color:rgba(255,255,255,.3);word-break:break-all;max-width:400px}
+@keyframes blink{0%,100%{border-color:rgba(103,80,164,.8)}50%{border-color:transparent}}
+@keyframes glitch{0%,94%,100%{text-shadow:0 0 40px rgba(103,80,164,.6),0 0 80px rgba(103,80,164,.3)}95%{text-shadow:-2px 0 #ff004c,2px 0 #00d4ff,0 0 40px rgba(103,80,164,.6)}97%{text-shadow:2px 0 #ff004c,-2px 0 #00d4ff,0 0 40px rgba(103,80,164,.6)}}
+</style>
 </head>
-<body></body>
+<body>
+<canvas id="matrix"></canvas>
+<div class="content">
+  <div class="code-404">404</div>
+  <div class="typewriter"><span class="typewriter-text" id="tw"></span></div>
+  <a class="home-btn" href="/">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    На главную
+  </a>
+  <div class="path-hint" id="pathHint"></div>
+</div>
+<script>
+// Matrix rain
+(function(){
+  var c=document.getElementById('matrix'),ctx=c.getContext('2d');
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  var chars='アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF♪♫♩♬≡∞∴∵⊕⊗';
+  var fontSize=14,cols=Math.floor(c.width/fontSize);
+  var drops=[];for(var i=0;i<cols;i++)drops[i]=Math.random()*-100;
+  function draw(){
+    ctx.fillStyle='rgba(10,10,10,.06)';ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle='rgba(103,80,164,.35)';ctx.font=fontSize+'px monospace';
+    for(var i=0;i<drops.length;i++){
+      var ch=chars[Math.floor(Math.random()*chars.length)];
+      ctx.fillStyle=Math.random()>.98?'rgba(154,130,219,.9)':'rgba(103,80,164,.3)';
+      ctx.fillText(ch,i*fontSize,drops[i]*fontSize);
+      if(drops[i]*fontSize>c.height&&Math.random()>.975)drops[i]=0;
+      drops[i]+=.5;
+    }
+  }
+  setInterval(draw,50);
+  window.addEventListener('resize',function(){c.width=window.innerWidth;c.height=window.innerHeight;cols=Math.floor(c.width/fontSize);drops=[];for(var i=0;i<cols;i++)drops[i]=Math.random()*-100});
+})();
+
+// Typewriter
+(function(){
+  var phrases=[
+    'Страница не найдена...',
+    'Тут ничего нет',
+    'Может, трек удалили?',
+    'Вы заблудились в матрице',
+    '404: нот фаунд',
+    'Эта страница сбежала',
+    'Кажется, что-то пошло не так',
+    'Мелодия потерялась...',
+    'Здесь только тишина',
+    'Попробуйте вернуться на главную'
+  ];
+  var el=document.getElementById('tw'),pi=0,ci=0,deleting=false;
+  function tick(){
+    var phrase=phrases[pi];
+    if(!deleting){
+      el.textContent=phrase.substring(0,ci+1);ci++;
+      if(ci>=phrase.length){setTimeout(function(){deleting=true;tick()},2000);return}
+      setTimeout(tick,60+Math.random()*40);
+    }else{
+      el.textContent=phrase.substring(0,ci);ci--;
+      if(ci<0){deleting=false;ci=0;pi=(pi+1)%phrases.length;setTimeout(tick,400);return}
+      setTimeout(tick,30);
+    }
+  }
+  tick();
+})();
+
+// Show path hint
+document.getElementById('pathHint').textContent=location.pathname;
+
+// SPA redirect (keep this for routing support)
+(function(){
+  var path=location.pathname+location.search+location.hash;
+  sessionStorage.setItem('spa_redirect',path);
+  // Auto-redirect after 5 seconds if user doesn't click
+  setTimeout(function(){location.replace('/')},5000);
+})();
+</script>
+</body>
 </html>
