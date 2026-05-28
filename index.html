@@ -2896,10 +2896,6 @@ body[data-ui-style="glass"]{display:contents}
               <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
               Войти через GitHub
             </button>
-            <button class="social-login-btn" onclick="signInWithMicrosoft()" style="background:#2f2f2f;color:#fff">
-              <svg viewBox="0 0 21 21" width="20" height="20"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
-              Войти через Microsoft
-            </button>
             <button class="tg-login-btn" onclick="openTelegramLogin()" style="width:100%;justify-content:center">
               <svg viewBox="0 0 24 24" fill="white" width="20" height="20"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
               Войти через Telegram
@@ -4788,12 +4784,11 @@ function openConnectedAccounts(){
   closeModal('settingsModal');
   db.ref('users/'+currentUser.uid).once('value').then(s=>{
     const u=s.val()||{};
-    const hasTg=!!u.telegramId,hasGoogle=!!u.googleId,hasGithub=!!u.githubId,hasMs=!!u.microsoftId;
+    const hasTg=!!u.telegramId,hasGoogle=!!u.googleId,hasGithub=!!u.githubId;
     const list=document.getElementById('connectedAccountsList');
     list.innerHTML=
       _connAccItem('','Telegram',hasTg?(u.telegramUsername?'@'+u.telegramUsername:'Подключён'):'Не подключён',hasTg,'telegram')+
       _connAccItem('','Google',hasGoogle?'Подключён':'Не подключён',hasGoogle,'google')+
-      _connAccItem('','Microsoft',hasMs?'Подключён':'Не подключён',hasMs,'microsoft')+
       _connAccItem('','GitHub',hasGithub?'Подключён':'Не подключён',hasGithub,'github');
     document.getElementById('connectedAccountsModal').classList.add('open');
   });
@@ -5028,7 +5023,7 @@ function openSettings(){
       '<div class="settings-item" onclick="openChangeUsername()"><span class="material-symbols-rounded">alternate_email</span><div class="settings-item-info"><div class="settings-item-title">Логин</div><div class="settings-item-sub">'+(u.username||currentUser.username||'—')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div class="settings-item" onclick="openEmailSettings()"><span class="material-symbols-rounded">mail</span><div class="settings-item-info"><div class="settings-item-title">Email</div><div class="settings-item-sub">'+(u.email||'Не привязан')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       (hasEmail?'<div class="settings-item" onclick="openChangePassword()"><span class="material-symbols-rounded">lock</span><div class="settings-item-info"><div class="settings-item-title">Сменить пароль</div><div class="settings-item-sub">Отправит подтверждение на почту</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
-      '<div class="settings-item" onclick="openConnectedAccounts()"><span class="material-symbols-rounded">link</span><div class="settings-item-info"><div class="settings-item-title">Подключённые аккаунты</div><div class="settings-item-sub">Telegram, Google, Microsoft, GitHub</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+      '<div class="settings-item" onclick="openConnectedAccounts()"><span class="material-symbols-rounded">link</span><div class="settings-item-info"><div class="settings-item-title">Подключённые аккаунты</div><div class="settings-item-sub">Telegram, Google, GitHub</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div class="settings-item" onclick="openPrivacySettings()"><span class="material-symbols-rounded">shield</span><div class="settings-item-info"><div class="settings-item-title">Конфиденциальность</div><div class="settings-item-sub">Скрыть понравившиеся треки</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div style="margin:16px 0;height:1px;background:var(--md-outline-variant)"></div>'+
       '<div class="settings-item" onclick="cycleThemeMode()"><span class="material-symbols-rounded">contrast</span><div class="settings-item-info"><div class="settings-item-title">Тема</div><div class="settings-item-sub">'+themeLabel+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">sync</span></div>'+
