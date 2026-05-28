@@ -5821,10 +5821,11 @@ function playTrackById(id){
   }
 }
 
-function _makeSquareArt(src,cb){var img=new Image();img.crossOrigin='anonymous';img.onload=function(){var sz=Math.max(img.width,img.height);var c=document.createElement('canvas');c.width=sz;c.height=sz;var x=c.getContext('2d');x.fillStyle='#1e1e1e';x.fillRect(0,0,sz,sz);x.drawImage(img,(sz-img.width)/2,(sz-img.height)/2);try{cb([{src:c.toDataURL('image/png'),sizes:sz+'x'+sz,type:'image/png'}])}catch(e){cb([{src:src}])}};img.onerror=function(){cb([{src:src}])};img.src=src}
+function _makeSquareArt(src,cb){var img=new Image();img.onload=function(){var sz=Math.min(Math.max(img.width,img.height),512);var c=document.createElement('canvas');c.width=sz;c.height=sz;var x=c.getContext('2d');x.fillStyle='#1e1e1e';x.fillRect(0,0,sz,sz);var scale=Math.min(sz/img.width,sz/img.height);var dw=img.width*scale,dh=img.height*scale;x.drawImage(img,(sz-dw)/2,(sz-dh)/2,dw,dh);try{var url=c.toDataURL('image/jpeg',0.85);cb([{src:url,sizes:sz+'x'+sz,type:'image/jpeg'}])}catch(e){cb([{src:src}])}};img.onerror=function(){cb([{src:src}])};img.src=src}
 function loadAndPlay(track){
   document.body.classList.remove('radio-mode');
   activeRadioStation=null;
+  audio.removeAttribute('crossorigin');
   showPlayer();
   currentLyricsMap=null;
   document.getElementById('playerSong').textContent=track.title||'Без названия';
@@ -7005,6 +7006,7 @@ function renderRadioGrid(){
 function setRadioPlayerMeta(s){
   activeRadioStation=s;
   currentTrackId='radio:'+String(s.stationuuid||s.name||Date.now());
+  audio.crossOrigin='anonymous';
   document.body.classList.add('radio-mode');
   showPlayer();
   document.getElementById('playerSong').textContent=s.name||'Радио';
