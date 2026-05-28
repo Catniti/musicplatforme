@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>MusicPlatforme</title>
+<script>
+// GitHub Pages SPA redirect: store path and redirect to index
+var path=location.pathname+location.search+location.hash;
+sessionStorage.setItem('spa_redirect',path);
+location.replace('/');
+</script>
+</head>
+<body></body>
+</html>
