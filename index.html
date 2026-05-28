@@ -2974,13 +2974,13 @@ body[data-ui-style="glass"]{display:contents}
     <div class="track-list" id="playlistViewTracks"></div>
   </div>
   <div class="page" id="page-404">
-    <div style="position:relative;min-height:80vh;display:flex;align-items:center;justify-content:center;overflow:hidden">
+    <div style="position:relative;min-height:80vh;display:flex;align-items:center;justify-content:center;overflow:hidden;perspective:600px">
       <canvas id="matrix404" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;border-radius:var(--md-shape-xl);opacity:.4"></canvas>
-      <div style="position:relative;z-index:1;text-align:center;padding:32px">
-        <div style="font:900 clamp(64px,15vw,140px)/1 'Inter',sans-serif;color:var(--md-on-surface);letter-spacing:-3px;text-shadow:0 0 40px rgba(103,80,164,.5);margin-bottom:12px">404</div>
-        <div style="font:400 clamp(14px,2.5vw,20px)/1.4 'Inter',sans-serif;color:var(--md-on-surface-variant);height:30px;display:flex;align-items:center;justify-content:center"><span id="tw404" style="border-right:2px solid var(--md-primary);padding-right:3px"></span></div>
-        <button class="btn-primary" style="margin-top:28px" onclick="navigate('home')"><span class="material-symbols-rounded">home</span> На главную</button>
-        <div style="margin-top:12px;font:400 12px/1.4 'Inter',sans-serif;color:var(--md-on-surface-variant);opacity:.5" id="pathHint404"></div>
+      <div id="scene404" style="position:relative;z-index:1;text-align:center;padding:32px;transform-style:preserve-3d;transition:transform .1s ease-out">
+        <div style="font:900 clamp(64px,15vw,140px)/1 'Inter',sans-serif;color:var(--md-on-surface);letter-spacing:-3px;text-shadow:0 0 40px rgba(0,255,70,.4);margin-bottom:12px;transform:translateZ(40px)">404</div>
+        <div style="font:400 clamp(14px,2.5vw,20px)/1.4 'Inter',sans-serif;color:var(--md-on-surface-variant);height:30px;display:flex;align-items:center;justify-content:center;transform:translateZ(20px)"><span id="tw404" style="border-right:2px solid #0f0;padding-right:3px"></span></div>
+        <button class="btn-primary" style="margin-top:28px;transform:translateZ(15px)" onclick="history.length>1?history.back():navigate('home')"><span class="material-symbols-rounded">arrow_back</span> Назад</button>
+        <div style="margin-top:12px;font:400 12px/1.4 'Inter',sans-serif;color:var(--md-on-surface-variant);opacity:.5;transform:translateZ(8px)" id="pathHint404"></div>
       </div>
     </div>
   </div>
@@ -7695,15 +7695,22 @@ function _init404Page(){
     ctx.fillStyle='rgba(10,10,10,.07)';ctx.fillRect(0,0,c.width,c.height);
     ctx.font=fs+'px monospace';
     for(var i=0;i<drops.length;i++){
-      ctx.fillStyle=Math.random()>.97?'rgba(154,130,219,.8)':'rgba(103,80,164,.25)';
+      ctx.fillStyle=Math.random()>.97?'rgba(150,255,150,.8)':'rgba(0,255,70,.25)';
       ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*fs,drops[i]*fs);
       if(drops[i]*fs>c.height&&Math.random()>.975)drops[i]=0;
       drops[i]+=.4;
     }
   },55);
   window.addEventListener('resize',resize);
-  var phrases=['Страница не найдена...','Тут ничего нет','Может, трек удалили?','Вы заблудились в матрице','404: нот фаунд','Эта страница сбежала','Мелодия потерялась...','Здесь только тишина','Попробуйте вернуться на главную'];
-  var el=document.getElementById('tw404'),pi=0,ci=0,del=false;
+  var scene=document.getElementById('scene404');
+  if(scene){
+    var pg=document.getElementById('page-404');
+    pg.addEventListener('mousemove',function(e){var r=pg.getBoundingClientRect();var cx=r.left+r.width/2,cy=r.top+r.height/2;var rx=(e.clientY-cy)/(r.height/2)*10,ry=(e.clientX-cx)/(r.width/2)*-10;scene.style.transform='rotateX('+rx+'deg) rotateY('+ry+'deg)'});
+    pg.addEventListener('touchmove',function(e){if(!e.touches[0])return;var r=pg.getBoundingClientRect();var cx=r.left+r.width/2,cy=r.top+r.height/2;var rx=(e.touches[0].clientY-cy)/(r.height/2)*10,ry=(e.touches[0].clientX-cx)/(r.width/2)*-10;scene.style.transform='rotateX('+rx+'deg) rotateY('+ry+'deg)'},{passive:true});
+  }
+  var phrases=['Страница не найдена...','Тут ничего нет','Может, трек удалили?','Вы заблудились в матрице','404: нот фаунд','Эта страница сбежала','Мелодия потерялась...','Здесь только тишина','Попробуйте вернуться назад'];
+  var el=document.getElementById('tw404');if(!el)return;el.textContent='';
+  var pi=0,ci=0,del=false;
   (function tick(){
     if(!document.getElementById('page-404').classList.contains('active'))return;
     var p=phrases[pi];

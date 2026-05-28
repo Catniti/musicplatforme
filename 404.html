@@ -4,35 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>404 — MusicPlatforme</title>
+<script>
+// SPA redirect: known routes → immediate redirect
+var p=location.pathname,known=['/explore','/wave','/radio','/charts','/new','/favorites','/playlists','/history','/subscriptions','/upload','/profile','/search'];
+var isSPA=known.indexOf(p)!==-1||p.match(/^\/(track|artist|radio)\//);
+if(isSPA){sessionStorage.setItem('spa_redirect',p+location.search+location.hash);location.replace('/')}
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a0a;overflow:hidden;font-family:'Inter','Segoe UI',system-ui,sans-serif;height:100vh;display:flex;align-items:center;justify-content:center}
+body{background:#0a0a0a;overflow:hidden;font-family:'Inter','Segoe UI',system-ui,sans-serif;height:100vh;display:flex;align-items:center;justify-content:center;perspective:800px}
 canvas{position:fixed;top:0;left:0;z-index:0}
-.content{position:relative;z-index:1;text-align:center;padding:20px}
-.code-404{font-size:clamp(80px,20vw,180px);font-weight:900;color:#fff;letter-spacing:-4px;text-shadow:0 0 40px rgba(103,80,164,.6),0 0 80px rgba(103,80,164,.3);line-height:1;margin-bottom:16px;animation:glitch 3s infinite}
-.typewriter{font-size:clamp(16px,3vw,24px);color:rgba(255,255,255,.8);height:36px;display:flex;align-items:center;justify-content:center;gap:0}
-.typewriter-text{border-right:2px solid rgba(103,80,164,.8);padding-right:4px;animation:blink .7s infinite}
-.home-btn{display:inline-flex;align-items:center;gap:8px;margin-top:32px;padding:14px 32px;background:linear-gradient(135deg,#6750A4,#9a82db);color:#fff;border:none;border-radius:28px;font:600 16px/1 'Inter',sans-serif;cursor:pointer;text-decoration:none;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(103,80,164,.4)}
-.home-btn:hover{transform:scale(1.05);box-shadow:0 6px 30px rgba(103,80,164,.6)}
-.home-btn svg{width:20px;height:20px}
-.path-hint{margin-top:16px;font:400 13px/1.4 'Inter',sans-serif;color:rgba(255,255,255,.3);word-break:break-all;max-width:400px}
-@keyframes blink{0%,100%{border-color:rgba(103,80,164,.8)}50%{border-color:transparent}}
-@keyframes glitch{0%,94%,100%{text-shadow:0 0 40px rgba(103,80,164,.6),0 0 80px rgba(103,80,164,.3)}95%{text-shadow:-2px 0 #ff004c,2px 0 #00d4ff,0 0 40px rgba(103,80,164,.6)}97%{text-shadow:2px 0 #ff004c,-2px 0 #00d4ff,0 0 40px rgba(103,80,164,.6)}}
+.scene{position:relative;z-index:1;text-align:center;padding:20px;transform-style:preserve-3d;transition:transform .1s ease-out}
+.code-404{font-size:clamp(80px,20vw,180px);font-weight:900;color:#fff;letter-spacing:-4px;text-shadow:0 0 40px rgba(0,255,70,.5),0 0 80px rgba(0,255,70,.2);line-height:1;margin-bottom:16px;animation:glitch 3s infinite;transform:translateZ(60px)}
+.typewriter{font-size:clamp(16px,3vw,24px);color:rgba(255,255,255,.8);height:36px;display:flex;align-items:center;justify-content:center;transform:translateZ(30px)}
+.typewriter-text{border-right:2px solid rgba(0,255,70,.7);padding-right:4px;animation:blink .7s infinite}
+.back-btn{display:inline-flex;align-items:center;gap:8px;margin-top:32px;padding:14px 32px;background:linear-gradient(135deg,#0f0,#0a0);color:#fff;border:none;border-radius:28px;font:600 16px/1 'Inter',sans-serif;cursor:pointer;text-decoration:none;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(0,255,70,.3);transform:translateZ(20px)}
+.back-btn:hover{transform:translateZ(20px) scale(1.05);box-shadow:0 6px 30px rgba(0,255,70,.5)}
+.back-btn svg{width:20px;height:20px}
+.path-hint{margin-top:16px;font:400 13px/1.4 'Inter',sans-serif;color:rgba(255,255,255,.25);word-break:break-all;max-width:400px;transform:translateZ(10px)}
+@keyframes blink{0%,100%{border-color:rgba(0,255,70,.7)}50%{border-color:transparent}}
+@keyframes glitch{0%,94%,100%{text-shadow:0 0 40px rgba(0,255,70,.5),0 0 80px rgba(0,255,70,.2)}95%{text-shadow:-3px 0 #ff004c,3px 0 #00d4ff,0 0 40px rgba(0,255,70,.5)}97%{text-shadow:3px 0 #ff004c,-3px 0 #00d4ff,0 0 40px rgba(0,255,70,.5)}}
 </style>
 </head>
 <body>
 <canvas id="matrix"></canvas>
-<div class="content">
+<div class="scene" id="scene">
   <div class="code-404">404</div>
   <div class="typewriter"><span class="typewriter-text" id="tw"></span></div>
-  <a class="home-btn" href="/">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-    На главную
+  <a class="back-btn" href="javascript:void(0)" onclick="history.length>1?history.back():location.href='/'">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+    Назад
   </a>
   <div class="path-hint" id="pathHint"></div>
 </div>
 <script>
-// Matrix rain
+// Matrix rain (GREEN)
 (function(){
   var c=document.getElementById('matrix'),ctx=c.getContext('2d');
   c.width=window.innerWidth;c.height=window.innerHeight;
@@ -40,11 +46,11 @@ canvas{position:fixed;top:0;left:0;z-index:0}
   var fontSize=14,cols=Math.floor(c.width/fontSize);
   var drops=[];for(var i=0;i<cols;i++)drops[i]=Math.random()*-100;
   function draw(){
-    ctx.fillStyle='rgba(10,10,10,.06)';ctx.fillRect(0,0,c.width,c.height);
-    ctx.fillStyle='rgba(103,80,164,.35)';ctx.font=fontSize+'px monospace';
+    ctx.fillStyle='rgba(10,10,10,.05)';ctx.fillRect(0,0,c.width,c.height);
+    ctx.font=fontSize+'px monospace';
     for(var i=0;i<drops.length;i++){
       var ch=chars[Math.floor(Math.random()*chars.length)];
-      ctx.fillStyle=Math.random()>.98?'rgba(154,130,219,.9)':'rgba(103,80,164,.3)';
+      ctx.fillStyle=Math.random()>.97?'rgba(150,255,150,.9)':'rgba(0,255,70,.3)';
       ctx.fillText(ch,i*fontSize,drops[i]*fontSize);
       if(drops[i]*fontSize>c.height&&Math.random()>.975)drops[i]=0;
       drops[i]+=.5;
@@ -54,7 +60,7 @@ canvas{position:fixed;top:0;left:0;z-index:0}
   window.addEventListener('resize',function(){c.width=window.innerWidth;c.height=window.innerHeight;cols=Math.floor(c.width/fontSize);drops=[];for(var i=0;i<cols;i++)drops[i]=Math.random()*-100});
 })();
 
-// Typewriter
+// Typewriter with MULTIPLE phrases
 (function(){
   var phrases=[
     'Страница не найдена...',
@@ -66,7 +72,7 @@ canvas{position:fixed;top:0;left:0;z-index:0}
     'Кажется, что-то пошло не так',
     'Мелодия потерялась...',
     'Здесь только тишина',
-    'Попробуйте вернуться на главную'
+    'Попробуйте вернуться назад'
   ];
   var el=document.getElementById('tw'),pi=0,ci=0,deleting=false;
   function tick(){
@@ -84,16 +90,19 @@ canvas{position:fixed;top:0;left:0;z-index:0}
   tick();
 })();
 
-// Show path hint
-document.getElementById('pathHint').textContent=location.pathname;
-
-// SPA redirect (keep this for routing support)
+// 3D Parallax
 (function(){
-  var path=location.pathname+location.search+location.hash;
-  sessionStorage.setItem('spa_redirect',path);
-  // Auto-redirect after 5 seconds if user doesn't click
-  setTimeout(function(){location.replace('/')},5000);
+  var scene=document.getElementById('scene');
+  function move(x,y){
+    var cx=window.innerWidth/2,cy=window.innerHeight/2;
+    var rx=(y-cy)/cy*12,ry=(x-cx)/cx*-12;
+    scene.style.transform='rotateX('+rx+'deg) rotateY('+ry+'deg)';
+  }
+  document.addEventListener('mousemove',function(e){move(e.clientX,e.clientY)});
+  document.addEventListener('touchmove',function(e){if(e.touches[0])move(e.touches[0].clientX,e.touches[0].clientY)},{passive:true});
 })();
+
+document.getElementById('pathHint').textContent=location.pathname;
 </script>
 </body>
 </html>
