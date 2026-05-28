@@ -5821,7 +5821,7 @@ function loadAndPlay(track){
   }
   document.getElementById('totalTime').textContent=track.duration?formatTime(track.duration):'0:00';
   document.getElementById('fsTotalTime').textContent=track.duration?formatTime(track.duration):'0:00';
-  updateFsLike();renderQueue();showTrackNotification(track);
+  updateFsLike();renderQueue();
   if(audio.src&&!audio.paused){
     const origVol=audio.volume;
     const fadeOut=setInterval(()=>{if(audio.volume>0.05){audio.volume=Math.max(0,audio.volume-0.1)}else{clearInterval(fadeOut);audio.volume=origVol;doLoad(track)}},30);
@@ -5834,9 +5834,11 @@ function loadAndPlay(track){
 async function doLoad(track){
   let source=getCachedAudioData(currentTrackId)||track.audioData;
   if(!source&&currentTrackId){
-    try{source=await _fetchTrackAudio(currentTrackId);if(source)track.audioData=source}catch(e){}
+    for(let _retry=0;_retry<2;_retry++){
+      try{source=await _fetchTrackAudio(currentTrackId);if(source){track.audioData=source;break}}catch(e){await new Promise(r=>setTimeout(r,1000))}
+    }
   }
-  if(!source){showSnackbar('Аудио недоступно');return}
+  if(!source){showSnackbar('Аудио недоступно. Если включён VPN — попробуйте отключить');return}
   if(currentTrackId&&source) touchAudioCache(currentTrackId);
   audio.src=source;
   if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
@@ -6157,8 +6159,10 @@ function initDrag(el,cb){
 }
 initDrag(document.getElementById('progressTrack'),p=>{if(audio.duration)audio.currentTime=p*audio.duration});
 initDrag(document.getElementById('fsProgressTrack'),p=>{if(audio.duration)audio.currentTime=p*audio.duration});
-let volume=0.8;audio.volume=volume;
-initDrag(document.getElementById('volumeSlider'),v=>{volume=v;audio.volume=v;document.getElementById('volumeFill').style.width=(v*100)+'%';updateVolumeIcon()});
+const _isMobileDevice=(function(){const ua=navigator.userAgent||'';return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)||('ontouchstart' in window&&window.innerWidth<=1024)})();
+let volume=_isMobileDevice?1.0:parseFloat(localStorage.getItem('mp_volume'))||0.8;audio.volume=volume;
+document.getElementById('volumeFill').style.width=(volume*100)+'%';
+initDrag(document.getElementById('volumeSlider'),v=>{volume=v;audio.volume=v;document.getElementById('volumeFill').style.width=(v*100)+'%';updateVolumeIcon();if(!_isMobileDevice)localStorage.setItem('mp_volume',v.toFixed(2))});
 function toggleMute(){audio.muted=!audio.muted;updateVolumeIcon()}
 function updateVolumeIcon(){document.getElementById('volumeBtn').querySelector('.material-symbols-rounded').textContent=audio.muted||volume===0?'volume_off':volume<.5?'volume_down':'volume_up'}
 function formatTime(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return m+':'+(sec<10?'0':'')+sec}
@@ -6735,18 +6739,18 @@ const RADIO_API_SERVERS=[
 ];
 const RADIO_FALLBACK_STATIONS={
   RU:[
-    {name:'Европа Плюс',country:'Россия',language:'ru',tags:'pop,hits,европа',bitrate:128,favicon:'https://www.europaplus.ru/favicon.ico',url_resolved:'https://ep128.hostingradio.ru/europaplus128.mp3',url:'https://ep256.hostingradio.ru/europaplus256.mp3',homepage:'https://europaplus.ru'},
-    {name:'Радио ENERGY (NRJ)',country:'Россия',language:'ru',tags:'dance,electronic,energy,nrj',bitrate:128,favicon:'https://nrjrussia.ru/favicon.ico',url_resolved:'https://energy128.hostingradio.ru/energy128.mp3',homepage:'https://nrjrussia.ru'},
+    {name:'Европа Плюс',country:'Россия',language:'ru',tags:'pop,hits,европа',bitrate:256,favicon:'https://www.europaplus.ru/favicon.ico',url_resolved:'https://ep256.hostingradio.ru:8052/europaplus256.mp3',homepage:'https://europaplus.ru'},
+    {name:'Radio Record',country:'Россия',language:'ru',tags:'dance,electronic,record,mix',bitrate:96,favicon:'https://radiorecord.ru/favicon.ico',url_resolved:'https://radiorecord.hostingradio.ru/rus96.aacp',homepage:'https://radiorecord.ru'},
     {name:'Хит FM',country:'Россия',language:'ru',tags:'hits,pop,хит',bitrate:128,favicon:'https://hitfm.ru/favicon.ico',url_resolved:'https://hitfm.hostingradio.ru/hitfm128.mp3',homepage:'https://hitfm.ru'},
     {name:'DFM',country:'Россия',language:'ru',tags:'dance,electronic,dfm',bitrate:128,favicon:'https://dfm.ru/favicon.ico',url_resolved:'https://dfm.hostingradio.ru/dfm128.mp3',homepage:'https://dfm.ru'},
     {name:'Дорожное радио',country:'Россия',language:'ru',tags:'road,pop,retro,russian,дорожное',bitrate:128,favicon:'https://dorognoe.ru/favicon.ico',url_resolved:'https://dorognoe.hostingradio.ru:8000/radio',homepage:'https://dorognoe.ru'},
     {name:'Русское Радио',country:'Россия',language:'ru',tags:'pop,russian,русское',bitrate:128,favicon:'https://rusradio.ru/favicon.ico',url_resolved:'https://rusradio.hostingradio.ru/rusradio128.mp3',homepage:'https://rusradio.ru'},
-    {name:'Авторадио',country:'Россия',language:'ru',tags:'pop,russian,auto,авторадио',bitrate:96,favicon:'https://www.avtoradio.ru/favicon.ico',url_resolved:'https://avtoradio.hostingradio.ru/avtoradio96.mp3',homepage:'https://avtoradio.ru'},
-    {name:'Ретро FM',country:'Россия',language:'ru',tags:'retro,pop,80s,90s,ретро',bitrate:96,favicon:'https://retrofm.ru/favicon.ico',url_resolved:'https://retrofm.hostingradio.ru/retrofm96.mp3',url:'https://retrofm.hostingradio.ru/retrofm128.mp3',homepage:'https://retrofm.ru'},
+    {name:'Авторадио',country:'Россия',language:'ru',tags:'pop,russian,auto,авторадио',bitrate:128,favicon:'https://www.avtoradio.ru/favicon.ico',url_resolved:'https://play.global.audio/avtoradio.opus',homepage:'https://avtoradio.ru'},
+    {name:'Ретро FM',country:'Россия',language:'ru',tags:'retro,pop,80s,90s,ретро',bitrate:256,favicon:'https://retrofm.ru/favicon.ico',url_resolved:'https://retroserver.streamr.ru:8043/retro256.mp3',homepage:'https://retrofm.ru'},
     {name:'Наше Радио',country:'Россия',language:'ru',tags:'rock,russian,наше',bitrate:128,favicon:'https://nashe.ru/favicon.ico',url_resolved:'https://nashe1.hostingradio.ru/nashe-128.mp3',homepage:'https://nashe.ru'},
     {name:'Radio Monte Carlo',country:'Россия',language:'ru',tags:'pop,lounge,montecarlo',bitrate:128,favicon:'https://montecarlo.ru/favicon.ico',url_resolved:'https://montecarlo.hostingradio.ru/montecarlo128.mp3',homepage:'https://montecarlo.ru'},
-    {name:'Радио Дача',country:'Россия',language:'ru',tags:'pop,retro,russian,дача',bitrate:96,favicon:'https://www.radiodacha.ru/favicon.ico',url_resolved:'https://radiodacha.hostingradio.ru/dacha96.mp3',homepage:'https://www.radiodacha.ru'},
-    {name:'Record Dance Radio',country:'Россия',language:'ru',tags:'dance,electronic,record',bitrate:96,favicon:'https://radiorecord.ru/favicon.ico',url_resolved:'https://radiorecord.hostingradio.ru/rr_main96.aacp',homepage:'https://radiorecord.ru'},
+    {name:'Радио Дача',country:'Россия',language:'ru',tags:'pop,retro,russian,дача',bitrate:128,favicon:'https://www.radiodacha.ru/favicon.ico',url_resolved:'https://listen13.vdfm.ru:8000/dacha',homepage:'https://www.radiodacha.ru'},
+    {name:'Record Dance Radio',country:'Россия',language:'ru',tags:'dance,electronic,record',bitrate:96,favicon:'https://radiorecord.ru/favicon.ico',url_resolved:'https://radiorecord.hostingradio.ru/rr_main96.aacp',url:'https://radiorecord.hostingradio.ru/sd9096.aacp',homepage:'https://radiorecord.ru'},
     {name:'Maximum',country:'Россия',language:'ru',tags:'rock,pop,maximum',bitrate:128,favicon:'https://maximum.ru/favicon.ico',url_resolved:'https://maximum.hostingradio.ru/maximum128.mp3',homepage:'https://maximum.ru'},
     {name:'Радио 7',country:'Россия',language:'ru',tags:'pop,easy,7',bitrate:256,favicon:'https://radio7.ru/favicon.ico',url_resolved:'https://radio7server.streamr.ru:8040/radio7256.mp3',homepage:'https://radio7.ru'},
     {name:'Радио Маяк',country:'Россия',language:'ru',tags:'news,talk,маяк',bitrate:128,favicon:'https://radiomayak.ru/favicon.ico',url_resolved:'https://icecast-vgtrk.cdnvideo.ru/mayakfm_mp3_128kbps',homepage:'https://radiomayak.ru'},
@@ -6755,8 +6759,8 @@ const RADIO_FALLBACK_STATIONS={
     {name:'Радио Ваня',country:'Россия',language:'ru',tags:'pop,russian,ваня',bitrate:128,favicon:'https://radiovanya.ru/favicon.ico',url_resolved:'https://icecast-radiovanya.cdnvideo.ru/radiovanya',homepage:'https://radiovanya.ru'},
     {name:'Юмор FM',country:'Россия',language:'ru',tags:'humor,fun,talk,юмор',bitrate:128,favicon:'https://humorfm.by/favicon.ico',url_resolved:'https://pub0302.101.ru:8000/stream/trust/mp3/128/17',homepage:'https://www.veseloeradio.ru/'},
     {name:'Шансон',country:'Россия',language:'ru',tags:'shanson,russian,шансон',bitrate:128,favicon:'https://radioshanson.fm/favicon.ico',url_resolved:'https://chanson.hostingradio.ru:8041/chanson128.mp3',homepage:'https://radioshanson.fm'},
-    {name:'Маруся FM',country:'Россия',language:'ru',tags:'pop,russian,маруся',bitrate:128,favicon:'https://marus.fm/favicon.ico',url_resolved:'https://listen1.myradio24.com/8304',homepage:'https://marus.fm'},
-    {name:'Relax FM',country:'Россия',language:'ru',tags:'relax,chillout',bitrate:128,favicon:'https://relax-fm.ru/favicon.ico',url_resolved:'https://relax.hostingradio.ru/relax96.mp3',url:'https://pub0301.101.ru:8443/stream/trust/mp3/128/200',homepage:'https://relax-fm.ru'}
+    {name:'Маруся FM',country:'Россия',language:'ru',tags:'pop,russian,маруся',bitrate:128,favicon:'https://marus.fm/favicon.ico',url_resolved:'https://radio-holding.ru:9433/marusya_default',homepage:'https://marus.fm'},
+    {name:'Relax FM',country:'Россия',language:'ru',tags:'relax,chillout',bitrate:128,favicon:'https://relax-fm.ru/favicon.ico',url_resolved:'https://pub0201.101.ru:8443/stream/trust/mp3/128/24',homepage:'https://relax-fm.ru'}
   ]
 };
 let radioApiServerIndex=0;
@@ -8277,47 +8281,6 @@ function openModerationDetails(trackId,mode){
 }
 function escAttr(v){return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
-/* ===== SWIPE UP TO OPEN FULLSCREEN PLAYER ===== */
-(function(){
-  const bar=document.getElementById('playerBar');
-  let startY=0,startX=0,swiping=false;
-  bar.addEventListener('touchstart',e=>{
-    const t=e.touches[0];startY=t.clientY;startX=t.clientX;swiping=true;
-  },{passive:true});
-  bar.addEventListener('touchmove',e=>{
-    if(!swiping)return;
-    const dy=startY-e.touches[0].clientY;
-    const dx=Math.abs(e.touches[0].clientX-startX);
-    if(dy>50&&dx<80){swiping=false;openFullscreenPlayer()}
-  },{passive:true});
-  bar.addEventListener('touchend',()=>{swiping=false},{passive:true});
-})();
-
-/* ===== TRACK NOTIFICATION WITH LIKE ===== */
-function showTrackNotification(track){
-  if(!('Notification' in window)||Notification.permission!=='granted')return;
-  try{
-    const n=new Notification(track.title||'Без названия',{
-      body:(track.musicAuthor||track.artistName||'Неизвестен'),
-      icon:track.cover||'/icon.png',
-      tag:'mp-now-playing',
-      renotify:true,
-      actions:[{action:'like',title:'❤️ Нравится'}],
-      silent:true
-    });
-    n.onclick=()=>{window.focus();openFullscreenPlayer();n.close()};
-  }catch(e){}
-}
-if('Notification' in window&&Notification.permission==='default'){
-  setTimeout(()=>Notification.requestPermission(),10000);
-}
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').catch(()=>{});
-  navigator.serviceWorker.addEventListener('message',e=>{
-    if(e.data&&e.data.action==='like'&&currentTrackId)toggleFavorite(currentTrackId);
-  });
-}
-
 /* ===== RESTORE SAVED FX PRESET ON LOAD ===== */
 window.addEventListener('load',()=>{
   const savedPreset=localStorage.getItem('mp_fx_preset');
@@ -8330,7 +8293,12 @@ window.addEventListener('load',()=>{
 window.addEventListener('scroll',()=>{document.getElementById('topBar').classList.toggle('scrolled',window.scrollY>10)});
 function checkResponsive(){const b=document.getElementById('sidebarCloseBtn');if(window.innerWidth<=1024)b.style.display='';else{b.style.display='none';document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open')}}
 window.addEventListener('resize',checkResponsive);checkResponsive();
-document.addEventListener('click',e=>{document.querySelectorAll('.modal-overlay').forEach(m=>{if(e.target===m)m.classList.remove('open')})});
+document.addEventListener('click',e=>{
+  document.querySelectorAll('.modal-overlay').forEach(m=>{if(e.target===m)m.classList.remove('open')});
+  if(!e.target.closest('.track-context-menu')&&!e.target.closest('[onclick*="openTrackContextMenu"]')&&!e.target.closest('[onclick*="showContextMenu"]')){
+    document.querySelectorAll('.track-context-menu').forEach(m=>m.remove());
+  }
+});
 document.addEventListener('keydown',e=>{
   if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
   if(e.code==='Space'){e.preventDefault();togglePlay()}
