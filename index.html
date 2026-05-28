@@ -2988,11 +2988,11 @@ body[data-ui-style="glass"]{display:contents}
   </div>
   <div class="player-controls">
     <div class="player-buttons">
-      <button class="btn-icon" onclick="toggleShuffle()" id="shuffleBtn"><span class="material-symbols-rounded">shuffle</span></button>
+      <button class="btn-icon" id="playerDislikeBtn" onclick="dislikeCurrentTrack()" title="Не нравится"><span class="material-symbols-rounded">thumb_down</span></button>
       <button class="btn-icon" onclick="prevTrack()"><span class="material-symbols-rounded">skip_previous</span></button>
       <button class="player-play-btn" onclick="togglePlay()" id="mainPlayBtn"><span class="material-symbols-rounded" id="playIcon">play_arrow</span></button>
       <button class="btn-icon" onclick="nextTrack()"><span class="material-symbols-rounded">skip_next</span></button>
-      <button class="btn-icon" onclick="toggleRepeat()" id="repeatBtn"><span class="material-symbols-rounded">repeat</span></button>
+      <button class="btn-icon" id="playerLikeBtn" onclick="toggleFavorite(currentTrackId)" title="Нравится"><span class="material-symbols-rounded">favorite</span></button>
     </div>
     <div class="progress-bar">
       <span class="progress-time" id="currentTime">0:00</span>
@@ -3028,11 +3028,11 @@ body[data-ui-style="glass"]{display:contents}
       <span class="progress-time" id="fsTotalTime">0:00</span>
     </div>
     <div class="fs-buttons">
-      <button class="btn-icon" onclick="toggleShuffle()" id="fsShuffleBtn"><span class="material-symbols-rounded">shuffle</span></button>
+      <button class="btn-icon" id="fsDislikeBtn" onclick="dislikeCurrentTrack()" title="Не нравится"><span class="material-symbols-rounded">thumb_down</span></button>
       <button class="btn-icon" onclick="prevTrack()" style="width:48px;height:48px"><span class="material-symbols-rounded" style="font-size:32px">skip_previous</span></button>
       <button class="fs-play-btn" onclick="togglePlay()" id="fsPlayBtn"><span class="material-symbols-rounded" id="fsPlayIcon">play_arrow</span></button>
       <button class="btn-icon" onclick="nextTrack()" style="width:48px;height:48px"><span class="material-symbols-rounded" style="font-size:32px">skip_next</span></button>
-      <button class="btn-icon" onclick="toggleRepeat()" id="fsRepeatBtn"><span class="material-symbols-rounded">repeat</span></button>
+      <button class="btn-icon" id="fsLikeBtnMain" onclick="toggleFavorite(currentTrackId)" title="Нравится"><span class="material-symbols-rounded">favorite</span></button>
     </div>
   </div>
   <div class="fs-actions">
@@ -3738,7 +3738,7 @@ let partyGeoWatchId=null;
 let partyGeo={enabled:false,lat:null,lon:null,accuracy:null};
 let audioCtx=null,mediaSource=null,fxNodes=null;
 let fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};
-let currentFxPreset='off';
+let currentFxPreset=localStorage.getItem('mp_fx_preset')||'off';
 localStorage.setItem('mp_device_id',deviceId);localStorage.setItem('mp_device_name',deviceName);
 try{const savedFx=JSON.parse(localStorage.getItem('mp_fx_state')||'null');if(savedFx)fxState={...fxState,...savedFx}}catch(e){}
 const audio=document.getElementById('audioPlayer');
@@ -5060,6 +5060,7 @@ function loadUserData(){
       case 'page-charts':renderCharts();break;
       case 'page-new-releases':renderNewReleases();break;
       case 'page-favorites':renderFavorites();break;
+      case 'page-upload':case 'page-profile':if(currentUser)loadMyTracks();break;
       case 'page-search':handleSearch(document.getElementById('searchInput').value);break;
       case 'page-artist':if(currentArtistId){currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===currentArtistId).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));const _atl=document.getElementById('artistTracks');if(_atl)_atl.innerHTML=currentArtistTracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');}break;
     }
@@ -5820,7 +5821,7 @@ function loadAndPlay(track){
   }
   document.getElementById('totalTime').textContent=track.duration?formatTime(track.duration):'0:00';
   document.getElementById('fsTotalTime').textContent=track.duration?formatTime(track.duration):'0:00';
-  updateFsLike();renderQueue();
+  updateFsLike();renderQueue();showTrackNotification(track);
   if(audio.src&&!audio.paused){
     const origVol=audio.volume;
     const fadeOut=setInterval(()=>{if(audio.volume>0.05){audio.volume=Math.max(0,audio.volume-0.1)}else{clearInterval(fadeOut);audio.volume=origVol;doLoad(track)}},30);
@@ -5854,8 +5855,8 @@ function togglePlay(){if(!audio.src)return;if(isPlaying){audio.pause();if(audioC
 function updatePlayButton(){const ic=isPlaying?'pause':'play_arrow';document.getElementById('playIcon').textContent=ic;document.getElementById('fsPlayIcon').textContent=ic;document.getElementById('waveCircle').classList.toggle('playing-anim',isPlaying)}
 function prevTrack(){if(!playlist.length)return;if(audio.currentTime>3){audio.currentTime=0;broadcastPlaybackState();broadcastPartyState();return}playlistIndex=(playlistIndex-1+playlist.length)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
 function nextTrack(){if(!playlist.length)return;if(isShuffle)playlistIndex=Math.floor(Math.random()*playlist.length);else playlistIndex=(playlistIndex+1)%playlist.length;currentTrackId=playlist[playlistIndex];loadAndPlay(allTracks[currentTrackId])}
-function toggleShuffle(){isShuffle=!isShuffle;document.getElementById('shuffleBtn').classList.toggle('active',isShuffle);document.getElementById('fsShuffleBtn').classList.toggle('active',isShuffle);showSnackbar(isShuffle?'Перемешивание вкл':'Перемешивание выкл');broadcastPlaybackState();broadcastPartyState()}
-function toggleRepeat(){repeatMode=(repeatMode+1)%3;['repeatBtn','fsRepeatBtn'].forEach(id=>{const b=document.getElementById(id);b.classList.toggle('active',repeatMode>0);b.querySelector('.material-symbols-rounded').textContent=repeatMode===2?'repeat_one':'repeat'});showSnackbar(['Повтор выкл','Повтор плейлиста','Повтор трека'][repeatMode]);broadcastPlaybackState();broadcastPartyState()}
+function toggleShuffle(){isShuffle=!isShuffle;showSnackbar(isShuffle?'Перемешивание вкл':'Перемешивание выкл');broadcastPlaybackState();broadcastPartyState()}
+function toggleRepeat(){repeatMode=(repeatMode+1)%3;showSnackbar(['Повтор выкл','Повтор плейлиста','Повтор трека'][repeatMode]);broadcastPlaybackState();broadcastPartyState()}
 
 /* ===== AUDIO EVENTS ===== */
 audio.addEventListener('timeupdate',()=>{
@@ -5912,8 +5913,7 @@ function listenRemoteCommands(){
       if(typeof cmd.muted==='boolean'){audio.muted=cmd.muted;updateVolumeIcon();}
       if(cmd.fxState&&typeof cmd.fxState==='object'){fxState={...fxState,...cmd.fxState};applyFxState();syncFxUi();}
       updatePlayButton();
-      document.getElementById('shuffleBtn').classList.toggle('active',isShuffle);document.getElementById('fsShuffleBtn').classList.toggle('active',isShuffle);
-      ['repeatBtn','fsRepeatBtn'].forEach(id=>{const b=document.getElementById(id);b.classList.toggle('active',repeatMode>0);b.querySelector('.material-symbols-rounded').textContent=repeatMode===2?'repeat_one':'repeat'});
+
       if(cmd.isPlaying){audio.play().catch(()=>{})}else{audio.pause();isPlaying=false;updatePlayButton();document.getElementById('fsCover').classList.remove('playing')}
       setTimeout(()=>{suppressRemoteBroadcast=false},500);
     };
@@ -6483,7 +6483,7 @@ function syncFxUi(){
     card.style.background=isActive?'var(--md-primary-container)':'';
   });
 }
-function toggleFx(name){fxState[name]=!fxState[name];currentFxPreset=null;startAudioEngine();applyFxState();syncFxUi()}
+function toggleFx(name){fxState[name]=!fxState[name];currentFxPreset=null;localStorage.removeItem('mp_fx_preset');startAudioEngine();applyFxState();syncFxUi()}
 function updateFxFromUI(){
   fxState.bass=Number(document.getElementById('fxBass')?.value||0);
   fxState.presence=Number(document.getElementById('fxPresence')?.value||0);
@@ -6495,9 +6495,10 @@ function updateFxFromUI(){
   fxState.width=Number(document.getElementById('fxWidth')?.value||1);
   fxState.echo=Number(document.getElementById('fxEcho')?.value||0);
   currentFxPreset=null;
+  localStorage.removeItem('mp_fx_preset');
   startAudioEngine();applyFxState();syncFxUi();
 }
-function resetFx(){fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};currentFxPreset='off';applyFxState();syncFxUi();showSnackbar('Эффекты сброшены')}
+function resetFx(){fxState={spatial:false,eightD:false,drive:false,bass:0,presence:0,air:0,warmth:0,gain:1,speed:1,eightDRate:.35,width:1,echo:0};currentFxPreset='off';localStorage.setItem('mp_fx_preset','off');applyFxState();syncFxUi();showSnackbar('Эффекты сброшены')}
 function switchFxTab(tab,el){
   document.querySelectorAll('#audioEffectsModal .tab-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
@@ -6518,6 +6519,7 @@ function applyFxPreset(name){
   if(name==='concert')fxState={...fxState,spatial:true,eightD:false,drive:false,bass:4,presence:4,air:3,warmth:1,gain:1.02,speed:1,eightDRate:.35,width:1.6,echo:18};
   if(name==='lofi')fxState={...fxState,spatial:false,eightD:false,drive:true,bass:4,presence:-3,air:-2,warmth:5,gain:.96,speed:1,eightDRate:.35,width:1.1,echo:10};
   currentFxPreset=name;
+  localStorage.setItem('mp_fx_preset',name);
   const labels={'off':'Обычный','surround':'Объёмное звучание','8d-move':'8D движение','cinema':'Кино','club':'Клуб','focus':'Фокус','8d':'8D','bass':'Bass Boost','vocal':'Вокал','night':'Ночной','concert':'Концерт','lofi':'Lo-Fi'};
   startAudioEngine();applyFxState();syncFxUi();showSnackbar('Пресет: '+(labels[name]||name))
 }
@@ -6525,7 +6527,13 @@ function applyFxPreset(name){
 /* ===== FULLSCREEN PLAYER ===== */
 function openFullscreenPlayer(){if(!currentTrackId)return;document.getElementById('fsPlayer').classList.add('open');updateFsLike();syncFxUi();if(isPlaying)document.getElementById('fsCover').classList.add('playing')}
 function closeFullscreenPlayer(){document.getElementById('fsPlayer').classList.remove('open')}
-function updateFsLike(){const btn=document.getElementById('fsLikeBtn');if(!btn)return;const liked=currentTrackId&&favorites[currentTrackId];btn.classList.toggle('active',!!liked);btn.querySelector('.material-symbols-rounded').classList.toggle('filled',!!liked)}
+function updateFsLike(){
+  const liked=!!(currentTrackId&&favorites[currentTrackId]);
+  ['fsLikeBtn','fsLikeBtnMain','playerLikeBtn'].forEach(id=>{
+    const btn=document.getElementById(id);if(!btn)return;
+    btn.classList.toggle('active',liked);btn.querySelector('.material-symbols-rounded').classList.toggle('filled',liked);
+  });
+}
 function updateFullscreenMediaSurface(track){
   const fs=document.getElementById('fsCover');
   if(!fs||!track) return;
@@ -6591,6 +6599,14 @@ function toggleFavorite(tid){
   if(!currentUser){showSnackbar('Войдите для лайков');return}if(!tid)return;
   if(favorites[tid]){db.ref('favorites/'+currentUser.uid+'/'+tid).remove();db.ref('tracks/'+tid+'/likes').transaction(l=>Math.max(0,(l||1)-1));showSnackbar('Удалено из любимого')}
   else{db.ref('favorites/'+currentUser.uid+'/'+tid).set(true);db.ref('tracks/'+tid+'/likes').transaction(l=>(l||0)+1);showSnackbar('Добавлено в любимое')}
+  updateFsLike();
+}
+function dislikeCurrentTrack(){
+  if(!currentUser){showSnackbar('Войдите');return}
+  if(!currentTrackId){showSnackbar('Нет трека');return}
+  if(favorites[currentTrackId]){db.ref('favorites/'+currentUser.uid+'/'+currentTrackId).remove();db.ref('tracks/'+currentTrackId+'/likes').transaction(l=>Math.max(0,(l||1)-1))}
+  showSnackbar('Следующий трек');
+  nextTrack();
 }
 function renderFavorites(){
   const fids=Object.keys(favorites),em=document.getElementById('favEmpty'),list=document.getElementById('favTracks'),btn=document.getElementById('playAllFavBtn'),sbtn=document.getElementById('shuffleFavBtn');
@@ -6705,7 +6721,7 @@ function startWave(){
   shuffleArr(fe);shuffleArr(nfe);let wt=fe.length?[...fe,...nfe]:[...entries];if(!fe.length)shuffleArr(wt);
   document.getElementById('waveTracks').innerHTML=wt.map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
   playlist=wt.map(([id])=>id);playlistIndex=0;currentTrackId=playlist[0];loadAndPlay(allTracks[currentTrackId]);
-  isShuffle=true;document.getElementById('shuffleBtn').classList.add('active');document.getElementById('fsShuffleBtn').classList.add('active');
+  isShuffle=true;
   document.getElementById('waveBtn').innerHTML='<span class="material-symbols-rounded">refresh</span> Обновить волну';showSnackbar('Волна запущена!');
 }
 function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
@@ -7460,12 +7476,17 @@ async function confirmDeleteTrack(){
   try{await fireUser.getIdToken(true)}catch(e){showSnackbar('Ошибка авторизации');closeModal('deleteModal');return}
   const reason=document.getElementById('deleteTrackReason')?.value||'';
   const delId=deleteTrackId;
-  db.ref('tracks/'+delId).remove();
-  if(reason){db.ref('deletedTracks/'+delId).set({title:t.title||'',artistId:t.artistId,reason,deletedBy:currentUser.uid,deletedAt:Date.now()}).catch(()=>{})}
-  document.querySelectorAll('.track-item[data-id="'+delId+'"]').forEach(el=>el.remove());
-  if(currentTrackId===delId){audio.pause();audio.src='';playerVisible=false;document.getElementById('playerBar').classList.remove('visible');currentTrackId=null;activeRadioStation=null;document.body.classList.remove('radio-mode');isPlaying=false;updatePlayButton()}
-  closeModal('deleteModal');
-  showSnackbar('Трек удалён'+(reason?' ('+reason+')':''));
+  try{
+    await db.ref('tracks/'+delId).remove();
+    if(reason){db.ref('deletedTracks/'+delId).set({title:t.title||'',artistId:t.artistId,reason,deletedBy:currentUser.uid,deletedAt:Date.now()}).catch(()=>{})}
+    document.querySelectorAll('.track-item[data-id="'+delId+'"]').forEach(el=>el.remove());
+    if(currentTrackId===delId){audio.pause();audio.src='';playerVisible=false;document.getElementById('playerBar').classList.remove('visible');currentTrackId=null;activeRadioStation=null;document.body.classList.remove('radio-mode');isPlaying=false;updatePlayButton()}
+    closeModal('deleteModal');
+    showSnackbar('Трек удалён'+(reason?' ('+reason+')':''));
+  }catch(e){
+    closeModal('deleteModal');
+    showSnackbar('Ошибка удаления: '+(e.message||'нет доступа'));
+  }
   deleteTrackId=null;
 }
 
@@ -8255,6 +8276,55 @@ function openModerationDetails(trackId,mode){
   modal.classList.add('open');
 }
 function escAttr(v){return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+/* ===== SWIPE UP TO OPEN FULLSCREEN PLAYER ===== */
+(function(){
+  const bar=document.getElementById('playerBar');
+  let startY=0,startX=0,swiping=false;
+  bar.addEventListener('touchstart',e=>{
+    const t=e.touches[0];startY=t.clientY;startX=t.clientX;swiping=true;
+  },{passive:true});
+  bar.addEventListener('touchmove',e=>{
+    if(!swiping)return;
+    const dy=startY-e.touches[0].clientY;
+    const dx=Math.abs(e.touches[0].clientX-startX);
+    if(dy>50&&dx<80){swiping=false;openFullscreenPlayer()}
+  },{passive:true});
+  bar.addEventListener('touchend',()=>{swiping=false},{passive:true});
+})();
+
+/* ===== TRACK NOTIFICATION WITH LIKE ===== */
+function showTrackNotification(track){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  try{
+    const n=new Notification(track.title||'Без названия',{
+      body:(track.musicAuthor||track.artistName||'Неизвестен'),
+      icon:track.cover||'/icon.png',
+      tag:'mp-now-playing',
+      renotify:true,
+      actions:[{action:'like',title:'❤️ Нравится'}],
+      silent:true
+    });
+    n.onclick=()=>{window.focus();openFullscreenPlayer();n.close()};
+  }catch(e){}
+}
+if('Notification' in window&&Notification.permission==='default'){
+  setTimeout(()=>Notification.requestPermission(),10000);
+}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  navigator.serviceWorker.addEventListener('message',e=>{
+    if(e.data&&e.data.action==='like'&&currentTrackId)toggleFavorite(currentTrackId);
+  });
+}
+
+/* ===== RESTORE SAVED FX PRESET ON LOAD ===== */
+window.addEventListener('load',()=>{
+  const savedPreset=localStorage.getItem('mp_fx_preset');
+  if(savedPreset&&savedPreset!=='off'&&savedPreset!==currentFxPreset){
+    applyFxPreset(savedPreset);
+  }
+});
 
 /* ===== EVENT LISTENERS ===== */
 window.addEventListener('scroll',()=>{document.getElementById('topBar').classList.toggle('scrolled',window.scrollY>10)});
