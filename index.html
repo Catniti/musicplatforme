@@ -7566,6 +7566,7 @@ function navigate(page,pushUrl){
   if(window.innerWidth<=1024){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open')}
   window.scrollTo({top:0,behavior:'smooth'});
   if(['favorites','subscriptions','playlists'].includes(page)){if(!currentUser)showSnackbar('Войдите для доступа');else{renderFavorites();renderSubscriptions();renderPlaylists()}}
+  if(page==='home')renderHome();
   if(page==='explore')renderExplore();
   if(page==='profile'&&currentUser)loadMyTracks();
   if(page==='profile'&&!currentUser)setTimeout(_initCaptchaWidget,50);
