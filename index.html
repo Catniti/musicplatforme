@@ -4870,6 +4870,13 @@ function loginUser(ud){
   localStorage.setItem('mp_user',JSON.stringify(currentUser));
   playedTracks=JSON.parse(localStorage.getItem('mp_played_'+currentUser.uid)||'{}');
   updateAuthUI();loadUserData();setupDevicePresence();listenRemoteCommands();
+  _ensureFirebaseAuth(ud.uid);
+}
+function _ensureFirebaseAuth(rtdbUid){
+  if(auth.currentUser)return;
+  auth.signInAnonymously().then(function(cred){
+    if(cred&&cred.user){db.ref('authUidMap/'+cred.user.uid).set(rtdbUid).catch(function(){})}
+  }).catch(function(){});
 }
 function signOutUser(){teardownDevicePresence();auth.signOut().catch(()=>{});currentUser=null;localStorage.removeItem('mp_user');favorites={};subscriptions={};userPlaylists={};listeningHistory=[];playedTracks={};activeReceiverId=null;updateAuthUI();showSnackbar('Вы вышли');navigate('home')}
 function restoreSession(){
@@ -4881,6 +4888,7 @@ function restoreSession(){
   try{loadUserData()}catch(e){}
   try{setupDevicePresence()}catch(e){}
   try{listenRemoteCommands()}catch(e){}
+  _ensureFirebaseAuth(currentUser.uid);
   db.ref('users/'+currentUser.uid).once('value').then(snap=>{
     const fresh=snap.val();
     if(fresh&&fresh.uid){
