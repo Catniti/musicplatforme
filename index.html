@@ -5145,14 +5145,26 @@ async function saveProfileEdits(){
   if(!currentUser)return;
   const dn=document.getElementById('editDisplayName').value.trim(),photo=document.getElementById('editAvatarUrl').value.trim(),bio=document.getElementById('editBio').value.trim();
   if(!dn){showSnackbar('Введите имя');return}
-  await db.ref('users/'+currentUser.uid).update({displayName:dn,photo,bio});
-  const snap=await db.ref('tracks').orderByChild('artistId').equalTo(currentUser.uid).once('value');
-  const tracks=snap.val()||{},u={};
-  Object.keys(tracks).forEach(tid=>{u[tid+'/artistName']=dn;u[tid+'/artistPhoto']=photo});
-  if(Object.keys(u).length)await db.ref('tracks').update(u);
-  currentUser.displayName=dn;currentUser.photo=photo;currentUser.bio=bio;
-  localStorage.setItem('mp_user',JSON.stringify(currentUser));
-  updateAuthUI();closeModal('editProfileModal');showSnackbar('Профиль обновлён');
+  try{
+    await db.ref('users/'+currentUser.uid).update({displayName:dn,photo:photo,bio:bio});
+    try{
+      const snap=await db.ref('tracks').orderByChild('artistId').equalTo(currentUser.uid).once('value');
+      const tracks=snap.val()||{},u={};
+      Object.keys(tracks).forEach(tid=>{u[tid+'/artistName']=dn;u[tid+'/artistPhoto']=photo});
+      if(Object.keys(u).length)await db.ref('tracks').update(u);
+    }catch(te){}
+    currentUser.displayName=dn;currentUser.photo=photo;currentUser.bio=bio;
+    localStorage.setItem('mp_user',JSON.stringify(currentUser));
+    updateAuthUI();closeModal('editProfileModal');showSnackbar('Профиль обновлён');
+  }catch(e){
+    if(e.message&&e.message.includes('PERMISSION_DENIED')){
+      showSnackbar('Нет прав на изменение профиля. Попробуйте перезайти');
+    }else if(e.message&&(e.message.includes('too large')||e.message.includes('size'))){
+      showSnackbar('Аватар слишком большой. Используйте ссылку или файл меньшего размера');
+    }else{
+      showSnackbar('Ошибка сохранения: '+e.message);
+    }
+  }
 }
 function openLinkTelegram(){closeModal('settingsModal');document.getElementById('linkTelegramModal').classList.add('open')}
 function openLinkEmail(){closeModal('settingsModal');document.getElementById('linkEmailModal').classList.add('open');document.getElementById('linkEmailError').textContent=''}
