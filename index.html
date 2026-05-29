@@ -1927,8 +1927,12 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 
 /* ===== MISC ===== */
 .skeleton{background:linear-gradient(90deg,var(--md-surface-container-high) 25%,var(--md-surface-container-highest) 50%,var(--md-surface-container-high) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--md-shape-sm)}
+.skeleton-circle{border-radius:50%}
+.skeleton-text{height:14px;margin:4px 0}
+.skeleton-track{display:flex;align-items:center;gap:12px;padding:10px 0}.skeleton-track .sk-thumb{width:48px;height:48px;border-radius:var(--md-shape-sm);flex-shrink:0}.skeleton-track .sk-lines{flex:1;display:flex;flex-direction:column;gap:6px}.skeleton-track .sk-line1{height:14px;width:70%}.skeleton-track .sk-line2{height:12px;width:45%}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .loading-spinner{width:40px;height:40px;border:3px solid var(--md-outline-variant);border-top-color:var(--md-primary);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
+.loading-spinner-sm{width:20px;height:20px;border:2px solid var(--md-outline-variant);border-top-color:var(--md-primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .user-menu{position:fixed;top:68px;right:16px;background:var(--md-surface-container-high);border-radius:20px;box-shadow:var(--md-elevation-3);border:1px solid var(--md-outline-variant);min-width:220px;max-width:min(92vw,280px);overflow:hidden;z-index:1005;display:none;transform-origin:top right}
@@ -3960,7 +3964,7 @@ async function analyzeAudioSafetyWithPollinations({title='',lyrics='',genre='',d
     {role:'system',content:'Ты модератор музыкальной платформы для детей и подростков. Тебе дали название трека, текст, расшифровку слов, жанр, длительность и автора музыки. Ответь только JSON без пояснений. Формат: {"explicit": boolean, "lowQuality": boolean, "reason": string, "confidence": number, "detectedLyrics": string}. explicit=true если в тексте есть мат, сексуальные темы, жесть, наркотики, токсичные оскорбления или другой неприятный детям контент. lowQuality=true если это спам, мусор, бессмысленная нарезка или фейковый трек. Ничего не выдумывай сверх текста.'},
     {role:'user',content:JSON.stringify({title,lyrics,genre,duration,fileName,musicAuthor,transcript})}
   ];
-  const modModels=['openai','mistral','qwen-coder','llama'];
+  const modModels=['openai'];
   for(const model of modModels){
     try{
       const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),20000);
@@ -3995,7 +3999,7 @@ async function analyzeSongStructureWithPollinations({title='',lyrics='',genre=''
     {role:'system',content:'Ты анализируешь уже готовую транскрипцию песни. Ответь только JSON без пояснений. Формат: {"hasVocals": boolean, "normalizedLyrics": string, "chorus": string, "sections": [{"type": string, "label": string, "text": string}], "summary": string}. Найди припев, куплеты, бридж, интро/аутро если они различимы. Не выдумывай строки, которых нет в тексте. Если текст слабый, просто структурируй то, что есть.'},
     {role:'user',content:JSON.stringify({title,lyrics,genre,duration,musicAuthor,transcript:rawText})}
   ];
-  const models=['openai','mistral','gemini'];
+  const models=['openai'];
   for(const model of models){
     try{
       const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),20000);
@@ -4036,7 +4040,7 @@ async function checkLyricsCopyrightOnline({title='',artistName='',musicAuthor=''
     {role:'system',content:'Ты ищешь в интернете возможные совпадения текста песни и признаки авторских прав. Используй веб-поиск. Ответь только JSON без пояснений. Формат: {"possibleCopyright": boolean, "confidence": number, "reason": string, "matchedSource": string, "matchedArtist": string}. possibleCopyright=true если вероятно, что текст уже опубликован и принадлежит другому артисту/правообладателю. Если musicAuthor соответствует найденному правообладателю или источнику, снижай риск.'},
     {role:'user',content:JSON.stringify({title,artistName,musicAuthor,lyricsSample:snippet})}
   ];
-  const models=['openai','mistral','gemini','llama'];
+  const models=['openai'];
   for(const model of models){
     try{
       const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),20000);
@@ -4119,8 +4123,8 @@ async function checkCoverImageNSFW(url){
 async function moderateTrackWithAI({title='',lyrics='',genre='',duration=0,fileName='',musicAuthor='',audioFile=null,artistName='',coverUrl=''}){
   let transcript='';
   if(audioFile){
-    transcript=await transcribeWithOpenAIAudio(audioFile);
-    if(!transcript) transcript=(await transcribeAudioWithPollinations(audioFile))?.text||'';
+    try{transcript=await transcribeWithOpenAIAudio(audioFile)}catch(e){}
+    if(!transcript) try{transcript=(await transcribeAudioWithPollinations(audioFile))?.text||''}catch(e){}
   }
   const structure=await analyzeSongStructureWithPollinations({title,lyrics,genre,duration,musicAuthor,transcript});
   const safety=await analyzeAudioSafetyWithPollinations({title,lyrics,genre,duration,fileName,musicAuthor,transcript:structure.hasVocals?(transcript||structure.normalizedLyrics):'[инструментал]'});
@@ -4786,6 +4790,8 @@ async function startChangeUsername(){
 
 function openConnectedAccounts(){
   closeModal('settingsModal');
+  document.getElementById('connectedAccountsList').innerHTML='<div class="loading-spinner"></div>';
+  document.getElementById('connectedAccountsModal').classList.add('open');
   db.ref('users/'+currentUser.uid).once('value').then(s=>{
     const u=s.val()||{};
     const hasTg=!!u.telegramId,hasGoogle=!!u.googleId,hasGithub=!!u.githubId,hasYa=!!u.yandexId;
@@ -5103,6 +5109,8 @@ function openSettings(){
   _settingsNav=[];
   _setSettingsTitle('');
   if(!currentUser){showSnackbar('Войдите в аккаунт');return}
+  document.getElementById('settingsContent').innerHTML='<div class="loading-spinner"></div>';
+  document.getElementById('settingsModal').classList.add('open');
   db.ref('users/'+currentUser.uid).once('value').then(s=>{
     const u=s.val()||{},hasEmail=!!u.email&&!!u.passwordHash;
     const themeMode=localStorage.getItem('mp_theme_mode')||(labsSettings.adaptiveTheme?'device':'light');
@@ -5139,20 +5147,24 @@ function openEditProfile(){
 function handleAvatarSelect(e){
   const f=e.target.files[0];if(!f||!f.type.startsWith('image/'))return;
   if(f.size>10*1024*1024){showSnackbar('Аватар макс. 10 МБ');return}
+  var zone=document.getElementById('editAvatarZone');
+  zone.innerHTML='<div class="loading-spinner-sm"></div>';
   compressImageFile(f,150,150,0.72).then(dataUrl=>{
-    document.getElementById('editAvatarZone').innerHTML='<img src="'+dataUrl+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    zone.innerHTML='<img src="'+dataUrl+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
     document.getElementById('editAvatarUrl').value=dataUrl;
   }).catch(()=>{
     compressImageFile(f,120,120,0.6).then(dataUrl=>{
-      document.getElementById('editAvatarZone').innerHTML='<img src="'+dataUrl+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+      zone.innerHTML='<img src="'+dataUrl+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
       document.getElementById('editAvatarUrl').value=dataUrl;
-    }).catch(()=>{showSnackbar('Не удалось сжать изображение');});
+    }).catch(()=>{zone.innerHTML='<span class="material-symbols-rounded">add_a_photo</span>';showSnackbar('Не удалось сжать изображение');});
   });
 }
 async function saveProfileEdits(){
   if(!currentUser)return;
   const dn=document.getElementById('editDisplayName').value.trim(),photo=document.getElementById('editAvatarUrl').value.trim(),bio=document.getElementById('editBio').value.trim();
   if(!dn){showSnackbar('Введите имя');return}
+  var saveBtn=document.querySelector('#editProfileModal .btn-primary');
+  if(saveBtn){saveBtn.disabled=true;saveBtn.innerHTML='<div class="loading-spinner-sm" style="display:inline-block;vertical-align:middle"></div> Сохранение...';}
   try{
     await db.ref('users/'+currentUser.uid).update({displayName:dn,photo:photo,bio:bio});
     try{
@@ -5172,6 +5184,8 @@ async function saveProfileEdits(){
     }else{
       showSnackbar('Ошибка сохранения: '+e.message);
     }
+  }finally{
+    if(saveBtn){saveBtn.disabled=false;saveBtn.innerHTML='Сохранить';}
   }
 }
 function openLinkTelegram(){closeModal('settingsModal');document.getElementById('linkTelegramModal').classList.add('open')}
@@ -7714,6 +7728,7 @@ function navigate(page,pushUrl){
   document.querySelectorAll('.bottom-nav .nav-tab').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
   if(window.innerWidth<=1024){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('open')}
   window.scrollTo({top:0,behavior:'smooth'});
+  _showPageLoading(page);
   if(['favorites','subscriptions','playlists'].includes(page)){if(!currentUser)showSnackbar('Войдите для доступа');else{renderFavorites();renderSubscriptions();renderPlaylists()}}
   if(page==='home')renderHome();
   if(page==='explore')renderExplore();
@@ -7729,6 +7744,26 @@ function navigate(page,pushUrl){
     _updateSEO({title:titles[page]||_seoDefaults.title,url});
     try{history.pushState({page,path},'',path)}catch(e){}
   }
+}
+function _showPageLoading(page){
+  var _loadTargets={
+    home:[['homeNewTracks',5],['homePopular',4,'cards']],
+    explore:[['exploreTracks',6]],
+    charts:[['chartsTracks',6]],
+    'new-releases':[['newReleasesTracks',6]],
+    favorites:[['favTracks',4]],
+    history:[['historyTracks',4]],
+    subscriptions:[['subsGrid',0],['subsFeedTracks',3]],
+    profile:[['profileTrackList',4]]
+  };
+  var targets=_loadTargets[page];
+  if(!targets)return;
+  targets.forEach(function(t){
+    var el=document.getElementById(t[0]);
+    if(!el||el.children.length>0)return;
+    if(t[2]==='cards')el.innerHTML=_skeletonCards(t[1]);
+    else if(t[1]>0)el.innerHTML=_skeletonTracks(t[1]);
+  });
 }
 function _pushRouteForTrack(tid){
   const t=allTracks[tid];if(!t)return;
@@ -7819,6 +7854,53 @@ function _handleInitialRoute(){
 }
 let _routeInitTime=Date.now();
 document.addEventListener('DOMContentLoaded',()=>setTimeout(_handleInitialRoute,500));
+
+/* ===== SWIPE NAV BETWEEN TABS ===== */
+(function(){
+  var _navPages=['home','explore','wave','favorites','profile'];
+  var _swipeStartX=0,_swipeStartY=0,_swipeStartTime=0,_swipeHoldTimer=null,_swipeActive=false,_swipeHeld=false;
+  var _holdMs=500,_minSwipeDx=60,_maxSwipeDy=100;
+  function _currentNavIdx(){
+    var active=document.querySelector('.bottom-nav .nav-tab.active');
+    if(!active)return -1;
+    var p=active.dataset.page;
+    return _navPages.indexOf(p);
+  }
+  function _onPointerDown(e){
+    if(e.target.closest('.modal-overlay,.fullscreen-player,.context-menu-overlay,.progress-track'))return;
+    _swipeStartX=e.touches?e.touches[0].clientX:e.clientX;
+    _swipeStartY=e.touches?e.touches[0].clientY:e.clientY;
+    _swipeStartTime=Date.now();
+    _swipeHeld=false;_swipeActive=false;
+    _swipeHoldTimer=setTimeout(function(){_swipeHeld=true;},_holdMs);
+  }
+  function _onPointerMove(e){
+    if(!_swipeHeld)return;
+    var x=e.touches?e.touches[0].clientX:e.clientX;
+    var y=e.touches?e.touches[0].clientY:e.clientY;
+    var dx=Math.abs(x-_swipeStartX),dy=Math.abs(y-_swipeStartY);
+    if(dx>20&&dx>dy)_swipeActive=true;
+  }
+  function _onPointerUp(e){
+    clearTimeout(_swipeHoldTimer);
+    if(!_swipeHeld||!_swipeActive){_swipeHeld=false;_swipeActive=false;return;}
+    var endX=e.changedTouches?e.changedTouches[0].clientX:e.clientX;
+    var endY=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
+    var dx=endX-_swipeStartX,dy=Math.abs(endY-_swipeStartY);
+    _swipeHeld=false;_swipeActive=false;
+    if(Math.abs(dx)<_minSwipeDx||dy>_maxSwipeDy)return;
+    var idx=_currentNavIdx();if(idx<0)return;
+    if(dx<0&&idx<_navPages.length-1)navigate(_navPages[idx+1]);
+    else if(dx>0&&idx>0)navigate(_navPages[idx-1]);
+  }
+  document.addEventListener('touchstart',_onPointerDown,{passive:true});
+  document.addEventListener('touchmove',_onPointerMove,{passive:true});
+  document.addEventListener('touchend',_onPointerUp,{passive:true});
+  document.addEventListener('mousedown',_onPointerDown);
+  document.addEventListener('mousemove',_onPointerMove);
+  document.addEventListener('mouseup',_onPointerUp);
+})();
+
 function _init404Page(){
   document.getElementById('pathHint404').textContent=location.pathname;
   var code=document.getElementById('code404spa'),hint=document.getElementById('gameHint404');
@@ -7902,6 +7984,8 @@ applyLabsSettings();
 
 /* ===== UTILS ===== */
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function _skeletonTracks(n){var h='';for(var i=0;i<n;i++)h+='<div class="skeleton-track"><div class="sk-thumb skeleton"></div><div class="sk-lines"><div class="sk-line1 skeleton"></div><div class="sk-line2 skeleton"></div></div></div>';return h}
+function _skeletonCards(n){var h='';for(var i=0;i<n;i++)h+='<div class="skeleton" style="height:220px"></div>';return h}
 function pushCreatorLog(level,msg,meta){
   const ts=Date.now();
   const line={id:'log_'+ts+'_'+Math.random().toString(36).slice(2,7),time:new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),ts,level:String(level||'info'),msg:String(msg||''),meta:meta||null};
