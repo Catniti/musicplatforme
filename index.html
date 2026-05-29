@@ -2896,6 +2896,10 @@ body[data-ui-style="glass"]{display:contents}
               <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
               Войти через GitHub
             </button>
+            <button class="social-login-btn" onclick="signInWithYandex()" style="background:#fc3f1d;color:#fff">
+              <svg viewBox="0 0 24 24" width="20" height="20"><path d="M13.62 21.41h2.17V2.59h-3.2c-4.19 0-6.39 2.06-6.39 5.19 0 2.62 1.29 4.06 3.6 5.67l-3.98 7.96h2.35l4.35-8.65-1.3-.87c-1.86-1.27-2.87-2.35-2.87-4.36 0-2.12 1.43-3.42 3.99-3.42h.88v17.3z" fill="white"/></svg>
+              Войти через Яндекс
+            </button>
             <button class="tg-login-btn" onclick="openTelegramLogin()" style="width:100%;justify-content:center">
               <svg viewBox="0 0 24 24" fill="white" width="20" height="20"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
               Войти через Telegram
@@ -4784,23 +4788,25 @@ function openConnectedAccounts(){
   closeModal('settingsModal');
   db.ref('users/'+currentUser.uid).once('value').then(s=>{
     const u=s.val()||{};
-    const hasTg=!!u.telegramId,hasGoogle=!!u.googleId,hasGithub=!!u.githubId;
+    const hasTg=!!u.telegramId,hasGoogle=!!u.googleId,hasGithub=!!u.githubId,hasYa=!!u.yandexId;
     const list=document.getElementById('connectedAccountsList');
     list.innerHTML=
       _connAccItem('','Telegram',hasTg?(u.telegramUsername?'@'+u.telegramUsername:'Подключён'):'Не подключён',hasTg,'telegram')+
       _connAccItem('','Google',hasGoogle?'Подключён':'Не подключён',hasGoogle,'google')+
+      _connAccItem('','Яндекс',hasYa?(u.yandexLogin||'Подключён'):'Не подключён',hasYa,'yandex')+
       _connAccItem('','GitHub',hasGithub?'Подключён':'Не подключён',hasGithub,'github');
     document.getElementById('connectedAccountsModal').classList.add('open');
   });
 }
 function _connAccItem(icon,name,sub,connected,provider){
-  const icons={telegram:'<svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="12" fill="#2AABEE"/><path d="M5.43 11.87c2.94-1.28 4.9-2.12 5.88-2.53 2.8-1.17 3.38-1.37 3.76-1.37.08 0 .27.02.4.12a.43.43 0 0 1 .14.27c.01.08.03.26.02.4-.15 1.6-.81 5.47-1.14 7.26-.14.76-.42 1.01-.69 1.04-.59.05-1.03-.39-1.6-.76-.89-.58-1.39-.94-2.25-1.51-1-.66-.35-1.02.22-1.61.15-.15 2.73-2.5 2.78-2.72a.2.2 0 0 0-.05-.18c-.05-.04-.12-.03-.17-.02-.08.02-1.33.85-3.76 2.48-.36.25-.68.37-.97.36-.32 0-.93-.18-1.39-.33-.56-.18-1-.28-.96-.59.02-.16.24-.33.67-.5z" fill="#fff"/></svg>',microsoft:'<svg viewBox="0 0 21 21" width="24" height="24"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>',google:'<svg viewBox="0 0 24 24" width="24" height="24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>',github:'<svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" fill="currentColor"/></svg>'};
+  const icons={telegram:'<svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="12" fill="#2AABEE"/><path d="M5.43 11.87c2.94-1.28 4.9-2.12 5.88-2.53 2.8-1.17 3.38-1.37 3.76-1.37.08 0 .27.02.4.12a.43.43 0 0 1 .14.27c.01.08.03.26.02.4-.15 1.6-.81 5.47-1.14 7.26-.14.76-.42 1.01-.69 1.04-.59.05-1.03-.39-1.6-.76-.89-.58-1.39-.94-2.25-1.51-1-.66-.35-1.02.22-1.61.15-.15 2.73-2.5 2.78-2.72a.2.2 0 0 0-.05-.18c-.05-.04-.12-.03-.17-.02-.08.02-1.33.85-3.76 2.48-.36.25-.68.37-.97.36-.32 0-.93-.18-1.39-.33-.56-.18-1-.28-.96-.59.02-.16.24-.33.67-.5z" fill="#fff"/></svg>',yandex:'<svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="12" fill="#fc3f1d"/><path d="M13.62 18.41h1.67V5.59h-2.45c-3.22 0-4.91 1.58-4.91 3.99 0 2.01.99 3.12 2.77 4.36l-3.06 6.12h1.81l3.34-6.65-1-.67c-1.43-.98-2.21-1.81-2.21-3.35 0-1.63 1.1-2.63 3.07-2.63h.67v13.29z" fill="#fff"/></svg>',microsoft:'<svg viewBox="0 0 21 21" width="24" height="24"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>',google:'<svg viewBox="0 0 24 24" width="24" height="24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>',github:'<svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" fill="currentColor"/></svg>'};
   const iconHtml=icon?'<span class="material-symbols-rounded">'+icon+'</span>':(icons[provider]||'');
   const action=connected?'onclick="confirmReconnect(\''+provider+'\')"':'onclick="connectAccount(\''+provider+'\')"';
   return '<div class="settings-item" '+action+'><div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center">'+iconHtml+'</div><div class="settings-item-info"><div class="settings-item-title">'+name+'</div><div class="settings-item-sub">'+sub+'</div></div>'+(connected?'<span class="material-symbols-rounded" style="color:var(--md-primary)">check_circle</span>':'<span class="material-symbols-rounded" style="color:var(--md-outline)">add_circle_outline</span>')+'</div>';
 }
 function connectAccount(provider){
   if(provider==='telegram'){closeModal('connectedAccountsModal');openLinkTelegram();return}
+  if(provider==='yandex'){closeModal('connectedAccountsModal');linkYandex();return}
   if(provider==='google'){_linkOAuthProvider(new firebase.auth.GoogleAuthProvider(),'googleId');return}
   if(provider==='microsoft'){var mp=new firebase.auth.OAuthProvider('microsoft.com');mp.addScope('user.read');_linkOAuthProvider(mp,'microsoftId');return}
   if(provider==='github'){_linkOAuthProvider(new firebase.auth.GithubAuthProvider(),'githubId');return}
@@ -4819,9 +4825,10 @@ async function _linkOAuthProvider(provider,dbKey){
   }
 }
 function confirmReconnect(provider){
-  const names={telegram:'Telegram',google:'Google',microsoft:'Microsoft',github:'GitHub'};
+  const names={telegram:'Telegram',google:'Google',yandex:'Яндекс',microsoft:'Microsoft',github:'GitHub'};
   if(confirm('Сменить подключённый аккаунт '+names[provider]+'?')){
     if(provider==='telegram'){closeModal('connectedAccountsModal');openLinkTelegram();return}
+    if(provider==='yandex'){closeModal('connectedAccountsModal');linkYandex();return}
     _relinkOAuth(provider);
   }
 }
@@ -4908,6 +4915,80 @@ window.onTelegramLink=async function(tg){
 };
 function openTelegramLogin(){openTgPopup('onTelegramAuth')}
 function linkTelegram(){openTgPopup('onTelegramLink')}
+
+/* ===== YANDEX OAuth ===== */
+var _yandexClientId='010a613861334b1389901061a7b8f362';
+function signInWithYandex(){
+  var state='login_'+Date.now();
+  localStorage.setItem('ya_oauth_state',state);
+  var url='https://oauth.yandex.ru/authorize?response_type=token&client_id='+_yandexClientId+'&redirect_uri='+encodeURIComponent(location.origin+'/')+'&state='+state;
+  location.href=url;
+}
+function linkYandex(){
+  if(!currentUser){showSnackbar('Войдите в аккаунт');return}
+  var state='link_'+Date.now();
+  localStorage.setItem('ya_oauth_state',state);
+  var url='https://oauth.yandex.ru/authorize?response_type=token&client_id='+_yandexClientId+'&redirect_uri='+encodeURIComponent(location.origin+'/')+'&state='+state;
+  location.href=url;
+}
+async function _handleYandexOAuthCallback(){
+  var hash=location.hash;
+  if(!hash||!hash.includes('access_token'))return false;
+  var params=new URLSearchParams(hash.substring(1));
+  var token=params.get('access_token');
+  var state=params.get('state')||'';
+  if(!token)return false;
+  var savedState=localStorage.getItem('ya_oauth_state')||'';
+  localStorage.removeItem('ya_oauth_state');
+  history.replaceState(null,'',location.pathname+location.search);
+  try{
+    var resp=await fetch('https://login.yandex.ru/info?format=json',{headers:{'Authorization':'OAuth '+token}});
+    if(!resp.ok)throw new Error('Yandex API error');
+    var ya=await resp.json();
+    if(!ya.id){showSnackbar('Ошибка Яндекс');return true}
+    if(savedState.startsWith('link_')){
+      if(!currentUser){showSnackbar('Войдите для привязки');return true}
+      await db.ref('users/'+currentUser.uid+'/yandexId').set(ya.id);
+      await db.ref('users/'+currentUser.uid+'/yandexLogin').set(ya.login||'');
+      if(ya.default_avatar_id&&!currentUser.photo){
+        var avaUrl='https://avatars.yandex.net/get-yapic/'+ya.default_avatar_id+'/islands-200';
+        await db.ref('users/'+currentUser.uid+'/photo').set(avaUrl);
+        currentUser.photo=avaUrl;localStorage.setItem('mp_user',JSON.stringify(currentUser));updateAuthUI();
+      }
+      showSnackbar('Яндекс привязан!');
+      return true;
+    }
+    var email=(ya.default_email||ya.emails&&ya.emails[0]||'').toLowerCase();
+    if(email){
+      var ek=email.replace(/\./g,','),es=await db.ref('emails/'+ek).once('value');
+      if(es.exists()){
+        var existUid=es.val(),us=await db.ref('users/'+existUid).once('value'),ud=us.val();
+        if(ud){
+          if(!ud.yandexId){await db.ref('users/'+existUid+'/yandexId').set(ya.id)}
+          loginUser(ud);showSnackbar('С возвращением!');return true;
+        }
+      }
+    }
+    var yaSnap=await db.ref('users').orderByChild('yandexId').equalTo(String(ya.id)).limitToFirst(1).once('value');
+    if(yaSnap.exists()){
+      var existData=Object.values(yaSnap.val())[0];
+      if(existData){loginUser(existData);showSnackbar('С возвращением!');return true}
+    }
+    var uid='ya_'+ya.id;
+    var dn=ya.display_name||ya.real_name||ya.login||'Yandex User';
+    var un=(ya.login||('ya'+ya.id)).toLowerCase().replace(/[^a-z0-9_]/g,'');
+    var photo=ya.default_avatar_id?'https://avatars.yandex.net/get-yapic/'+ya.default_avatar_id+'/islands-200':'';
+    var newUser={uid:uid,username:un,email:email,displayName:dn,photo:photo,bio:'',authMethod:'yandex',yandexId:ya.id,createdAt:Date.now()};
+    await db.ref('users/'+uid).set(newUser);
+    if(un)await db.ref('usernames/'+un).set(uid);
+    if(email){var ek2=email.replace(/\./g,',');await db.ref('emails/'+ek2).set(uid)}
+    loginUser(newUser);showSnackbar('Добро пожаловать, '+dn+'!');
+    return true;
+  }catch(e){
+    showSnackbar('Ошибка авторизации Яндекс: '+e.message);
+    return true;
+  }
+}
 function openTgPopup(cbName){
   const w=550,h=470,l=(screen.width-w)/2,t=(screen.height-h)/2;
   const p=window.open('','TelegramLogin','width='+w+',height='+h+',left='+l+',top='+t+',resizable=yes');
@@ -5023,7 +5104,7 @@ function openSettings(){
       '<div class="settings-item" onclick="openChangeUsername()"><span class="material-symbols-rounded">alternate_email</span><div class="settings-item-info"><div class="settings-item-title">Логин</div><div class="settings-item-sub">'+(u.username||currentUser.username||'—')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div class="settings-item" onclick="openEmailSettings()"><span class="material-symbols-rounded">mail</span><div class="settings-item-info"><div class="settings-item-title">Email</div><div class="settings-item-sub">'+(u.email||'Не привязан')+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       (hasEmail?'<div class="settings-item" onclick="openChangePassword()"><span class="material-symbols-rounded">lock</span><div class="settings-item-info"><div class="settings-item-title">Сменить пароль</div><div class="settings-item-sub">Отправит подтверждение на почту</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
-      '<div class="settings-item" onclick="openConnectedAccounts()"><span class="material-symbols-rounded">link</span><div class="settings-item-info"><div class="settings-item-title">Подключённые аккаунты</div><div class="settings-item-sub">Telegram, Google, GitHub</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
+      '<div class="settings-item" onclick="openConnectedAccounts()"><span class="material-symbols-rounded">link</span><div class="settings-item-info"><div class="settings-item-title">Подключённые аккаунты</div><div class="settings-item-sub">Telegram, Google, Яндекс, GitHub</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div class="settings-item" onclick="openPrivacySettings()"><span class="material-symbols-rounded">shield</span><div class="settings-item-info"><div class="settings-item-title">Конфиденциальность</div><div class="settings-item-sub">Скрыть понравившиеся треки</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       '<div style="margin:16px 0;height:1px;background:var(--md-outline-variant)"></div>'+
       '<div class="settings-item" onclick="cycleThemeMode()"><span class="material-symbols-rounded">contrast</span><div class="settings-item-info"><div class="settings-item-title">Тема</div><div class="settings-item-sub">'+themeLabel+'</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">sync</span></div>'+
@@ -5745,7 +5826,7 @@ function openTrackFromHash(){
   return true;
 }
 window.addEventListener('hashchange',()=>{_openTrackFromHashDone=false;openTrackFromHash();});
-document.addEventListener('DOMContentLoaded',()=>setTimeout(openTrackFromHash,1000));
+document.addEventListener('DOMContentLoaded',()=>{_handleYandexOAuthCallback().then(function(handled){if(!handled)setTimeout(openTrackFromHash,1000)})});
 function shareTrackById(tid){
   const t=allTracks[tid];if(!t)return;
   const url=buildTrackShareUrl(tid);
