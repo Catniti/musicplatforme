@@ -3323,7 +3323,10 @@ body[data-ui-style="glass"]{display:contents}
       <label class="modal-label">Жанр</label>
       <input class="md-input" id="editTrackGenre" placeholder="Жанр">
       <label class="modal-label">Автор музыки / правообладатель *</label>
-      <input class="md-input" id="editTrackMusicAuthor" placeholder="Кто написал или владеет музыкой">
+      <div style="position:relative">
+      <input class="md-input" id="editTrackMusicAuthor" placeholder="Кто написал или владеет музыкой (например: @me)" oninput="handleAuthorMentionInput(this)" autocomplete="off">
+      <div id="authorSuggestDropdownEdit" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:300;background:var(--md-surface-container-high);border-radius:var(--md-shape-md);box-shadow:0 4px 20px rgba(0,0,0,.18);max-height:220px;overflow-y:auto;border:1px solid var(--md-outline-variant)"></div>
+      </div>
       <label class="modal-label">Обложка (URL)</label>
       <input class="md-input" id="editTrackCoverUrl" placeholder="https://...">
       <label class="modal-label">Видео к треку</label>
@@ -5726,7 +5729,8 @@ async function saveTrackEdits(){
     const title=document.getElementById('editTrackTitle').value.trim();
     const genre=document.getElementById('editTrackGenre').value.trim();
     const lyrics=document.getElementById('editTrackLyrics').value.trim();
-    const musicAuthor=document.getElementById('editTrackMusicAuthor').value.trim();
+    var musicAuthor=document.getElementById('editTrackMusicAuthor').value.trim();
+    if(musicAuthor==='@me'&&currentUser)musicAuthor=currentUser.displayName||musicAuthor;
     let cover=(document.getElementById('editTrackCoverUrl').value||'').trim();
     let videoUrl=normalizeVideoUrl((document.getElementById('editTrackVideoUrl').value||'').trim());
     let videoData='';
@@ -7483,7 +7487,8 @@ async function publishTrack(){
   let videoUrl=normalizeVideoUrl(document.getElementById('uploadVideoUrl').value.trim());
   let videoData=selectedVideoDataURL||'';
   const lyrics=document.getElementById('uploadLyrics').value.trim();
-  const musicAuthor=document.getElementById('uploadMusicAuthor').value.trim();
+  var musicAuthor=document.getElementById('uploadMusicAuthor').value.trim();
+  if(musicAuthor==='@me'&&currentUser)musicAuthor=currentUser.displayName||musicAuthor;
   const pe=document.getElementById('uploadProgress'),pb=document.getElementById('uploadProgressBar'),st=document.getElementById('uploadStatusText'),btn=document.getElementById('publishBtn');
 
   if(!title){showSnackbar('Введите название');return}
@@ -8024,7 +8029,8 @@ function applyLabsSettings(){
 }
 function toggleLabsFlag(key){labsSettings[key]=!labsSettings[key];saveLabsSettings();renderLabsModal();if(key==='customIcons')applyLabsCustomIcons(labsSettings[key]);}
 function handleAuthorMentionInput(input){
-  const dd=document.getElementById('authorSuggestDropdown');if(!dd)return;
+  var isEdit=input.id==='editTrackMusicAuthor';
+  const dd=document.getElementById(isEdit?'authorSuggestDropdownEdit':'authorSuggestDropdown');if(!dd)return;
   const pos=input.selectionStart;const before=input.value.slice(0,pos);
   const atMatch=before.match(/@([^\s,@]*)$/);
   if(!atMatch){dd.style.display='none';return;}
@@ -8040,17 +8046,20 @@ function handleAuthorMentionInput(input){
   }
   candidates=candidates.slice(0,8);
   if(!candidates.length){dd.style.display='none';return;}
-  dd.innerHTML=candidates.map(c=>'<div style="padding:10px 14px;cursor:pointer;font:500 14px/20px Inter,sans-serif;border-radius:8px" onclick="selectAuthorMention(\''+c.uid+'\','+JSON.stringify(c.insert)+')">'+esc(c.label)+'</div>').join('');
+  dd.innerHTML=candidates.map(c=>'<div style="padding:10px 14px;cursor:pointer;font:500 14px/20px Inter,sans-serif;border-radius:8px" onclick="selectAuthorMention(\''+c.uid.replace(/'/g,"\\'")+'\',\''+c.insert.replace(/'/g,"\\'")+'\')">' +esc(c.label)+'</div>').join('');
   dd.style.display='block';
 }
 function selectAuthorMention(uid,insert){
-  const input=document.getElementById('uploadMusicAuthor');const dd=document.getElementById('authorSuggestDropdown');if(!input)return;
-  const pos=input.selectionStart;const before=input.value.slice(0,pos);const after=input.value.slice(pos);
+  var ddUp=document.getElementById('authorSuggestDropdown'),ddEd=document.getElementById('authorSuggestDropdownEdit');
+  var isEdit=ddEd&&ddEd.style.display!=='none';
+  const input=isEdit?document.getElementById('editTrackMusicAuthor'):document.getElementById('uploadMusicAuthor');
+  if(!input)return;
+  const pos=input.selectionStart||input.value.length;const before=input.value.slice(0,pos);const after=input.value.slice(pos);
   const newBefore=before.replace(/@([^\s,@]*)$/,insert);
   input.value=newBefore+after;input.focus();input.setSelectionRange(newBefore.length,newBefore.length);
-  if(dd)dd.style.display='none';
+  if(ddUp)ddUp.style.display='none';if(ddEd)ddEd.style.display='none';
 }
-document.addEventListener('click',function(e){const dd=document.getElementById('authorSuggestDropdown');if(dd&&!dd.contains(e.target)&&e.target.id!=='uploadMusicAuthor')dd.style.display='none';});
+document.addEventListener('click',function(e){const dd=document.getElementById('authorSuggestDropdown');const dd2=document.getElementById('authorSuggestDropdownEdit');if(dd&&!dd.contains(e.target)&&e.target.id!=='uploadMusicAuthor')dd.style.display='none';if(dd2&&!dd2.contains(e.target)&&e.target.id!=='editTrackMusicAuthor')dd2.style.display='none';});
 function setAdaptiveThemeMode(mode){localStorage.setItem('mp_theme_mode',mode);applyThemePreference();openSettings()}
 function applyThemePreference(){
 
