@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://vriskasYT.github.io/musicplatforme">🌐 Открыть сайт</a> •
+  <a href="musis.ru">🌐 Открыть сайт</a> •
   <a href="https://github.com/vriskasYT/musicplatforme">📦 Репозиторий</a>
 </p>
 
@@ -72,7 +72,7 @@ MusicPlatforme совмещает в себе онлайн-плеер, ката�
 Просто откройте сайт в браузере:
 
 ```
-https://vriskasYT.github.io/musicplatforme
+musis.ru
 ```
 
 Или запустите локально:
