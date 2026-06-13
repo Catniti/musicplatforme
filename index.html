@@ -346,7 +346,7 @@
             loadTracksFromServer().then(data => {
               resolve({ data: data || {}, source: data ? 'server-fallback' : 'none' });
             });
-          }, 5000);
+          }, 2000);
           db.ref('tracks').once('value', snap => {
             clearTimeout(t);
             setFirebaseAvailable(true);
@@ -370,7 +370,7 @@
         const t = setTimeout(() => {
           setFirebaseAvailable(false);
           resolve(null);
-        }, 6000);
+        }, 2000);
         db.ref('tracks').once('value', snap => {
           clearTimeout(t);
           setFirebaseAvailable(true);
@@ -1714,10 +1714,13 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 .md-card:hover{box-shadow:var(--md-elevation-2);transform:translateY(-4px)}.md-card:hover::after{opacity:.04}
 .md-card:active{transform:translateY(-1px)}
 .md-card .card-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--md-surface-container-highest);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-.md-card .card-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s cubic-bezier(.2,0,0,1)}
-.md-card:hover .card-img img{transform:scale(1.05)}
+.md-card .card-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s cubic-bezier(.2,0,0,1);opacity:0}
+.md-card .card-img img.loaded{opacity:1}
+.md-card .card-img.loading-shimmer::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);animation:shimmer 1.4s infinite;z-index:1;border-radius:inherit}
+.md-card:hover .card-img img.loaded{transform:scale(1.05)}
 .md-card .card-img .material-symbols-rounded{font-size:48px;color:var(--md-outline)}
 .md-card .card-img .card-play-fab{position:absolute;right:8px;bottom:8px;width:40px;height:40px;border-radius:50%;background:var(--md-primary);color:var(--md-on-primary);display:flex;align-items:center;justify-content:center;box-shadow:var(--md-elevation-2);opacity:0;transform:translateY(8px);transition:all .3s cubic-bezier(.2,0,0,1)}
+.md-card:hover .card-play-fab{opacity:1;transform:translateY(0)}
 .md-card:hover .card-play-fab{opacity:1;transform:translateY(0)}
 .md-card .card-body{padding:12px}
 .md-card .card-title{font:500 14px/20px 'Inter',sans-serif;color:var(--md-on-surface);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1774,9 +1777,15 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 .track-item.playing{background:var(--md-primary-container)}.track-item.playing::after{opacity:.04}
 .track-num{width:24px;text-align:center;font:400 14px/20px 'Inter',sans-serif;color:var(--md-on-surface-variant);flex-shrink:0}
 .track-thumb{width:48px;height:48px;border-radius:var(--md-shape-sm);background:var(--md-surface-container-highest);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;transition:transform .2s}
-.track-item:hover .track-thumb{transform:scale(1.05)}
-.track-thumb img{width:100%;height:100%;object-fit:cover}
-.track-thumb img.nsfw-blur{filter:blur(22px) saturate(0)}
+.track-thumb img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s}
+.track-thumb img.loaded{opacity:1}
+.track-thumb.loading-shimmer::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);animation:shimmer 1.4s infinite;z-index:1;border-radius:inherit}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+.track-item.loading-shimmer .track-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);animation:shimmer 1.2s infinite}
+.track-item.loading-shimmer .track-num,
+.track-item.loading-shimmer .track-name::after,
+.track-item.loading-shimmer .track-artist::after{content:'';display:inline-block;height:14px;background:linear-gradient(90deg,var(--md-surface-container-high),var(--md-surface-container),var(--md-surface-container-high));background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:4px;vertical-align:middle}
 .nsfw-cover-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}
 .track-thumb .play-overlay{position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .25s cubic-bezier(.2,0,0,1);backdrop-filter:blur(2px)}
 .track-item:hover .play-overlay{opacity:1}
@@ -1904,7 +1913,9 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 .artist-card:hover{transform:translateY(-4px)}
 .artist-img{width:100%;aspect-ratio:1;border-radius:50%;background:var(--md-surface-container-highest);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:all .3s cubic-bezier(.2,0,0,1);margin-bottom:8px;box-shadow:0 0 0 0 var(--md-primary)}
 .artist-card:hover .artist-img{transform:scale(1.08);box-shadow:0 0 0 3px var(--md-primary)}
-.artist-img img{width:100%;height:100%;object-fit:cover}
+.artist-img img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s}
+.artist-img img.loaded{opacity:1}
+.artist-img.loading-shimmer::before{content:'';position:absolute;inset:0;border-radius:50%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);animation:shimmer 1.4s infinite}
 
 /* ===== AUTH ===== */
 .auth-container{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:24px}
@@ -4205,6 +4216,7 @@ let partyQrDetector=null;
 let adminEditingTrackId=null;
 let copyrightAppealTrackId=null;
 let loadedTrackEntries=[];
+let _mpTracksInitialLoading=true;
 let trackPageSize=24;
 /* ===== AUDIO DATA MIGRATION & LAZY LOADING =====
  * audioData (base64 audio ~2MB/track) is moved to trackAudio/{id}
@@ -5702,6 +5714,8 @@ function openSettings(){
       '<div class="settings-item" onclick="navigate(\'radio\');closeModal(\'settingsModal\')"><span class="material-symbols-rounded">radio</span><div class="settings-item-info"><div class="settings-item-title">Радио</div><div class="settings-item-sub">Открыть реальные онлайн-радиостанции</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>'+
       (isCreatorUser(currentUser)?'<div class="settings-item" onclick="openAdminTools()"><span class="material-symbols-rounded">verified</span><div class="settings-item-info"><div class="settings-item-title">Меню создателя</div><div class="settings-item-sub">Логи, жалобы, статистика и сервисные инструменты</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">chevron_right</span></div>':'')+
       '<div style="margin:16px 0;height:1px;background:var(--md-outline-variant)"></div>'+
+      '<a class="settings-item" href="https://t.me/vriskas_channel" target="_blank" rel="noopener"><span class="material-symbols-rounded">send</span><div class="settings-item-info"><div class="settings-item-title">Телеграм канал создателя</div><div class="settings-item-sub">Новости и обновления платформы</div></div><span class="material-symbols-rounded" style="color:var(--md-outline)">open_in_new</span></a>'+
+      '<div style="margin:16px 0;height:1px;background:var(--md-outline-variant)"></div>'+
       '<div class="settings-item" onclick="signOutUser();closeModal(\'settingsModal\')"><span class="material-symbols-rounded" style="color:var(--md-error)">logout</span><div class="settings-item-info"><div class="settings-item-title" style="color:var(--md-error)">Выйти из аккаунта</div></div></div>';
     document.getElementById('settingsModal').classList.add('open');
   });
@@ -5905,7 +5919,10 @@ window.addEventListener('mp-source-switch',e=>{
 let _tracksRenderTimer=null;
 db.ref('tracks').on('value',snap=>{
   if(window._mpServerModeLocked)return; // server-mode активен — не перезаписываем Firebase данными
-  allTracks=_stripHeavyFields(snap.val()||{});
+  const rawData=snap.val()||{};
+  const hasData=Object.keys(rawData).length>0;
+  if(hasData) _mpTracksInitialLoading=false;
+  allTracks=_stripHeavyFields(rawData);
   loadedTrackEntries=Object.entries(allTracks).filter(([,t])=>t&&(t.title||t.audioUrl)).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   setTimeout(_migrateAudioData,3000);
   setTimeout(_migrateArtistPhotos,5000);
@@ -5944,9 +5961,9 @@ function renderTrackItem(id,track,num,showDel,hidePinBadge){
   const isPinned=!hidePinBadge&&!!(currentUser&&track.artistId===currentUser.uid&&pinnedTracks[id]);
   const creatorChip='';
   const featuredChip='';
-  return '<div class="track-item '+(isNP?'playing':'')+'" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
+  return '<div class="track-item '+(isNP?'playing':'')+' loading-shimmer" data-id="'+id+'" onclick="playTrackById(\''+id+'\')">'+
     '<div class="track-num" data-num="'+num+'">'+(isNP?'<div class="now-playing-mark">♪</div>':num)+'</div>'+
-    '<div class="track-thumb">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" decoding="async" onerror="this.style.display=\'none\'"'+(track.coverNSFW?' class="nsfw-blur"':'')+'>':'')+(track.coverNSFW&&track.cover?'<div class="nsfw-cover-icon"><span class="material-symbols-rounded" style="color:rgba(255,255,255,.8);font-size:16px">visibility_off</span></div>':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
+    '<div class="track-thumb'+(track.cover?'':' loading-shimmer')+'">'+(track.cover?'<img src="'+track.cover+'" alt="" loading="lazy" decoding="async" onload="this.classList.add(\'loaded\');this.closest(\'.track-item\')?.classList.remove(\'loading-shimmer\')" onerror="this.style.display=\'none\';this.closest(\'.track-item\')?.classList.remove(\'loading-shimmer\')"'+(track.coverNSFW?' class="nsfw-blur"':'')+'>':'')+(track.coverNSFW&&track.cover?'<div class="nsfw-cover-icon"><span class="material-symbols-rounded" style="color:rgba(255,255,255,.8);font-size:16px">visibility_off</span></div>':'')+'<span class="material-symbols-rounded" style="'+(track.cover?'display:none':'')+'">music_note</span><div class="play-overlay"><span class="material-symbols-rounded" style="color:white;font-size:24px">play_arrow</span></div></div>'+
     '<div class="track-info"><div class="track-title-row"><span class="track-name">'+esc(track.title||'Без названия')+'</span>'+(isPinned?'<span class="pinned-badge"><span class="material-symbols-rounded" style="font-size:13px">push_pin</span> Закреплён</span>':'')+(isExp?'<span class="explicit-badge" title="Explicit" onclick="event.stopPropagation();showModerationDetails(\''+id+'\',\'explicit\')">!</span>':'')+((track.moderationMeta&&track.moderationMeta.copyrightPossible)?'<span class="badge" title="Возможна проверка авторских прав — нажмите для подробностей" onclick="event.stopPropagation();openCopyrightDetails(\''+id+'\')">©?</span>':'')+'</div>'+ 
     '<div class="track-artist" onclick="event.stopPropagation();viewArtist(\''+track.artistId+'\')">'+esc(track.artistName||'Неизвестен')+'</div>'+
     '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:400 11px/16px \'Inter\',sans-serif;color:var(--md-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Автор музыки: '+esc(track.musicAuthor||track.artistName||'Не указан')+creatorChip+'</div></div>'+
@@ -6453,13 +6470,17 @@ function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,c
 function renderHome(){
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId));
   const sorted=[...entries].sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-  document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
+  if(_mpTracksInitialLoading && sorted.length===0){
+    document.getElementById('homeNewTracks').innerHTML=_skeletonTracks(6).join('');
+  } else {
+    document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
+  }
   const popular=[...entries].sort((a,b)=>(b[1].plays||0)-(a[1].plays||0)).slice(0,8);
-  document.getElementById('homePopular').innerHTML=popular.length===0?'':popular.map(([id,t])=>'<div class="md-card" onclick="playTrackById(\''+id+'\')"><div class="card-img">'+(t.cover?'<img src="'+t.cover+'" alt="" loading="lazy">':'<span class="material-symbols-rounded">music_note</span>')+'<div class="card-play-fab"><span class="material-symbols-rounded filled">play_arrow</span></div></div><div class="card-body"><div class="card-title" style="display:flex;align-items:center;gap:4px">'+esc(t.title||'')+(t.explicit?'<span class="explicit-badge" style="font-size:10px;width:16px;height:16px">!</span>':'')+'</div><div class="card-sub">'+esc(t.artistName||'')+'</div><div class="card-sub" style="display:flex;align-items:center;gap:4px;margin-top:2px"><span class="material-symbols-rounded" style="font-size:14px">play_arrow</span>'+formatPlays(t.plays||0)+'</div></div></div>').join('');
+  document.getElementById('homePopular').innerHTML=popular.length===0?'':popular.map(([id,t])=>'<div class="md-card loading-shimmer" onclick="playTrackById(\''+id+'\')"><div class="card-img'+(t.cover?' loading-shimmer':'')+'">'+(t.cover?'<img src="'+t.cover+'" alt="" loading="lazy" onload="this.classList.add(\'loaded\');this.closest(\'.md-card\')?.classList.remove(\'loading-shimmer\')" onerror="this.style.display=\'none\';this.closest(\'.md-card\')?.classList.remove(\'loading-shimmer\')">':'<span class="material-symbols-rounded">music_note</span>')+'<div class="card-play-fab"><span class="material-symbols-rounded filled">play_arrow</span></div></div><div class="card-body"><div class="card-title" style="display:flex;align-items:center;gap:4px">'+esc(t.title||'')+(t.explicit?'<span class="explicit-badge" style="font-size:10px;width:16px;height:16px">!</span>':'')+'</div><div class="card-sub">'+esc(t.artistName||'')+'</div><div class="card-sub" style="display:flex;align-items:center;gap:4px;margin-top:2px"><span class="material-symbols-rounded" style="font-size:14px">play_arrow</span>'+formatPlays(t.plays||0)+'</div></div></div>').join('');
   const am={};entries.slice(0,trackPageSize*2).forEach(([id,t])=>{if(t.artistId&&!am[t.artistId])am[t.artistId]={name:t.artistName,photo:t.artistPhoto||_artistPhotoCache[t.artistId]||'',id:t.artistId}});
   const allArtists=Object.values(am);
   const artistPageSize=8;
-  function renderArtistCards(list){return list.map(a=>'<div class="artist-card" onclick="viewArtist(\''+a.id+'\')"><div class="artist-img">'+(a.photo?'<img src="'+a.photo+'" alt="" loading="lazy">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">person</span>')+'</div><div class="card-title" style="font-size:13px">'+esc(a.name||'Артист')+'</div></div>').join('')}
+  function renderArtistCards(list){return list.map(a=>'<div class="artist-card loading-shimmer" onclick="viewArtist(\''+a.id+'\')"><div class="artist-img'+(a.photo?' loading-shimmer':'')+'">'+(a.photo?'<img src="'+a.photo+'" alt="" loading="lazy" onload="this.classList.add(\'loaded\');this.closest(\'.artist-card\')?.classList.remove(\'loading-shimmer\')" onerror="this.style.display=\'none\';this.closest(\'.artist-card\')?.classList.remove(\'loading-shimmer\')">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">person</span>')+'</div><div class="card-title" style="font-size:13px">'+esc(a.name||'Артист')+'</div></div>').join('')}
   let shownArtists=artistPageSize;
   const artistsEl=document.getElementById('homeArtists');
   function refreshArtists(){artistsEl.innerHTML=renderArtistCards(allArtists.slice(0,shownArtists))+(allArtists.length>shownArtists?'<div style="grid-column:1/-1;display:flex;justify-content:center;margin-top:4px"><button class="btn-tonal" onclick="shownArtists+=8;refreshArtists()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');}
@@ -6474,19 +6495,19 @@ function renderExplore(){
   filtered.sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   const gl=genres.find(g=>g.id===currentGenre);
   document.getElementById('exploreTitle').textContent=currentGenre==='all'?'Все треки':(gl?gl.label:'Треки');
-  document.getElementById('exploreTracks').innerHTML=filtered.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':filtered.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(filtered.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderExplore()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
+  document.getElementById('exploreTracks').innerHTML=_mpTracksInitialLoading&&filtered.length===0?_skeletonTracks(6).join(''):filtered.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':filtered.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(filtered.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderExplore()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 function filterGenre(g){currentGenre=g;trackPageSize=24;renderExplore()}
 
 function renderCharts(){
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId)).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0));
-  document.getElementById('chartsTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">trending_up</span><h3>Нет данных</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderCharts()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
+  document.getElementById('chartsTracks').innerHTML=_mpTracksInitialLoading&&entries.length===0?_skeletonTracks(6).join(''):entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">trending_up</span><h3>Нет данных</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderCharts()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
 function renderNewReleases(){
   const weekAgo=Date.now()-7*24*60*60*1000;
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId)&&(t.timestamp||0)>weekAgo).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-  document.getElementById('newReleasesTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">new_releases</span><h3>Нет новинок за последнюю неделю</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderNewReleases()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
+  document.getElementById('newReleasesTracks').innerHTML=_mpTracksInitialLoading&&entries.length===0?_skeletonTracks(6).join(''):entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">new_releases</span><h3>Нет новинок за последнюю неделю</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderNewReleases()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
 function renderHistory(){
@@ -6507,7 +6528,7 @@ function handleSearch(q){
   const artistResults=Object.values(artistMap).filter(a=>(a.name||'').toLowerCase().includes(query));
   document.getElementById('searchTitle').textContent='Результаты: «'+q+'»';
   const as=document.getElementById('searchArtistsSection'),ag=document.getElementById('searchArtists');
-  if(artistResults.length>0){as.style.display='';ag.innerHTML=artistResults.map(a=>'<div class="artist-card" onclick="viewArtist(\''+a.id+'\')"><div class="artist-img">'+(a.photo?'<img src="'+a.photo+'" alt="" loading="lazy">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">person</span>')+'</div><div class="card-title" style="font-size:13px">'+esc(a.name)+'</div><div class="card-sub">'+a.tracks+' треков</div></div>').join('')}else as.style.display='none';
+  if(artistResults.length>0){as.style.display='';ag.innerHTML=artistResults.map(a=>'<div class="artist-card loading-shimmer" onclick="viewArtist(\''+a.id+'\')"><div class="artist-img'+(a.photo?' loading-shimmer':'')+'">'+(a.photo?'<img src="'+a.photo+'" alt="" loading="lazy" onload="this.classList.add(\'loaded\');this.closest(\'.artist-card\')?.classList.remove(\'loading-shimmer\')" onerror="this.style.display=\'none\';this.closest(\'.artist-card\')?.classList.remove(\'loading-shimmer\')">':'<span class="material-symbols-rounded" style="font-size:40px;color:var(--md-outline)">person</span>')+'</div><div class="card-title" style="font-size:13px">'+esc(a.name)+'</div><div class="card-sub">'+a.tracks+' треков</div></div>').join('')}else as.style.display='none';
   document.getElementById('searchResults').innerHTML=trackResults.length===0?'<div class="empty-state"><span class="material-symbols-rounded">search_off</span><h3>Не найдено</h3></div>':trackResults.map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
 }
 
