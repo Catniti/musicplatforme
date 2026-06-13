@@ -2570,6 +2570,559 @@ body.radio-mode .player-artist-name{font-size:11px}
 body[data-ui-style="glass"]{all:unset}
 body[data-ui-style="glass"] *{all:revert}
 body[data-ui-style="glass"]{display:contents}
+/* ===== LIQUID GLASS (Apple Music iOS 26 style) ===== */
+body[data-ui-style="liquid-glass"] {
+  --lg-bg: rgba(255, 255, 255, 0.08);
+  --lg-bg-hover: rgba(255, 255, 255, 0.14);
+  --lg-bg-active: rgba(255, 255, 255, 0.06);
+  --lg-border: rgba(255, 255, 255, 0.18);
+  --lg-glow: rgba(147, 112, 219, 0.15);
+  --lg-text: rgba(255, 255, 255, 0.95);
+  --lg-text-secondary: rgba(255, 255, 255, 0.65);
+  --lg-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+  --lg-shadow-float: 0 24px 80px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --lg-blur: blur(40px) saturate(1.8);
+  --lg-radius: 28px;
+  --lg-radius-sm: 18px;
+  --lg-transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  background: linear-gradient(145deg, #1a0a2e 0%, #16213e 40%, #0f1729 100%) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  color: var(--lg-text) !important;
+}
+
+body[data-ui-style="liquid-glass"]::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(120, 80, 200, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(80, 60, 180, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 100% 100% at 50% 50%, rgba(100, 60, 200, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: lgAmbient 20s ease-in-out infinite;
+}
+
+@keyframes lgAmbient {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+body[data-ui-style="liquid-glass"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+body[data-ui-style="liquid-glass"] .top-bar,
+body[data-ui-style="liquid-glass"] .player-bar,
+body[data-ui-style="liquid-glass"] .bottom-nav,
+body[data-ui-style="liquid-glass"] .sidebar,
+body[data-ui-style="liquid-glass"] .modal,
+body[data-ui-style="liquid-glass"] .queue-panel,
+body[data-ui-style="liquid-glass"] .track-context-menu,
+body[data-ui-style="liquid-glass"] .settings-item,
+body[data-ui-style="liquid-glass"] .track-item,
+body[data-ui-style="liquid-glass"] .radio-card,
+body[data-ui-style="liquid-glass"] .labs-card,
+body[data-ui-style="liquid-glass"] .md-card,
+body[data-ui-style="liquid-glass"] .effect-card,
+body[data-ui-style="liquid-glass"] .stat-card,
+body[data-ui-style="liquid-glass"] .device-item,
+body[data-ui-style="liquid-glass"] .profile-pinned-wrap,
+body[data-ui-style="liquid-glass"] .hero-banner,
+body[data-ui-style="liquid-glass"] .upload-zone,
+body[data-ui-style="liquid-glass"] .cover-upload-zone,
+body[data-ui-style="liquid-glass"] .auth-form,
+body[data-ui-style="liquid-glass"] .creator-console,
+body[data-ui-style="liquid-glass"] .chip,
+body[data-ui-style="liquid-glass"] .btn-tonal,
+body[data-ui-style="liquid-glass"] .btn-outlined,
+body[data-ui-style="liquid-glass"] .btn-icon,
+body[data-ui-style="liquid-glass"] .search-bar,
+body[data-ui-style="liquid-glass"] .search-bar input,
+body[data-ui-style="liquid-glass"] .tab-bar,
+body[data-ui-style="liquid-glass"] .md-input,
+body[data-ui-style="liquid-glass"] select.md-input,
+body[data-ui-style="liquid-glass"] textarea.md-input {
+  background: var(--lg-bg) !important;
+  backdrop-filter: var(--lg-blur) !important;
+  -webkit-backdrop-filter: var(--lg-blur) !important;
+  border: 1px solid var(--lg-border) !important;
+  box-shadow: var(--lg-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  color: var(--lg-text) !important;
+  transition: var(--lg-transition) !important;
+}
+
+body[data-ui-style="liquid-glass"] .top-bar {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(60px) saturate(2) !important;
+}
+
+body[data-ui-style="liquid-glass"] .sidebar {
+  background: rgba(20, 10, 40, 0.7) !important;
+  backdrop-filter: blur(50px) saturate(1.5) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 4px 0 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+body[data-ui-style="liquid-glass"] .sidebar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(120, 80, 200, 0.08) 0%, transparent 40%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+body[data-ui-style="liquid-glass"] .player-bar {
+  background: rgba(15, 8, 35, 0.8) !important;
+  backdrop-filter: blur(50px) saturate(1.6) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 -4px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+body[data-ui-style="liquid-glass"] .bottom-nav {
+  background: rgba(15, 8, 35, 0.75) !important;
+  backdrop-filter: blur(50px) saturate(1.5) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+body[data-ui-style="liquid-glass"] .modal {
+  background: rgba(25, 15, 50, 0.85) !important;
+  backdrop-filter: blur(60px) saturate(1.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: var(--lg-shadow-float), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  border-radius: var(--lg-radius) !important;
+}
+
+body[data-ui-style="liquid-glass"] .modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+body[data-ui-style="liquid-glass"] .track-item {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: var(--lg-radius-sm) !important;
+  backdrop-filter: blur(20px) !important;
+  transition: var(--lg-transition) !important;
+}
+
+body[data-ui-style="liquid-glass"] .track-item:hover {
+  background: var(--lg-bg-hover) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: var(--lg-shadow), 0 0 20px rgba(147, 112, 219, 0.15) !important;
+  transform: translateY(-1px);
+}
+
+body[data-ui-style="liquid-glass"] .track-item.playing {
+  background: rgba(147, 112, 219, 0.15) !important;
+  border-color: rgba(147, 112, 219, 0.4) !important;
+  box-shadow: 0 0 30px rgba(147, 112, 219, 0.2) !important;
+}
+
+body[data-ui-style="liquid-glass"] .settings-item {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--lg-radius-sm) !important;
+  backdrop-filter: blur(30px) !important;
+  transition: var(--lg-transition) !important;
+}
+
+body[data-ui-style="liquid-glass"] .settings-item:hover {
+  background: var(--lg-bg-hover) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: var(--lg-shadow) !important;
+  transform: translateY(-1px);
+}
+
+body[data-ui-style="liquid-glass"] .settings-item-title {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+body[data-ui-style="liquid-glass"] .settings-item-sub {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+body[data-ui-style="liquid-glass"] .labs-card {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 24px !important;
+  backdrop-filter: blur(40px) saturate(1.5) !important;
+  box-shadow: var(--lg-shadow) !important;
+  transition: var(--lg-transition) !important;
+}
+
+body[data-ui-style="liquid-glass"] .labs-card:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: var(--lg-shadow-float), 0 0 40px rgba(147, 112, 219, 0.2) !important;
+  transform: translateY(-2px);
+}
+
+body[data-ui-style="liquid-glass"] .auth-form {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: var(--lg-radius) !important;
+  backdrop-filter: blur(50px) saturate(1.6) !important;
+  box-shadow: var(--lg-shadow-float), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+body[data-ui-style="liquid-glass"] .btn-primary {
+  background: linear-gradient(135deg, rgba(147, 112, 219, 0.9), rgba(100, 80, 200, 0.9)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 4px 20px rgba(147, 112, 219, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  backdrop-filter: blur(20px) !important;
+  border-radius: 16px !important;
+  transition: var(--lg-transition) !important;
+}
+
+body[data-ui-style="liquid-glass"] .btn-primary:hover {
+  background: linear-gradient(135deg, rgba(167, 132, 239, 0.95), rgba(120, 100, 220, 0.95)) !important;
+  box-shadow: 0 6px 30px rgba(147, 112, 219, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+body[data-ui-style="liquid-glass"] .auth-tab.active {
+  background: rgba(147, 112, 219, 0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+body[data-ui-style="liquid-glass"] .auth-tab {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(15px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .toggle {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+body[data-ui-style="liquid-glass"] .toggle.on {
+  background: linear-gradient(135deg, rgba(147, 112, 219, 0.9), rgba(100, 80, 200, 0.9)) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 0 20px rgba(147, 112, 219, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+body[data-ui-style="liquid-glass"] .toggle::after {
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 10px rgba(147, 112, 219, 0.3) !important;
+}
+
+body[data-ui-style="liquid-glass"] .md-input {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: var(--lg-text) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .md-input:focus {
+  border-color: rgba(147, 112, 219, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(147, 112, 219, 0.2), var(--lg-shadow) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+body[data-ui-style="liquid-glass"] .md-input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+body[data-ui-style="liquid-glass"] .nav-item {
+  color: rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(15px) !important;
+  transition: var(--lg-transition) !important;
+}
+
+body[data-ui-style="liquid-glass"] .nav-item:hover {
+  color: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+body[data-ui-style="liquid-glass"] .nav-item.active {
+  color: white !important;
+  background: rgba(147, 112, 219, 0.2) !important;
+  border: 1px solid rgba(147, 112, 219, 0.4) !important;
+  box-shadow: 0 0 20px rgba(147, 112, 219, 0.2) !important;
+}
+
+body[data-ui-style="liquid-glass"] .chip {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  border-radius: 999px !important;
+  backdrop-filter: blur(15px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .chip.active,
+body[data-ui-style="liquid-glass"] .tab-item.active {
+  background: rgba(147, 112, 219, 0.25) !important;
+  border-color: rgba(147, 112, 219, 0.5) !important;
+  color: white !important;
+  box-shadow: 0 0 15px rgba(147, 112, 219, 0.25) !important;
+}
+
+body[data-ui-style="liquid-glass"] .tab-bar {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(30px) !important;
+  border-radius: 999px !important;
+}
+
+body[data-ui-style="liquid-glass"] .tab-item {
+  color: rgba(255, 255, 255, 0.55) !important;
+  transition: var(--lg-transition) !important;
+}
+
+body[data-ui-style="liquid-glass"] .tab-item:hover {
+  color: rgba(255, 255, 255, 0.85) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+body[data-ui-style="liquid-glass"] .sidebar-logo {
+  background: linear-gradient(135deg, rgba(147, 112, 219, 0.8), rgba(100, 80, 200, 0.8)) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 20px rgba(147, 112, 219, 0.4) !important;
+}
+
+body[data-ui-style="liquid-glass"] .sidebar-brand {
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-shadow: 0 0 20px rgba(147, 112, 219, 0.5) !important;
+}
+
+body[data-ui-style="liquid-glass"] .sidebar-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body[data-ui-style="liquid-glass"] .sidebar-nav-item {
+  color: rgba(255, 255, 255, 0.55) !important;
+  transition: var(--lg-transition) !important;
+  border-radius: var(--lg-radius-sm) !important;
+}
+
+body[data-ui-style="liquid-glass"] .sidebar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+body[data-ui-style="liquid-glass"] .sidebar-nav-item.active {
+  background: rgba(147, 112, 219, 0.2) !important;
+  color: white !important;
+  border: 1px solid rgba(147, 112, 219, 0.4) !important;
+  box-shadow: 0 0 15px rgba(147, 112, 219, 0.2) !important;
+}
+
+body[data-ui-style="liquid-glass"] .search-bar {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 999px !important;
+  backdrop-filter: blur(25px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .search-bar input {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+body[data-ui-style="liquid-glass"] .search-bar input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+body[data-ui-style="liquid-glass"] .player-thumb {
+  border-radius: var(--lg-radius-sm) !important;
+  box-shadow: var(--lg-shadow) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+body[data-ui-style="liquid-glass"] .user-avatar {
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 15px rgba(147, 112, 219, 0.3) !important;
+}
+
+body[data-ui-style="liquid-glass"] .btn-icon {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  border-radius: 50% !important;
+  backdrop-filter: blur(15px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .btn-icon:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  box-shadow: 0 0 15px rgba(147, 112, 219, 0.3) !important;
+}
+
+body[data-ui-style="liquid-glass"] .btn-tonal {
+  background: rgba(147, 112, 219, 0.15) !important;
+  border: 1px solid rgba(147, 112, 219, 0.3) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .btn-tonal:hover {
+  background: rgba(147, 112, 219, 0.25) !important;
+  border-color: rgba(147, 112, 219, 0.5) !important;
+  color: white !important;
+  box-shadow: 0 0 20px rgba(147, 112, 219, 0.3) !important;
+}
+
+body[data-ui-style="liquid-glass"] .btn-outlined {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(15px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .btn-outlined:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+}
+
+body[data-ui-style="liquid-glass"] .effect-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important;
+  backdrop-filter: blur(30px) !important;
+  box-shadow: var(--lg-shadow) !important;
+}
+
+body[data-ui-style="liquid-glass"] .stat-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--lg-radius-sm) !important;
+  backdrop-filter: blur(25px) !important;
+  box-shadow: var(--lg-shadow) !important;
+}
+
+body[data-ui-style="liquid-glass"] .radio-card {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--lg-radius-sm) !important;
+  backdrop-filter: blur(25px) !important;
+  transition: var(--lg-transition) !important;
+}
+
+body[data-ui-style="liquid-glass"] .radio-card:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: var(--lg-shadow-float) !important;
+  transform: translateY(-2px);
+}
+
+body[data-ui-style="liquid-glass"] .fullscreen-player {
+  background: linear-gradient(180deg, rgba(30, 15, 60, 0.95), rgba(15, 8, 35, 0.98)) !important;
+  backdrop-filter: blur(80px) saturate(2) !important;
+}
+
+body[data-ui-style="liquid-glass"] .queue-panel {
+  background: rgba(20, 10, 40, 0.9) !important;
+  backdrop-filter: blur(50px) saturate(1.5) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: -4px 0 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+body[data-ui-style="liquid-glass"] .chat-input-wrap {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(30px) !important;
+  border-radius: 999px !important;
+}
+
+body[data-ui-style="liquid-glass"] .empty-state {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.12) !important;
+  border-radius: var(--lg-radius) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .upload-zone,
+body[data-ui-style="liquid-glass"] .import-box,
+body[data-ui-style="liquid-glass"] .cover-upload-zone {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 2px dashed rgba(255, 255, 255, 0.15) !important;
+  border-radius: var(--lg-radius) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .upload-zone:hover,
+body[data-ui-style="liquid-glass"] .import-box:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(147, 112, 219, 0.5) !important;
+  box-shadow: 0 0 30px rgba(147, 112, 219, 0.15) !important;
+}
+
+body[data-ui-style="liquid-glass"] .social-login-btn {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .social-login-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+body[data-ui-style="liquid-glass"] .chat-message {
+  border-radius: var(--lg-radius-sm) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+body[data-ui-style="liquid-glass"] .waveform-bar {
+  background: linear-gradient(180deg, rgba(147, 112, 219, 0.9), rgba(100, 80, 200, 0.9)) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 0 10px rgba(147, 112, 219, 0.4) !important;
+}
+
+/* Scrollbars in Liquid Glass mode */
+body[data-ui-style="liquid-glass"] ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+body[data-ui-style="liquid-glass"] ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 999px;
+}
+body[data-ui-style="liquid-glass"] ::-webkit-scrollbar-thumb {
+  background: rgba(147, 112, 219, 0.4);
+  border-radius: 999px;
+}
+body[data-ui-style="liquid-glass"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 112, 219, 0.6);
+}
+
+/* Liquid Glass floating glow effect for active elements */
+body[data-ui-style="liquid-glass"] .track-item.playing::before,
+body[data-ui-style="liquid-glass"] .settings-item:hover::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(147, 112, 219, 0.2), transparent, rgba(100, 80, 200, 0.2));
+  z-index: -1;
+  animation: lgPulse 3s ease-in-out infinite;
+}
+
+@keyframes lgPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
 
 /* ===== PIANO BETA ===== */
 .piano-shell{display:flex;flex-direction:column;gap:16px;background:var(--md-surface-container-low);border:1px solid var(--md-outline-variant);border-radius:24px;padding:16px;overflow:hidden}
@@ -2877,7 +3430,7 @@ body[data-ui-style="glass"]{display:contents}
             <input class="md-input" id="loginIdentity" placeholder="Логин или Email" autocomplete="username">
             <div class="password-wrap"><input class="md-input" id="loginPassword" type="password" placeholder="Пароль" autocomplete="current-password"><button class="password-toggle" onclick="togglePasswordVis('loginPassword',this)" type="button"><span class="material-symbols-rounded">visibility_off</span></button></div>
             <div class="auth-error" id="loginError"></div>
-            <div id="captcha-container" style="margin:8px 0 16px 0;min-height:100px"></div>
+            <div id="captcha-container" style="margin:12px 0;min-height:100px"></div>
             <button class="btn-primary" style="width:100%;justify-content:center" onclick="doLogin()"><span class="material-symbols-rounded">login</span> Войти</button>
             <a href="#" onclick="event.preventDefault();openResetPasswordModal()" style="display:block;text-align:center;margin-top:8px;font:400 13px/18px 'Inter',sans-serif;color:var(--md-primary)">Забыли пароль?</a>
           </div>
@@ -2888,7 +3441,7 @@ body[data-ui-style="glass"]{display:contents}
             <div class="password-wrap"><input class="md-input" id="regPassword" type="password" placeholder="Пароль (мин. 6 символов)" autocomplete="new-password"><button class="password-toggle" onclick="togglePasswordVis('regPassword',this)" type="button"><span class="material-symbols-rounded">visibility_off</span></button></div>
             <div class="password-wrap"><input class="md-input" id="regPassword2" type="password" placeholder="Повторите пароль" autocomplete="new-password"><button class="password-toggle" onclick="togglePasswordVis('regPassword2',this)" type="button"><span class="material-symbols-rounded">visibility_off</span></button></div>
             <div class="auth-error" id="regError"></div>
-            <div id="registerCaptchaContainer" style="margin:8px 0 16px 0;min-height:100px"></div>
+            <div id="registerCaptchaContainer" style="margin:12px 0;min-height:100px"></div>
             <button class="btn-primary" style="width:100%;justify-content:center" onclick="doRegister()"><span class="material-symbols-rounded">person_add</span> Зарегистрироваться</button>
           </div>
           <div class="auth-divider">или</div>
@@ -4881,7 +5434,7 @@ function openPrivacySettings(){
     const u=s.val()||{};
     const hideFav=!!u.hideFavorites;
     document.getElementById('settingsContent').innerHTML=
-      '<div class="settings-item"><span class="material-symbols-rounded">visibility_off</span><div class="settings-item-info"><div class="settings-item-title">Скрыть понравившиеся треки</div><div class="settings-item-sub">Другие пользователи не увидят ваши лайки</div></div><label class="md-switch"><input type="checkbox" id="privacyHideFav" '+(hideFav?'checked':'')+' onchange="togglePrivacyHideFav(this.checked)"><span class="slider"></span></label></div>';
+      '<div class="settings-item"><span class="material-symbols-rounded">visibility_off</span><div class="settings-item-info"><div class="settings-item-title">Скрыть понравившиеся треки</div><div class="settings-item-sub">Другие пользователи не увидят ваши лайки</div></div><div class="toggle "+(hideFav?"on":"")+" onclick="togglePrivacyHideFav(!hideFav)"></div></div>';
   });
 }
 function togglePrivacyHideFav(val){
@@ -8000,7 +8553,6 @@ applyThemePreference();
 labsSettings = Object.assign({videoInsteadOfCover:false}, labsSettings||{});
 delete labsSettings.pianoBeta;
 if(labsSettings.glass!==undefined) delete labsSettings.glass;
-if(labsSettings.liquidGlass!==undefined) delete labsSettings.liquidGlass;
 applyLabsSettings();
 
 /* ===== UTILS ===== */
@@ -8033,7 +8585,6 @@ function closeModal(id){
   closeElementWithAnimation(el,()=>el.classList.remove('open'));
 }
 function saveLabsSettings(){
-  if(labsSettings.liquidGlass!==undefined) delete labsSettings.liquidGlass;
   if(labsSettings.glass!==undefined) delete labsSettings.glass;
   localStorage.setItem('mp_labs_settings',JSON.stringify(labsSettings));
   applyLabsSettings();
@@ -8043,7 +8594,8 @@ function applyLabsSettings(){
   applyThemePreference();
   if(currentTrackId&&allTracks[currentTrackId]) updateFullscreenMediaSurface(allTracks[currentTrackId]);
 }
-function toggleLabsFlag(key){labsSettings[key]=!labsSettings[key];saveLabsSettings();renderLabsModal();if(key==='customIcons')applyLabsCustomIcons(labsSettings[key]);}
+function toggleLabsFlag(key){labsSettings[key]=!labsSettings[key];saveLabsSettings();renderLabsModal();if(key==='customIcons')applyLabsCustomIcons(labsSettings[key]);
+  if(key==='liquidGlass'){document.body.setAttribute('data-ui-style',labsSettings[key]?'liquid-glass':'');if(!labsSettings[key])document.body.removeAttribute('data-ui-style');}}
 function handleAuthorMentionInput(input){
   var isEdit=input.id==='editTrackMusicAuthor';
   const dd=document.getElementById(isEdit?'authorSuggestDropdownEdit':'authorSuggestDropdown');if(!dd)return;
@@ -8093,6 +8645,7 @@ function renderLabsModal(){
   if(!grid) return;
   const items=[
     ['videoInsteadOfCover','smart_display','Видео вместо обложки','Если у трека есть видео, в полноэкранном плеере вместо статичной обложки будет показываться само видео. Экспериментально.'],
+    ['liquidGlass','water_drop','Liquid Glass','Полностью переработанный интерфейс в стиле Apple Music iOS 26 — жидкое стекло с глубоким размытием, органическими формами и плавными анимациями.'],
     ['customIcons','auto_awesome','Кастомные иконки','Переключает иконки платформы в заполненный стиль (filled) — более яркий и насыщенный внешний вид.']
   ];
   grid.innerHTML=items.map(([key,icon,title,sub])=>'<div class="labs-card"><div class="labs-card-title"><span class="material-symbols-rounded">'+icon+'</span>'+title+'</div><div class="labs-card-sub">'+sub+'</div><div class="effect-row" style="margin:0"><div class="effect-meta"><div class="effect-sub">Состояние</div></div><div class="toggle '+(labsSettings[key]?'on':'')+'" onclick="toggleLabsFlag(\''+key+'\')"></div></div></div>').join('');
