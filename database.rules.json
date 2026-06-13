@@ -20,7 +20,7 @@
     },
     "trackAudio": {
       "$trackId": {
-        ".read": "auth != null",
+        ".read": true,
         ".write": "auth != null && (
           !data.exists() ||
           root.child('tracks').child($trackId).child('artistId').val() === auth.uid ||
