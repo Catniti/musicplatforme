@@ -1667,6 +1667,7 @@
 *:focus-visible{outline:2px solid var(--md-primary);outline-offset:2px;border-radius:4px}
 html{scroll-behavior:smooth}
 body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--md-surface);color:var(--md-on-surface);overflow-x:hidden;transition:background .4s ease,color .4s ease;min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased}
+body.mp-no-scroll{overflow:hidden!important;position:relative}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--md-outline-variant);border-radius:3px}
 .material-symbols-rounded{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;user-select:none;-webkit-user-select:none}
 .material-symbols-rounded.filled{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
@@ -2002,7 +2003,7 @@ input[type="date"].md-input::-webkit-calendar-picker-indicator{opacity:.9;cursor
 
 /* ===== SETTINGS ===== */
 .settings-item{display:flex;align-items:center;gap:16px;padding:16px;border-radius:var(--md-shape-md);transition:all .25s cubic-bezier(.2,0,0,1);cursor:pointer}
-.settings-item:hover{background:var(--md-surface-container);transform:translateX(4px)}
+.settings-item:hover{background:var(--md-surface-container)}
 .settings-item .material-symbols-rounded{color:var(--md-on-surface-variant);font-size:24px}
 .settings-item-info{flex:1;min-width:0}
 .settings-item-title{font:500 14px/20px 'Inter',sans-serif;color:var(--md-on-surface)}
@@ -3378,6 +3379,7 @@ body[data-ui-style="liquid-glass"] .settings-item:hover::before {
       <label class="modal-label">Автор музыки / правообладатель *</label>
       <div style="position:relative;margin-bottom:16px" id="uploadAuthorWrap">
       <input class="md-input" id="uploadMusicAuthor" placeholder="Например: @me, Иван Иванов, DJ Example" style="border-radius:var(--md-shape-md)" oninput="handleAuthorMentionInput(this)" autocomplete="off">
+      <input type="hidden" id="authorMentionUid" value="">
       <div id="authorSuggestDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:300;background:var(--md-surface-container-high);border-radius:var(--md-shape-md);box-shadow:0 4px 20px rgba(0,0,0,.18);max-height:220px;overflow-y:auto;border:1px solid var(--md-outline-variant)"></div>
       </div>
       <label class="modal-label">Видео к треку (необязательно)</label>
@@ -3879,6 +3881,7 @@ body[data-ui-style="liquid-glass"] .settings-item:hover::before {
       <label class="modal-label">Автор музыки / правообладатель *</label>
       <div style="position:relative">
       <input class="md-input" id="editTrackMusicAuthor" placeholder="Кто написал или владеет музыкой (например: @me)" oninput="handleAuthorMentionInput(this)" autocomplete="off">
+      <input type="hidden" id="editAuthorMentionUid" value="">
       <div id="authorSuggestDropdownEdit" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:300;background:var(--md-surface-container-high);border-radius:var(--md-shape-md);box-shadow:0 4px 20px rgba(0,0,0,.18);max-height:220px;overflow-y:auto;border:1px solid var(--md-outline-variant)"></div>
       </div>
       <label class="modal-label">Обложка (URL)</label>
@@ -4193,6 +4196,7 @@ let bannedUserIds=new Set();
 let isPlaying=false,isShuffle=false,repeatMode=0;
 let favorites={},subscriptions={},userPlaylists={},pinnedTracks={},deleteTrackId=null;
 let selectedAudioFile=null,selectedAudioDataURL=null,playerVisible=false;
+let authorMentionUid=null,editAuthorMentionUid=null;
 let selectedCoverDataURL=null,selectedVideoDataURL=null,selectedVideoFile=null,reportTrackId=null,contextTrackId=null;
 let playCountCooldowns={},listeningHistory=[],sleepTimerId=null,editTrackId=null,editTrackVideoData='';
 let creatorLogs=[];
@@ -5434,7 +5438,7 @@ function openPrivacySettings(){
     const u=s.val()||{};
     const hideFav=!!u.hideFavorites;
     document.getElementById('settingsContent').innerHTML=
-      '<div class="settings-item"><span class="material-symbols-rounded">visibility_off</span><div class="settings-item-info"><div class="settings-item-title">Скрыть понравившиеся треки</div><div class="settings-item-sub">Другие пользователи не увидят ваши лайки</div></div><div class="toggle "+(hideFav?"on":"")+" onclick="togglePrivacyHideFav(!hideFav)"></div></div>';
+      '<div class="settings-item"><span class="material-symbols-rounded">visibility_off</span><div class="settings-item-info"><div class="settings-item-title">Скрыть понравившиеся треки</div><div class="settings-item-sub">Другие пользователи не увидят ваши лайки</div></div><div class="toggle "+(hideFav?"on":"")+" id="privacyHideFavToggle" data-state="'+(hideFav?'1':'0')+'" onclick="var el=document.getElementById('privacyHideFavToggle');var cur=el.dataset.state==='1';togglePrivacyHideFav(!cur);el.dataset.state=cur?'0':'1';el.classList.toggle('on',!cur)"></div></div>';
   });
 }
 function togglePrivacyHideFav(val){
@@ -6299,7 +6303,7 @@ async function saveTrackEdits(){
     const genre=document.getElementById('editTrackGenre').value.trim();
     const lyrics=document.getElementById('editTrackLyrics').value.trim();
     var musicAuthor=document.getElementById('editTrackMusicAuthor').value.trim();
-    if(musicAuthor==='@me'&&currentUser)musicAuthor=currentUser.displayName||musicAuthor;
+    if(musicAuthor==='@me'&&currentUser&&!creatorOverride)musicAuthor=currentUser.displayName||musicAuthor;
     let cover=(document.getElementById('editTrackCoverUrl').value||'').trim();
     let videoUrl=normalizeVideoUrl((document.getElementById('editTrackVideoUrl').value||'').trim());
     let videoData='';
@@ -6386,6 +6390,12 @@ async function saveTrackEdits(){
     });
 
     await db.ref('tracks/'+editTrackId).set(upd);
+    // Notify mentioned author
+    const editAuthUid=document.getElementById('editAuthorMentionUid')?.value;
+    if(editAuthUid && editAuthUid!==currentUser?.uid){
+      sendAuthorMentionNotification(editTrackId,title,editAuthUid,musicAuthor,isCreatorUser(currentUser)?currentUser?.displayName:currentUser?.displayName);
+    }
+    editAuthorMentionUid=null;
     closeModal('editTrackModal');
     let msg='Трек обновлён';
     if(upd.moderationMeta.chorus) msg+=' • найден припев';
@@ -8157,6 +8167,12 @@ async function publishTrack(){
     window.__lastUploadLyricsAnalysis=null;
     document.getElementById('coverUploadZone').innerHTML='<span class="material-symbols-rounded">image</span><span style="font:400 11px/14px \'Inter\',sans-serif;color:var(--md-on-surface-variant);text-align:center;padding:0 4px">Загрузить</span>';
     clearSelectedFile();
+    // Notify mentioned author
+    const uploadAuthorUid=document.getElementById('authorMentionUid')?.value;
+    if(uploadAuthorUid && uploadAuthorUid!==currentUser?.uid){
+      sendAuthorMentionNotification(trackId,title,uploadAuthorUid,musicAuthor,currentUser?.displayName);
+    }
+    authorMentionUid=null; // reset
     showSnackbar('Трек опубликован. Анализ текста и слов продолжится в фоне.');
 
     setTimeout(()=>{
@@ -8582,7 +8598,11 @@ function closeElementWithAnimation(el, finalizer){
 function closeModal(id){
   const el=document.getElementById(id);
   if(!el||!el.classList.contains('open')) return;
-  closeElementWithAnimation(el,()=>el.classList.remove('open'));
+  closeElementWithAnimation(el,()=>{
+    el.classList.remove('open');
+    // Remove body scroll lock if no modals are open
+    if(!document.querySelector('.modal-overlay.open')) document.body.classList.remove('mp-no-scroll');
+  });
 }
 function saveLabsSettings(){
   if(labsSettings.glass!==undefined) delete labsSettings.glass;
@@ -8606,10 +8626,22 @@ function handleAuthorMentionInput(input){
   let candidates=[];
   if(currentUser)candidates.push({uid:'@me',label:'@me — '+((currentUser.displayName)||'Вы'),insert:'@me'});
   const usersSource=window._mpAllUsers||{};
-  if(typeof usersSource==='object'){
+  // Fetch from Firebase if not cached and query has some chars
+  if(Object.keys(usersSource).length===0 && (query.length>=1 || !candidates.length)){
+    try{
+      const snap=await db.ref('users').once('value');
+      const allUsers=snap.val()||{};
+      window._mpAllUsers=allUsers;
+      Object.entries(allUsers).forEach(([uid,u])=>{
+        const dn=String(u.displayName||u.username||'').trim();
+        if(!dn||uid===currentUser?.uid)return;
+        if(!query||dn.toLowerCase().includes(query)||String(u.username||'').toLowerCase().includes(query))candidates.push({uid,label:dn,insert:'@'+dn});
+      });
+    }catch(e){console.warn('users fetch failed',e)}
+  }else{
     Object.entries(usersSource).forEach(([uid,u])=>{
-      const dn=String(u.displayName||u.name||'').trim();if(!dn)return;
-      if(!query||dn.toLowerCase().includes(query)||uid.toLowerCase().includes(query))candidates.push({uid,label:dn,insert:'@'+dn});
+      const dn=String(u.displayName||u.name||'').trim();if(!dn||uid===currentUser?.uid)return;
+      if(!query||dn.toLowerCase().includes(query)||uid.toLowerCase().includes(query)||String(u.username||'').toLowerCase().includes(query))candidates.push({uid,label:dn,insert:'@'+dn});
     });
   }
   candidates=candidates.slice(0,8);
@@ -8626,8 +8658,12 @@ function selectAuthorMention(uid,insert){
   const newBefore=before.replace(/@([^\s,@]*)$/,insert);
   input.value=newBefore+after;input.focus();input.setSelectionRange(newBefore.length,newBefore.length);
   if(ddUp)ddUp.style.display='none';if(ddEd)ddEd.style.display='none';
+  // Track author UID (null means current user / @me)
+  if(isEdit){editAuthorMentionUid=uid==='@me'?null:uid;const hf=document.getElementById('editAuthorMentionUid');if(hf)hf.value=editAuthorMentionUid||''}
+  else{authorMentionUid=uid==='@me'?null:uid;const hf=document.getElementById('authorMentionUid');if(hf)hf.value=authorMentionUid||''}
 }
 document.addEventListener('click',function(e){const dd=document.getElementById('authorSuggestDropdown');const dd2=document.getElementById('authorSuggestDropdownEdit');if(dd&&!dd.contains(e.target)&&e.target.id!=='uploadMusicAuthor')dd.style.display='none';if(dd2&&!dd2.contains(e.target)&&e.target.id!=='editTrackMusicAuthor')dd2.style.display='none';});
+document.addEventListener('wheel',function(e){if(document.querySelector('.modal-overlay.open')){var el=e.target;if(!el.closest('.modal-overlay.open')){e.preventDefault();e.stopPropagation()}}},{passive:false});
 function setAdaptiveThemeMode(mode){localStorage.setItem('mp_theme_mode',mode);applyThemePreference();openSettings()}
 function applyThemePreference(){
 
@@ -9245,8 +9281,71 @@ function renderNotificationsModal(){
   if(!list) return;
   const items=(notifications||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
   if(countEl) countEl.textContent=String(items.filter(n=>!n.read).length||0);
-  list.innerHTML=items.length?items.map(n=>'<div class="settings-item" onclick="markNotificationRead(\''+escAttr(n.id||'')+'\')"><span class="material-symbols-rounded">'+(n.type==='moderation'?'policy':n.type==='copyright'?'copyright':'notifications')+'</span><div class="settings-item-info"><div class="settings-item-title">'+esc(n.title||'Уведомление')+'</div><div class="settings-item-sub">'+esc(n.body||'')+' • '+new Date(n.ts||Date.now()).toLocaleString('ru-RU')+'</div></div>'+(!n.read?'<span class="badge">new</span>':'')+'</div>').join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">notifications_off</span><h3>Уведомлений нет</h3></div>';
+  list.innerHTML=items.length?items.map(n=>{
+    const icon=n.type==='moderation'?'policy':n.type==='copyright'?'copyright':n.type==='authorMention'?'person':'notifications';
+    const badge=!n.read?'<span class="badge">new</span>':'';
+    const authorBtns=n.type==='authorMention'?'<div style="display:flex;gap:8px;margin-top:6px" id="authorNotifBtns_'+escAttr(n.id||'')+'"><button class="btn-tonal" onclick="event.stopPropagation();resolveAuthorMentionNo(\''+escAttr(n.id||'')+'\',1)" style="flex:1;padding:6px;font-size:12px"><span class="material-symbols-rounded" style="font-size:16px">close</span> Это не я</button><button class="btn-tonal" onclick="event.stopPropagation();resolveAuthorMentionYes(\''+escAttr(n.id||'')+'\',1)" style="flex:1;padding:6px;font-size:12px"><span class="material-symbols-rounded" style="font-size:16px">check</span> Это я</button></div>':'';
+    return '<div class="settings-item" onclick="markNotificationRead(\''+escAttr(n.id||'')+'\')"><span class="material-symbols-rounded">'+icon+'</span><div class="settings-item-info"><div class="settings-item-title">'+esc(n.title||'Уведомление')+'</div><div class="settings-item-sub">'+esc(n.body||'')+' • '+new Date(n.ts||Date.now()).toLocaleString('ru-RU')+'</div>'+authorBtns+'</div>'+badge+'</div>';
+  }).join(''):'<div class="empty-state" style="padding:20px"><span class="material-symbols-rounded">notifications_off</span><h3>Уведомлений нет</h3></div>';
 }
+async function resolveAuthorMentionYes(notifId, fromList){
+  const notif=(notifications||[]).find(n=>n.id===notifId);
+  if(!notif||notif.type!=='authorMention') return;
+  try{
+    const track=allTracks[notif.trackId];
+    const isCreator=isCreatorUser(currentUser);
+    if(isCreator && notif.trackId){
+      const trackRef=db.ref('tracks/'+notif.trackId);
+      const snap=await trackRef.once('value');
+      const t=snap.val();
+      if(t){
+        const musicAuthorInput=document.getElementById('editTrackMusicAuthor');
+        const origAuthor=t.musicAuthor||notif.authorName||'';
+        const finalAuthor=notif.authorName&&notif.authorName!=='@me'?notif.authorName:origAuthor;
+        if(musicAuthorInput) musicAuthorInput.value=finalAuthor;
+        if(document.getElementById('editAuthorMentionUid')) document.getElementById('editAuthorMentionUid').value=notif.authorUid||'';
+        openEditTrackModal(notif.trackId);
+        setTimeout(()=>{const mi=document.getElementById('editTrackMusicAuthor');if(mi)mi.value=finalAuthor},100);
+      }
+    }
+    showSnackbar('Авторство подтверждено');
+    markNotificationRead(notifId);
+    const btns=document.getElementById('authorNotifBtns_'+notifId);
+    if(btns) btns.style.display='none';
+  }catch(e){showSnackbar('Ошибка');console.warn(e)}
+}
+async function resolveAuthorMentionNo(notifId, fromList){
+  const notif=(notifications||[]).find(n=>n.id===notifId);
+  if(!notif||notif.type!=='authorMention') return;
+  try{
+    showSnackbar('Запрос отклонён. Автор уведомлён.');
+    markNotificationRead(notifId);
+    const btns=document.getElementById('authorNotifBtns_'+notifId);
+    if(btns) btns.style.display='none';
+    if(notif.trackId && notif.mentionerName){
+      await db.ref('notifications/'+notif.authorUid+'/'+notifId+'/read').set(true);
+      await db.ref('notifications/'+notif.authorUid+'/'+notifId+'/rejected').set({rejectedAt:Date.now(),rejecterUid:currentUser?.uid||''});
+    }
+  }catch(e){showSnackbar('Ошибка');console.warn(e)}
+}
+async function sendAuthorMentionNotification(trackId, trackTitle, authorUid, authorName, mentionerName){
+  if(!authorUid || authorUid === currentUser?.uid) return; // Don't notify yourself
+  const notifId = 'authorMention_' + trackId + '_' + Date.now();
+  const notif = {
+    type: 'authorMention',
+    title: 'Вас упомянули как автора трека',
+    body: (mentionerName || 'Пользователь') + ' указал вас как автора трека «' + (trackTitle || 'Без названия') + '»',
+    ts: Date.now(),
+    read: false,
+    trackId: trackId,
+    trackTitle: trackTitle,
+    authorUid: authorUid,
+    authorName: authorName,
+    mentionerName: mentionerName
+  };
+  try { await db.ref('notifications/' + authorUid + '/' + notifId).set(notif); } catch(e) { console.warn('authorMentionNotification failed', e); }
+}
+
 function openNotificationsModal(){
   if(!currentUser){showSnackbar('Уведомления доступны после входа');return}
   renderNotificationsModal();
