@@ -5254,16 +5254,16 @@ function loadUserData(){
   db.ref('subscriptions/'+uid).on('value',s=>{subscriptions=s.val()||{};renderSubscriptions()});
   db.ref('playlists/'+uid).on('value',s=>{userPlaylists=s.val()||{};renderPlaylists()});
   db.ref('pinnedTracks/'+uid).on('value',s=>{pinnedTracks=s.val()||{};renderPinnedTracks()});
-  db.ref('history/'+uid).orderByChild('time').limitToLast(100).on('value',s=>{
+  db.ref('history/'+uid).orderByChild('time').limitToLast(50).on('value',s=>{
     listeningHistory=[];s.forEach(c=>{listeningHistory.unshift({id:c.key,...c.val()})});renderHistory();
   });
-  db.ref('notifications/'+uid).limitToLast(200).on('value',s=>{
+  db.ref('notifications/'+uid).limitToLast(50).on('value',s=>{
     notificationsMap=s.val()||{};
     updateNotificationsUi();
     if(document.getElementById('notificationsModal').classList.contains('open')) renderNotifications();
   });
   if(isCreatorUser(currentUser)){
-    db.ref('creatorLogs').limitToLast(500).on('value',s=>{
+    db.ref('creatorLogs').limitToLast(100).on('value',s=>{
       const data=s.val()||{};
       creatorLogs=Object.values(data).sort((a,b)=>(b.ts||0)-(a.ts||0));
       if(document.getElementById('creatorRealtimeConsole')) renderCreatorRealtimeConsole();
