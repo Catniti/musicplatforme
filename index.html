@@ -3653,6 +3653,7 @@ let partyQrDetector=null;
 let adminEditingTrackId=null;
 let copyrightAppealTrackId=null;
 let loadedTrackEntries=[];
+let _mpTracksInitialLoading=true;
 let trackPageSize=24;
 /* ===== AUDIO DATA MIGRATION & LAZY LOADING =====
  * audioData (base64 audio ~2MB/track) is moved to trackAudio/{id}
@@ -5247,7 +5248,7 @@ function loadUserData(){
       case 'page-favorites':renderFavorites();break;
       case 'page-upload':case 'page-profile':if(currentUser)loadMyTracks();break;
       case 'page-search':handleSearch(document.getElementById('searchInput').value);break;
-      case 'page-artist':if(currentArtistId){currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===currentArtistId).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));const _atl=document.getElementById('artistTracks');if(_atl)_atl.innerHTML=currentArtistTracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');}break;
+      case 'page-artist':if(currentArtistId){currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===currentArtistId).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));const _atl=document.getElementById('artistTracks');if(_atl)_atl.innerHTML=currentArtistTracks.length===0&&!_mpTracksInitialLoading?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');}break;
     }
   });
   db.ref('subscriptions/'+uid).on('value',s=>{subscriptions=s.val()||{};renderSubscriptions()});
@@ -5333,6 +5334,7 @@ window.addEventListener('mp-source-switch',e=>{
   if(e.detail&&e.detail.source==='server'&&e.detail.tracks){
     allTracks=_stripHeavyFields(e.detail.tracks);
     loadedTrackEntries=Object.entries(allTracks).filter(([,t])=>t&&(t.title||t.audioUrl)).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+    _mpTracksInitialLoading=false;
     const pid=document.querySelector('.page.active')?.id||'page-home';
     switch(pid){
       case 'page-home':renderHome();break;
@@ -5351,6 +5353,7 @@ db.ref('tracks').on('value',snap=>{
   const hasData=Object.keys(rawData).length>0;
   allTracks=_stripHeavyFields(rawData);
   loadedTrackEntries=Object.entries(allTracks).filter(([,t])=>t&&(t.title||t.audioUrl)).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
+  _mpTracksInitialLoading=false;
   setTimeout(_migrateAudioData,3000);
   setTimeout(_migrateArtistPhotos,5000);
   clearTimeout(_tracksRenderTimer);
@@ -5371,7 +5374,7 @@ db.ref('tracks').on('value',snap=>{
       if(currentArtistId){
         currentArtistTracks=Object.entries(allTracks).filter(([id,t])=>t.artistId===currentArtistId).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
         const _atl=document.getElementById('artistTracks');
-        if(_atl)_atl.innerHTML=currentArtistTracks.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
+        if(_atl)_atl.innerHTML=currentArtistTracks.length===0&&!_mpTracksInitialLoading?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':currentArtistTracks.map(([id,t],i)=>renderTrackItem(id,t,i+1)).join('');
       }
       break;
     default:renderHome();break;
@@ -5897,7 +5900,7 @@ function showContextMenuForCurrent(e){if(currentTrackId)openTrackContextMenu(e,c
 function renderHome(){
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId));
   const sorted=[...entries].sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-  document.getElementById('homeNewTracks').innerHTML=sorted.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
+  document.getElementById('homeNewTracks').innerHTML=sorted.length===0&&!_mpTracksInitialLoading?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Пока нет треков</h3><p>Будьте первым!</p></div>':sorted.slice(0,12).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('');
   const popular=[...entries].sort((a,b)=>(b[1].plays||0)-(a[1].plays||0)).slice(0,8);
   document.getElementById('homePopular').innerHTML=popular.length===0?'':popular.map(([id,t])=>'<div class="md-card" onclick="playTrackById(\''+id+'\')"><div class="card-img">'+(t.cover?'<img src="'+t.cover+'" alt="" loading="lazy">':'<span class="material-symbols-rounded">music_note</span>')+'<div class="card-play-fab"><span class="material-symbols-rounded filled">play_arrow</span></div></div><div class="card-body"><div class="card-title" style="display:flex;align-items:center;gap:4px">'+esc(t.title||'')+(t.explicit?'<span class="explicit-badge" style="font-size:10px;width:16px;height:16px">!</span>':'')+'</div><div class="card-sub">'+esc(t.artistName||'')+'</div><div class="card-sub" style="display:flex;align-items:center;gap:4px;margin-top:2px"><span class="material-symbols-rounded" style="font-size:14px">play_arrow</span>'+formatPlays(t.plays||0)+'</div></div></div>').join('');
   const am={};entries.slice(0,trackPageSize*2).forEach(([id,t])=>{if(t.artistId&&!am[t.artistId])am[t.artistId]={name:t.artistName,photo:t.artistPhoto||_artistPhotoCache[t.artistId]||'',id:t.artistId}});
@@ -5918,19 +5921,19 @@ function renderExplore(){
   filtered.sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
   const gl=genres.find(g=>g.id===currentGenre);
   document.getElementById('exploreTitle').textContent=currentGenre==='all'?'Все треки':(gl?gl.label:'Треки');
-  document.getElementById('exploreTracks').innerHTML=filtered.length===0?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':filtered.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(filtered.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderExplore()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
+  document.getElementById('exploreTracks').innerHTML=filtered.length===0&&!_mpTracksInitialLoading?'<div class="empty-state"><span class="material-symbols-rounded">library_music</span><h3>Нет треков</h3></div>':filtered.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(filtered.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderExplore()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 function filterGenre(g){currentGenre=g;trackPageSize=24;renderExplore()}
 
 function renderCharts(){
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId)).sort((a,b)=>(b[1].plays||0)-(a[1].plays||0));
-  document.getElementById('chartsTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">trending_up</span><h3>Нет данных</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderCharts()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
+  document.getElementById('chartsTracks').innerHTML=entries.length===0&&!_mpTracksInitialLoading?'<div class="empty-state"><span class="material-symbols-rounded">trending_up</span><h3>Нет данных</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderCharts()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
 function renderNewReleases(){
   const weekAgo=Date.now()-7*24*60*60*1000;
   const entries=(loadedTrackEntries.length?loadedTrackEntries:Object.entries(allTracks)).filter(([,t])=>t&&(t.title||t.audioUrl)&&!bannedUserIds.has(t.artistId)&&(t.timestamp||0)>weekAgo).sort((a,b)=>(b[1].timestamp||0)-(a[1].timestamp||0));
-  document.getElementById('newReleasesTracks').innerHTML=entries.length===0?'<div class="empty-state"><span class="material-symbols-rounded">new_releases</span><h3>Нет новинок за последнюю неделю</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderNewReleases()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
+  document.getElementById('newReleasesTracks').innerHTML=entries.length===0&&!_mpTracksInitialLoading?'<div class="empty-state"><span class="material-symbols-rounded">new_releases</span><h3>Нет новинок за последнюю неделю</h3></div>':entries.slice(0,trackPageSize).map(([id,t],i)=>renderTrackItem(id,t,i+1,false,true)).join('')+(entries.length>trackPageSize?'<div style="display:flex;justify-content:center;margin-top:12px"><button class="btn-tonal" onclick="trackPageSize+=24;renderNewReleases()"><span class="material-symbols-rounded">expand_more</span> Показать ещё</button></div>':'');
 }
 
 function renderHistory(){
