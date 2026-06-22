@@ -10,14 +10,14 @@
 
 <p align="center">
   <a href="musis.ru">🌐 Открыть сайт</a> •
-  <a href="https://github.com/vriskasYT/musicplatforme">📦 Репозиторий</a>
+  <a href="https://github.com/Catniti/musicplatforme">📦 Репозиторий</a>
 </p>
 
 ---
 
 ## 📖 О проекте
 
-**MusicPlatforme** — бесплатная веб-платформа для прослушивания музыки, созданная и поддерживаемая **[VriskasYT](https://github.com/vriskasYT)**. Сайт предоставляет полноценный музыкальный сервис прямо в браузере — без рекламы, без подписок, без ограничений.
+**MusicPlatforme** — бесплатная веб-платформа для прослушивания музыки, созданная и поддерживаемая **[Catniti](https://github.com/Catniti)**. Сайт предоставляет полноценный музыкальный сервис прямо в браузере — без рекламы, без подписок, без ограничений.
 
 > **Слоган:** *MusicPlatforme — Слушай музыку бесплатно*
 
@@ -87,7 +87,7 @@ python -m http.server 8000
 
 ## 👨‍💻 Автор
 
-Создано и поддерживается **[VriskasYT](https://github.com/vriskasYT)**.
+Создано и поддерживается **[Catniti](https://github.com/Catniti)**.
 
 Если у вас есть вопросы или предложения — перейдите по ссылке в
 **[чат-бот поддержки в Telegram](https://t.me/VriskasSupport_bot)**
