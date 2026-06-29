@@ -5360,10 +5360,7 @@ function openConnectedAccounts(){
     const hasTg=!!u.telegramId,hasGoogle=!!u.googleId,hasGithub=!!u.githubId,hasYa=!!u.yandexId;
     const list=document.getElementById('connectedAccountsList');
     list.innerHTML=
-      _connAccItem('','Telegram',hasTg?(u.telegramUsername?'@'+u.telegramUsername:'Подключён'):'Не подключён',hasTg,'telegram')+
-      _connAccItem('','Google',hasGoogle?'Подключён':'Не подключён',hasGoogle,'google')+
-      _connAccItem('','Яндекс',hasYa?(u.yandexLogin||'Подключён'):'Не подключён',hasYa,'yandex')+
-      _connAccItem('','GitHub',hasGithub?'Подключён':'Не подключён',hasGithub,'github');
+      _connAccItem('','Яндекс',hasYa?(u.yandexLogin||'Подключён'):'Не подключён',hasYa,'yandex');
     document.getElementById('connectedAccountsModal').classList.add('open');
   });
 }
